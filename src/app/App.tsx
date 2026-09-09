@@ -6,7 +6,6 @@ import Authorization from '../pages/Auth/Authorization';
 import MainAppLayout from '../pages/MainAppLayout';
 
 import Catalog from '../pages/Catalog';
-import Crm from '../pages/CRM/Crm';
 import Favorites from '../pages/Favorites';
 import Mybookings from '../pages/Mybookings';
 import Dashboard from '../pages/CRM/Dashboard';
@@ -24,10 +23,15 @@ import { UserProvider } from '../context/UserContext';
 import CrmPage from '../pages/CRM/Crm';
 import EditStaff from '../pages/CRM/EditStaff';
 import Schedule from '../pages/CRM/Schedule';
+import EditAppointment from '../components/organisms/Crm/Appointments/Edit/EditAppointment';
+import { setDefaultOptions } from 'date-fns';
+import { ru } from 'date-fns/locale';
 
 const queryClient = new QueryClient();
 
 function App() {
+    setDefaultOptions({ locale: ru });
+
     return (
         <QueryClientProvider client={queryClient}>
             <UserProvider>
@@ -45,7 +49,13 @@ function App() {
                             path="my-businesses"
                             element={<Mybusinesses />}
                         />
-                        <Route path="appointments" element={<Appointments />} />
+                        <Route path="appointments">
+                            <Route index element={<Appointments />} />
+                            <Route
+                                path="edit/:id"
+                                element={<EditAppointment />}
+                            />
+                        </Route>
                         <Route path="staff">
                             <Route index element={<Staff />} />
                             <Route path="add" element={<AddStaf />} />

@@ -1,11 +1,20 @@
-import { useState } from 'react';
 import { CheckCircle2, Check } from 'lucide-react';
 import Icon from '../../../atoms/Icon';
 import Typography from '../../../atoms/Typography';
+import type { BookingSettings } from '../../../../pages/CRM/Settings';
 
-export default function ConfirmationOfRecords() {
-    const [isAutoConfirm, setIsAutoConfirm] = useState<boolean>(true);
+interface ConfirmationOfRecordsProps {
+    settings: BookingSettings;
+    updateField: <K extends keyof BookingSettings>(
+        field: K,
+        value: BookingSettings[K]
+    ) => void;
+}
 
+export default function ConfirmationOfRecords({
+    settings,
+    updateField
+}: ConfirmationOfRecordsProps) {
     return (
         <div className="flex w-full items-start">
             <div className="w-full px-4 py-6 sm:px-6 sm:py-9 bg-[#fff] rounded-3xl border border-[#c7c4d8]">
@@ -37,19 +46,26 @@ export default function ConfirmationOfRecords() {
 
                     <button
                         type="button"
-                        onClick={() => setIsAutoConfirm((prev) => !prev)}
+                        onClick={() =>
+                            updateField(
+                                'auto_confirm_bookings',
+                                !settings.auto_confirm_bookings
+                            )
+                        }
                         className={`w-14 h-8 rounded-full relative flex items-center px-1 transition-colors duration-200 ease-in-out focus:outline-none shrink-0 ${
-                            isAutoConfirm ? 'bg-[#4031d0]' : 'bg-slate-300'
+                            settings.auto_confirm_bookings
+                                ? 'bg-[#4031d0]'
+                                : 'bg-slate-300'
                         }`}
                     >
                         <div
                             className={`w-6 h-6 bg-white rounded-full shadow-sm transform transition-transform duration-200 ease-in-out flex items-center justify-center ${
-                                isAutoConfirm
+                                settings.auto_confirm_bookings
                                     ? 'translate-x-6'
                                     : 'translate-x-0'
                             }`}
                         >
-                            {isAutoConfirm && (
+                            {settings.auto_confirm_bookings && (
                                 <Icon
                                     icon={Check}
                                     className="w-3.5 h-3.5 text-[#4031d0]"

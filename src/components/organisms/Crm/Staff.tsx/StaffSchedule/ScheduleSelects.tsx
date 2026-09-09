@@ -34,7 +34,7 @@ export default function ScheduleSelects({
 
     const activeBusiness = selectedBusiness || businessOptions[0];
 
-    const { data: rawMasters, isFetching: isMastersFetching } = useQuery({
+    const { data: rawMasters, isPending: isMastersPending } = useQuery({
         queryKey: ['masters', activeBusiness?.id],
         queryFn: () => getMasters(Number(activeBusiness?.id)),
         enabled: !!activeBusiness?.id
@@ -83,20 +83,22 @@ export default function ScheduleSelects({
                     text={'Специалист'}
                     className="text-sm px-3 mb-1 "
                 />
+
                 <Select
                     options={specialistOptions}
                     value={
                         selectedSpecialist ||
                         (specialistOptions[0] ?? {
                             id: 0,
-                            label: 'Выберите мастера'
+                            label: isMastersPending ? '' : 'Выберите мастера'
                         })
                     }
                     onChange={setSelectedSpecialist}
-                    className={`w-full min-w-[220px] ${!activeBusiness || isMastersFetching ? 'opacity-50 pointer-events-none' : ''}`}
+                    className={`w-full min-w-[220px] ${!activeBusiness || isMastersPending ? 'opacity-50 pointer-events-none' : ''}`}
                 />
-                {isMastersFetching && (
-                    <span className="absolute top-1/2 left-1/2 -translate-x-1/2 text-xs text-gray-500">
+
+                {isMastersPending && (
+                    <span className="absolute top-1/2 left-1/2 -translate-x-1/2 text-xs text-gray-500 mt-2">
                         Загрузка...
                     </span>
                 )}

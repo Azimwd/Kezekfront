@@ -20,7 +20,6 @@ const INITIAL_SCHEDULE: DaySchedule[] = [
     { id: 7, day: 'Воскресенье', isActive: false, start: '10:00', end: '19:00' }
 ];
 
-// --- Кастомный компонент выбора времени ---
 function CustomTimePicker({
     value,
     onChange,
