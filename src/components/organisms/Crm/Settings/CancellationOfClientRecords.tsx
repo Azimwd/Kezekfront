@@ -1,115 +1,294 @@
-import { XCircle, Check } from 'lucide-react';
-import Icon from '../../../atoms/Icon';
-import Typography from '../../../atoms/Typography';
-import type { BookingSettings } from '../../../../pages/CRM/Settings';
+import {
+    CircleX
+} from 'lucide-react';
 
-interface CancellationProps {
+import type {
+    BookingSettings
+} from '../../../../api/settings';
+
+
+interface Props {
     settings: BookingSettings;
-    updateField: <K extends keyof BookingSettings>(
+
+    updateField: <
+        K extends keyof BookingSettings
+    >(
         field: K,
         value: BookingSettings[K]
     ) => void;
 }
 
+
 export default function CancellationOfClientRecords({
     settings,
     updateField
-}: CancellationProps) {
+}: Props) {
     return (
-        <div className="flex w-full items-start">
-            <div className="w-full px-4 py-6 sm:px-6 sm:py-9 bg-[#fff] rounded-3xl border border-[#c7c4d8]">
-                <div className="flex justify-start items-center gap-3 sm:gap-4">
-                    <div className="bg-[#eff4ff] p-2.5 rounded-full flex items-center justify-center shrink-0">
-                        <Icon
-                            icon={XCircle}
-                            className="text-[#4031d0] w-5 h-5 sm:w-6 sm:h-6"
-                        />
-                    </div>
-                    <Typography
-                        text={'Отмена записи клиентом'}
-                        className="text-xl sm:text-2xl font-medium text-slate-900"
-                    />
-                </div>
+        <section
+            className="
+                rounded-2xl
+                border
+                border-[#cbc9df]
+                bg-white
+                p-6
+            "
+        >
 
-                <div className="mt-6 flex items-start justify-between gap-4 sm:gap-6">
-                    <div className="flex flex-col gap-1 max-w-xl">
-                        <Typography
-                            text={'Разрешить клиенту отмену'}
-                            className="text-sm sm:text-base font-semibold text-slate-800"
-                        />
-                        <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-                            Если включено, клиент сможет самостоятельно отменить
-                            свою запись через портал.
-                        </p>
-                    </div>
-
-                    <button
-                        type="button"
-                        onClick={() =>
-                            updateField(
-                                'allow_client_cancel',
-                                !settings.allow_client_cancel
-                            )
-                        }
-                        className={`w-14 h-8 rounded-full relative flex items-center px-1 transition-colors duration-200 ease-in-out focus:outline-none shrink-0 ${
-                            settings.allow_client_cancel
-                                ? 'bg-[#4031d0]'
-                                : 'bg-slate-300'
-                        }`}
-                    >
-                        <div
-                            className={`w-6 h-6 bg-white rounded-full shadow-sm transform transition-transform duration-200 ease-in-out flex items-center justify-center ${
-                                settings.allow_client_cancel
-                                    ? 'translate-x-6'
-                                    : 'translate-x-0'
-                            }`}
-                        >
-                            {settings.allow_client_cancel && (
-                                <Icon
-                                    icon={Check}
-                                    className="w-3.5 h-3.5 text-[#4031d0]"
-                                />
-                            )}
-                        </div>
-                    </button>
-                </div>
-
-                <hr className="my-6 border-[#e2e4f0]" />
+            <div className="flex items-center gap-3">
 
                 <div
-                    className={`flex flex-col justify-center items-start gap-3 transition-opacity duration-200 ${
-                        !settings.allow_client_cancel
-                            ? 'opacity-40 pointer-events-none'
-                            : 'opacity-100'
-                    }`}
+                    className="
+                        flex
+                        h-10
+                        w-10
+                        shrink-0
+                        items-center
+                        justify-center
+                        rounded-full
+                        bg-[#f1efff]
+                    "
                 >
-                    <Typography
-                        text={'За сколько часов можно отменить'}
-                        className="text-sm font-semibold text-slate-800"
+                    <CircleX
+                        className="
+                            h-5
+                            w-5
+                            text-[#4031d0]
+                        "
                     />
+                </div>
 
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 w-full">
-                        <div className="flex flex-col gap-2 w-full sm:w-auto">
+
+                <h2
+                    className="
+                        text-xl
+                        font-semibold
+                        text-slate-900
+                    "
+                >
+                    Отмена записи клиентом
+                </h2>
+
+            </div>
+
+
+            <div
+                className="
+                    mt-7
+                    flex
+                    items-center
+                    justify-between
+                    gap-6
+                "
+            >
+
+                <div>
+
+                    <div
+                        className="
+                            text-sm
+                            font-semibold
+                            text-slate-700
+                        "
+                    >
+                        Разрешить клиенту отмену
+                    </div>
+
+
+                    <p
+                        className="
+                            mt-1.5
+                            max-w-[530px]
+                            text-[13px]
+                            leading-relaxed
+                            text-slate-500
+                        "
+                    >
+                        Если включено, клиент сможет самостоятельно
+                        отменить свою запись через портал.
+                    </p>
+
+
+                    <div
+                        className="
+                            mt-2
+                            font-mono
+                            text-[10px]
+                            text-slate-400
+                        "
+                    >
+                        allow_client_cancel
+                    </div>
+
+                </div>
+
+
+                <Toggle
+                    checked={
+                        settings.allow_client_cancel
+                    }
+                    onChange={() =>
+                        updateField(
+                            'allow_client_cancel',
+                            !settings.allow_client_cancel
+                        )
+                    }
+                />
+
+            </div>
+
+
+            {settings.allow_client_cancel && (
+                <div
+                    className="
+                        mt-5
+                        border-t
+                        border-slate-200
+                        pt-5
+                    "
+                >
+
+                    <div
+                        className="
+                            mb-2
+                            text-sm
+                            font-semibold
+                            text-slate-700
+                        "
+                    >
+                        За сколько часов можно отменить
+                    </div>
+
+
+                    <div
+                        className="
+                            grid
+                            grid-cols-1
+                            gap-4
+                            sm:grid-cols-[210px_1fr]
+                            sm:items-center
+                        "
+                    >
+
+                        <div>
+
                             <input
                                 type="number"
-                                min="0"
-                                value={settings.cancel_before_hours}
+                                min={0}
+                                max={168}
+                                value={
+                                    settings.cancel_before_hours
+                                }
                                 onChange={(e) =>
                                     updateField(
                                         'cancel_before_hours',
-                                        Number(e.target.value)
+                                        Math.max(
+                                            0,
+                                            Number(e.target.value)
+                                        )
                                     )
                                 }
-                                className="w-full sm:w-48 h-11 px-4 bg-[#fcfcfd] border border-[#e2e2ea] rounded-xl text-base font-medium text-slate-800 outline-none focus:border-[#4031d0] focus:ring-1 focus:ring-[#4031d0] transition-all"
+                                className="
+                                    h-11
+                                    w-full
+                                    rounded-lg
+                                    border
+                                    border-[#c7c5d9]
+                                    bg-white
+                                    px-3
+                                    text-sm
+                                    font-medium
+                                    text-slate-800
+                                    outline-none
+                                    transition
+                                    focus:border-[#4031d0]
+                                    focus:ring-2
+                                    focus:ring-[#4031d0]/10
+                                "
                             />
+
+
+                            <div
+                                className="
+                                    mt-1.5
+                                    font-mono
+                                    text-[10px]
+                                    text-slate-400
+                                "
+                            >
+                                cancel_before_hours
+                            </div>
+
                         </div>
-                        <p className="text-xs sm:text-sm text-slate-500 leading-relaxed max-w-sm">
-                            Клиент сможет отменить запись не позднее указанного
-                            времени до начала услуги.
+
+
+                        <p
+                            className="
+                                text-[13px]
+                                leading-relaxed
+                                text-slate-500
+                            "
+                        >
+                            Клиент сможет отменить запись
+                            не позднее указанного времени
+                            до начала услуги.
                         </p>
+
                     </div>
+
                 </div>
-            </div>
-        </div>
+            )}
+
+        </section>
+    );
+}
+
+
+function Toggle({
+    checked,
+    onChange
+}: {
+    checked: boolean;
+    onChange: () => void;
+}) {
+    return (
+        <button
+            type="button"
+            role="switch"
+            aria-checked={checked}
+            onClick={onChange}
+            className={`
+                relative
+                h-7
+                w-12
+                shrink-0
+                rounded-full
+                transition-colors
+                ${
+                    checked
+                        ? 'bg-[#4a38e8]'
+                        : 'bg-slate-300'
+                }
+            `}
+        >
+
+            <span
+                className={`
+                    absolute
+                    top-1
+                    h-5
+                    w-5
+                    rounded-full
+                    bg-white
+                    shadow
+                    transition-transform
+                    ${
+                        checked
+                            ? 'translate-x-6'
+                            : 'translate-x-1'
+                    }
+                `}
+            />
+
+        </button>
     );
 }

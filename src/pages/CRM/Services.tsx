@@ -1,7 +1,7 @@
 import Typography from '../../components/atoms/Typography';
 import Button from '../../components/atoms/Button';
 import Icon from '../../components/atoms/Icon';
-import { Scissors, Pencil, Trash2 } from 'lucide-react';
+import { Scissors, Trash2 } from 'lucide-react';
 import { useBusiness } from '../../context/BusinessContext';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { deleteService, listOfServices } from '../../api/services';

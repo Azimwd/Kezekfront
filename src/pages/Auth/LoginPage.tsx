@@ -1,9 +1,5 @@
-import HeroSection from '../../components/templates/Auth/Login/HeroSection';
+import LoginHero from '../../components/organisms/Auth/Login/LoginHero';
 
 export default function LoginPage() {
-    return (
-        <div>
-            <HeroSection />
-        </div>
-    );
+    return <LoginHero />;
 }

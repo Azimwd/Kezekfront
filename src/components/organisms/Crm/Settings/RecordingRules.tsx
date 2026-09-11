@@ -1,119 +1,276 @@
-import { Clock4 } from 'lucide-react';
-import Icon from '../../../atoms/Icon';
-import Typography from '../../../atoms/Typography';
-import RowItem from '../../../molecules/Crm/Settings/RecordingRules/RowItem';
-import type { SelectOption } from '../../../atoms/Select';
-import type { BookingSettings } from '../../../../pages/CRM/Settings';
+import {
+    Clock3
+} from 'lucide-react';
 
-interface RecordingRulesProps {
+import type {
+    ReactNode
+} from 'react';
+
+import type {
+    BookingSettings
+} from '../../../../api/settings';
+
+
+interface Props {
     settings: BookingSettings;
-    updateField: <K extends keyof BookingSettings>(
+
+    updateField: <
+        K extends keyof BookingSettings
+    >(
         field: K,
         value: BookingSettings[K]
     ) => void;
 }
 
-const SLOT_STEPS: SelectOption[] = [
-    { id: 15, label: '15 минут' },
-    { id: 30, label: '30 минут' },
-    { id: 45, label: '45 минут' },
-    { id: 60, label: '1 час' }
-];
-
-const MIN_NOTICE_HOURS: SelectOption[] = [
-    { id: 1, label: '1 час' },
-    { id: 2, label: '2 часа' },
-    { id: 3, label: '3 часа' },
-    { id: 4, label: '4 часа' },
-    { id: 5, label: '5 часов' }
-];
-
-const MAX_DAYS_AHEAD: SelectOption[] = [
-    { id: 2, label: '2 дня' },
-    { id: 3, label: '3 дня' },
-    { id: 4, label: '4 дня' },
-    { id: 5, label: '5 дней' },
-    { id: 6, label: '6 дней' },
-    { id: 7, label: '7 дней' },
-    { id: 8, label: '8 дней' },
-    { id: 30, label: '30 дней' }
-];
 
 export default function RecordingRules({
     settings,
     updateField
-}: RecordingRulesProps) {
-    const selectedSlotStep =
-        SLOT_STEPS.find((s) => s.id === settings.slot_step_minutes) ||
-        SLOT_STEPS[0];
-    const selectedNoticeHours =
-        MIN_NOTICE_HOURS.find(
-            (n) => n.id === settings.min_booking_notice_hours
-        ) || MIN_NOTICE_HOURS[0];
-    const selectedDaysAhead =
-        MAX_DAYS_AHEAD.find((d) => d.id === settings.max_booking_days_ahead) ||
-        MAX_DAYS_AHEAD[0];
-
+}: Props) {
     return (
-        <div className="flex w-full items-start">
-            <div className="w-full px-4 py-6 sm:px-6 sm:py-9 bg-[#fff] rounded-3xl border border-[#c7c4d8]">
-                <div className="flex justify-start items-center gap-3 sm:gap-4">
-                    <div className="bg-[#eff4ff] p-2.5 rounded-full flex items-center justify-center shrink-0">
-                        <Icon
-                            icon={Clock4}
-                            className="text-[#4031d0] w-5 h-5 sm:w-6 sm:h-6"
-                        />
-                    </div>
-                    <Typography
-                        text={'Правила записи'}
-                        className="text-xl sm:text-2xl font-medium"
+        <section
+            className="
+                rounded-2xl
+                border
+                border-[#cbc9df]
+                bg-white
+                p-6
+            "
+        >
+
+            <div className="flex items-center gap-3">
+
+                <div
+                    className="
+                        flex
+                        h-10
+                        w-10
+                        shrink-0
+                        items-center
+                        justify-center
+                        rounded-full
+                        bg-[#f1efff]
+                    "
+                >
+                    <Clock3
+                        className="
+                            h-5
+                            w-5
+                            text-[#4031d0]
+                        "
                     />
                 </div>
 
-                <div className="mt-6 flex flex-col gap-6 w-full">
-                    <RowItem
-                        text={'Шаг слотов'}
-                        selectOptions={SLOT_STEPS}
-                        value={selectedSlotStep}
-                        onChange={(val) =>
-                            updateField('slot_step_minutes', Number(val.id))
-                        }
-                        description={
-                            'Определяет, с каким интервалом клиент будет видеть свободное время.'
-                        }
-                    />
 
-                    <RowItem
-                        text={'Минимальное время до записи (в часах)'}
-                        selectOptions={MIN_NOTICE_HOURS}
-                        value={selectedNoticeHours}
-                        onChange={(val) =>
+                <h2
+                    className="
+                        text-xl
+                        font-semibold
+                        text-slate-900
+                    "
+                >
+                    Правила записи
+                </h2>
+
+            </div>
+
+
+            <div className="mt-7 flex flex-col gap-7">
+
+                <SettingRow
+                    title="Шаг слотов"
+                    description="Определяет, с каким интервалом клиент будет видеть свободное время."
+                    code="slot_step_minutes"
+                >
+
+                    <select
+                        value={
+                            settings.slot_step_minutes
+                        }
+                        onChange={(e) =>
+                            updateField(
+                                'slot_step_minutes',
+                                Number(e.target.value)
+                            )
+                        }
+                        className={inputClass}
+                    >
+                        <option value={5}>
+                            5 минут
+                        </option>
+
+                        <option value={10}>
+                            10 минут
+                        </option>
+
+                        <option value={15}>
+                            15 минут
+                        </option>
+
+                        <option value={20}>
+                            20 минут
+                        </option>
+
+                        <option value={30}>
+                            30 минут
+                        </option>
+
+                        <option value={60}>
+                            60 минут
+                        </option>
+                    </select>
+
+                </SettingRow>
+
+
+                <SettingRow
+                    title="Минимальное время до записи (в часах)"
+                    description="Клиент не сможет записаться раньше указанного количества часов от текущего времени."
+                    code="min_booking_notice_hours"
+                >
+
+                    <input
+                        type="number"
+                        min={0}
+                        max={168}
+                        value={
+                            settings.min_booking_notice_hours
+                        }
+                        onChange={(e) =>
                             updateField(
                                 'min_booking_notice_hours',
-                                Number(val.id)
+                                Math.max(
+                                    0,
+                                    Number(e.target.value)
+                                )
                             )
                         }
-                        description={
-                            'Клиент не сможет записаться раньше указанного количества часов от текущего времени.'
-                        }
+                        className={inputClass}
                     />
 
-                    <RowItem
-                        text={'Запись на сколько дней вперёд'}
-                        selectOptions={MAX_DAYS_AHEAD}
-                        value={selectedDaysAhead}
-                        onChange={(val) =>
+                </SettingRow>
+
+
+                <SettingRow
+                    title="Запись на сколько дней вперёд"
+                    description="Ограничивает, насколько далеко вперёд клиент может выбрать дату записи."
+                    code="max_booking_days_ahead"
+                >
+
+                    <input
+                        type="number"
+                        min={1}
+                        max={365}
+                        value={
+                            settings.max_booking_days_ahead
+                        }
+                        onChange={(e) =>
                             updateField(
                                 'max_booking_days_ahead',
-                                Number(val.id)
+                                Math.max(
+                                    1,
+                                    Number(e.target.value)
+                                )
                             )
                         }
-                        description={
-                            'Ограничивает, насколько далеко вперёд клиент может выбрать дату записи.'
-                        }
+                        className={inputClass}
                     />
-                </div>
+
+                </SettingRow>
+
             </div>
+
+        </section>
+    );
+}
+
+
+const inputClass = `
+    h-11
+    w-full
+    rounded-lg
+    border
+    border-[#c7c5d9]
+    bg-white
+    px-3
+    text-sm
+    font-medium
+    text-slate-800
+    outline-none
+    transition
+    focus:border-[#4031d0]
+    focus:ring-2
+    focus:ring-[#4031d0]/10
+`;
+
+
+function SettingRow({
+    title,
+    description,
+    code,
+    children
+}: {
+    title: string;
+    description: string;
+    code: string;
+    children: ReactNode;
+}) {
+    return (
+        <div>
+
+            <div
+                className="
+                    mb-2
+                    text-sm
+                    font-semibold
+                    text-slate-700
+                "
+            >
+                {title}
+            </div>
+
+
+            <div
+                className="
+                    grid
+                    grid-cols-1
+                    gap-4
+                    sm:grid-cols-[210px_1fr]
+                    sm:items-center
+                "
+            >
+
+                <div>
+
+                    {children}
+
+
+                    <div
+                        className="
+                            mt-1.5
+                            font-mono
+                            text-[10px]
+                            text-slate-400
+                        "
+                    >
+                        {code}
+                    </div>
+
+                </div>
+
+
+                <p
+                    className="
+                        text-[13px]
+                        leading-relaxed
+                        text-slate-600
+                    "
+                >
+                    {description}
+                </p>
+
+            </div>
+
         </div>
     );
 }

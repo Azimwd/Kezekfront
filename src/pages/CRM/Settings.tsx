@@ -1,181 +1,476 @@
-import { useState, useEffect } from 'react';
+import {
+    useMemo,
+    useState,
+    type ReactNode
+} from 'react';
+
+import {
+    Calendar,
+    CalendarX,
+    Lightbulb,
+    UserCheck
+} from 'lucide-react';
+
 import RecordingRules from '../../components/organisms/Crm/Settings/RecordingRules';
-import Icon from '../../components/atoms/Icon';
-import { Calendar, Lightbulb, UserCheck } from 'lucide-react';
-import Typography from '../../components/atoms/Typography';
 import ConfirmationOfRecords from '../../components/organisms/Crm/Settings/ConfirmationOfRecords';
 import CancellationOfClientRecords from '../../components/organisms/Crm/Settings/CancellationOfClientRecords';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getSettings, patchSettings } from '../../api/settings';
-import { useBusiness } from '../../context/BusinessContext';
 
-export interface BookingSettings {
-    slot_step_minutes: number;
-    min_booking_notice_hours: number;
-    max_booking_days_ahead: number;
-    auto_confirm_bookings: boolean;
-    allow_client_cancel: boolean;
-    cancel_before_hours: number;
-}
+import type {
+    BookingSettings
+} from '../../api/settings';
+
+
+const DEFAULT_SETTINGS: BookingSettings = {
+    slot_step_minutes: 60,
+    min_booking_notice_hours: 2,
+    max_booking_days_ahead: 30,
+    auto_confirm_bookings: true,
+    allow_client_cancel: true,
+    cancel_before_hours: 12
+};
+
 
 export default function Settings() {
-    const queryClient = useQueryClient();
-    const { selectedBusiness } = useBusiness();
-    const businessId = selectedBusiness?.id;
-
-    const [settingsForm, setSettingsForm] = useState<BookingSettings | null>(
-        null
-    );
-
-    const { data, isPending } = useQuery({
-        queryKey: ['settings', businessId],
-        queryFn: () => getSettings(Number(businessId)),
-        enabled: !!businessId
+    const [
+        settings,
+        setSettings
+    ] = useState<BookingSettings>({
+        ...DEFAULT_SETTINGS
     });
 
-    const updateSettingsMutation = useMutation({
-        mutationFn: (newSettings: BookingSettings) =>
-            patchSettings(
-                Number(businessId),
-                newSettings.slot_step_minutes,
-                newSettings.min_booking_notice_hours,
-                newSettings.max_booking_days_ahead,
-                newSettings.auto_confirm_bookings,
-                newSettings.allow_client_cancel,
-                newSettings.cancel_before_hours
-            ),
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: ['settings', businessId]
-            });
-        }
+    const [
+        savedSettings,
+        setSavedSettings
+    ] = useState<BookingSettings>({
+        ...DEFAULT_SETTINGS
     });
 
-    useEffect(() => {
-        if (data?.data) {
-            setSettingsForm(data.data);
-        }
-    }, [data]);
 
-    const updateField = <K extends keyof BookingSettings>(
+    const updateField = <
+        K extends keyof BookingSettings
+    >(
         field: K,
         value: BookingSettings[K]
     ) => {
-        setSettingsForm((prev) => {
-            if (!prev) return prev;
+        setSettings((prev) => ({
+            ...prev,
+            [field]: value
+        }));
+    };
 
-            const updatedSettings = { ...prev, [field]: value };
 
-            updateSettingsMutation.mutate(updatedSettings);
+    const hasChanges = useMemo(() => {
+        return (
+            JSON.stringify(settings) !==
+            JSON.stringify(savedSettings)
+        );
+    }, [
+        settings,
+        savedSettings
+    ]);
 
-            return updatedSettings;
+
+    const handleCancel = () => {
+        setSettings({
+            ...savedSettings
         });
     };
 
-    if (!businessId) {
-        return (
-            <div className="flex items-center justify-center w-full p-10 text-slate-500">
-                Пожалуйста, выберите бизнес для настройки
-            </div>
-        );
-    }
 
-    if (isPending || !settingsForm) {
-        return (
-            <div className="flex items-center justify-center w-full p-10 text-slate-500 animate-pulse">
-                Загрузка настроек...
-            </div>
+    const handleSave = () => {
+        setSavedSettings({
+            ...settings
+        });
+
+        console.log(
+            'Сохраняем настройки:',
+            settings
         );
-    }
+    };
+
 
     return (
-        <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 w-full relative pb-20 lg:pb-0">
-            <div className="flex flex-col w-full lg:w-[60%] gap-6 lg:gap-10 relative">
-                {updateSettingsMutation.isPending && (
-                    <div className="absolute -top-6 right-0 text-xs text-[#4031d0] animate-pulse font-medium">
-                        Сохранение изменений...
-                    </div>
-                )}
+        <div
+            className="
+                flex
+                min-h-[calc(100vh-110px)]
+                flex-col
+                bg-[#f7f8fc]
+            "
+        >
+            
+            <main
+                className="
+                    flex-1
+                    px-7
+                    py-7
+                "
+            >
 
-                <RecordingRules
-                    settings={settingsForm}
-                    updateField={updateField}
-                />
-                <ConfirmationOfRecords
-                    settings={settingsForm}
-                    updateField={updateField}
-                />
-                <CancellationOfClientRecords
-                    settings={settingsForm}
-                    updateField={updateField}
-                />
-            </div>
+                <div
+                    className="
+                        grid
+                        w-full
+                        max-w-[1160px]
+                        grid-cols-1
+                        items-start
+                        gap-6
+                        xl:grid-cols-[730px_340px]
+                    "
+                >
 
-            <div className="w-full lg:w-[40%] flex flex-col gap-6 lg:gap-10 justify-start">
-                <div className="p-5 sm:p-6 bg-[#ffffff] rounded-3xl border border-[#c7c4d8]">
-                    <div className="flex items-center gap-3 mb-4">
-                        <Icon
-                            icon={Lightbulb}
-                            className="text-[#4031d0] w-6 h-6 shrink-0"
+                    {/* LEFT */}
+
+                    <div className="flex flex-col gap-5">
+
+                        <RecordingRules
+                            settings={settings}
+                            updateField={updateField}
                         />
-                        <Typography
-                            text={'Как это работает'}
-                            className="text-lg font-semibold text-[#1a1a1a]"
+
+
+                        <ConfirmationOfRecords
+                            settings={settings}
+                            updateField={updateField}
                         />
+
+
+                        <CancellationOfClientRecords
+                            settings={settings}
+                            updateField={updateField}
+                        />
+
                     </div>
-                    <ul className="list-disc pl-5 space-y-3 text-sm text-[#4a4a5a] marker:text-[#4031d0]">
-                        <li>
-                            Шаг слотов влияет на визуальное отображение
-                            расписания для клиента. Меньший шаг дает больше
-                            вариантов времени.
-                        </li>
-                        <li>
-                            Минимальное время защищает вас от неожиданных
-                            записей &quot;день в день&quot;.
-                        </li>
-                        <li>
-                            Лимит отмены позволяет избежать простоя, если клиент
-                            передумал в последний момент.
-                        </li>
-                    </ul>
+
+
+                    {/* RIGHT */}
+
+                    <aside className="flex flex-col gap-4">
+
+                        {/* INFO */}
+
+                        <section
+                            className="
+                                rounded-2xl
+                                border
+                                border-[#d0cee3]
+                                bg-white
+                                p-6
+                            "
+                        >
+
+                            <div className="flex items-center gap-3">
+
+                                <div
+                                    className="
+                                        flex
+                                        h-10
+                                        w-10
+                                        shrink-0
+                                        items-center
+                                        justify-center
+                                        rounded-full
+                                        bg-[#f1efff]
+                                    "
+                                >
+                                    <Lightbulb
+                                        className="
+                                            h-5
+                                            w-5
+                                            text-[#4031d0]
+                                        "
+                                    />
+                                </div>
+
+
+                                <h3
+                                    className="
+                                        text-base
+                                        font-semibold
+                                        text-slate-900
+                                    "
+                                >
+                                    Как это работает
+                                </h3>
+
+                            </div>
+
+
+                            <div className="mt-6 flex flex-col gap-5">
+
+                                <InfoItem>
+                                    <strong className="font-semibold text-slate-800">
+                                        Шаг слотов
+                                    </strong>{' '}
+                                    определяет интервалы времени,
+                                    которые будут доступны клиенту.
+                                </InfoItem>
+
+
+                                <InfoItem>
+                                    <strong className="font-semibold text-slate-800">
+                                        Минимальное время
+                                    </strong>{' '}
+                                    защищает от слишком поздней
+                                    записи клиента перед визитом.
+                                </InfoItem>
+
+
+                                <InfoItem>
+                                    <strong className="font-semibold text-slate-800">
+                                        Лимит отмены
+                                    </strong>{' '}
+                                    помогает избежать простоев
+                                    при поздней отмене.
+                                </InfoItem>
+
+                            </div>
+
+                        </section>
+
+
+                        {/* RESULT */}
+
+                        <section
+                            className="
+                                rounded-2xl
+                                bg-[#4031d0]
+                                p-6
+                                text-white
+                                shadow-lg
+                                shadow-[#4031d0]/15
+                            "
+                        >
+
+                            <h3
+                                className="
+                                    text-base
+                                    font-semibold
+                                "
+                            >
+                                Итоговый результат:
+                            </h3>
+
+
+                            <div className="mt-6 flex flex-col gap-5">
+
+                                <ResultItem
+                                    icon={
+                                        <Calendar className="h-5 w-5" />
+                                    }
+                                >
+                                    Клиент видит слоты каждые{' '}
+
+                                    <strong>
+                                        {settings.slot_step_minutes} минут
+                                    </strong>
+                                    .
+                                </ResultItem>
+
+
+                                <ResultItem
+                                    icon={
+                                        <UserCheck className="h-5 w-5" />
+                                    }
+                                >
+                                    Записи подтверждаются{' '}
+
+                                    <strong>
+                                        {settings.auto_confirm_bookings
+                                            ? 'автоматически'
+                                            : 'вручную'}
+                                    </strong>
+                                    .
+                                </ResultItem>
+
+
+                                <ResultItem
+                                    icon={
+                                        <CalendarX className="h-5 w-5" />
+                                    }
+                                >
+                                    {settings.allow_client_cancel ? (
+                                        <>
+                                            Клиент может отменить
+                                            запись за{' '}
+
+                                            <strong>
+                                                {settings.cancel_before_hours} ч.
+                                            </strong>{' '}
+
+                                            до визита.
+                                        </>
+                                    ) : (
+                                        <>
+                                            Клиент не может самостоятельно
+                                            отменять запись.
+                                        </>
+                                    )}
+                                </ResultItem>
+
+                            </div>
+
+                        </section>
+
+                    </aside>
+
                 </div>
 
-                <div className="p-5 sm:p-6 bg-[#4031d0] text-white rounded-3xl shadow-sm transition-all">
-                    <Typography
-                        text={'Итоговый результат:'}
-                        className="text-lg font-semibold mb-4 block"
-                    />
-                    <div className="flex flex-col gap-4 text-sm font-medium">
-                        <div className="flex items-center gap-3">
-                            <div className="bg-white/10 p-2 rounded-full flex items-center justify-center shrink-0">
-                                <Icon
-                                    icon={Calendar}
-                                    className="w-5 h-5 text-white"
-                                />
-                            </div>
-                            <span>
-                                Клиент видит слоты каждые{' '}
-                                {settingsForm.slot_step_minutes} минут.
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <div className="bg-white/10 p-2 rounded-full flex items-center justify-center shrink-0">
-                                <Icon
-                                    icon={UserCheck}
-                                    className="w-5 h-5 text-white"
-                                />
-                            </div>
-                            <span>
-                                Записи подтверждаются{' '}
-                                {settingsForm.auto_confirm_bookings
-                                    ? 'автоматически'
-                                    : 'вручную'}
-                                .
-                            </span>
-                        </div>
-                    </div>
+            </main>
+
+
+            {/* ================================= */}
+            {/* BOTTOM ACTION BAR */}
+            {/* НЕ STICKY, НЕ FIXED */}
+            {/* ================================= */}
+
+            <footer
+                className="
+                    mt-auto
+                    w-full
+                    border-t
+                    border-[#d7d8e5]
+                    bg-white
+                    px-7
+                    py-4
+                "
+            >
+
+                <div
+                    className="
+                        flex
+                        items-center
+                        justify-end
+                        gap-3
+                    "
+                >
+
+                    <button
+                        type="button"
+                        onClick={handleCancel}
+                        disabled={!hasChanges}
+                        className="
+                            h-11
+                            min-w-[110px]
+                            rounded-lg
+                            border
+                            border-[#c7c5d9]
+                            bg-white
+                            px-5
+                            text-sm
+                            font-medium
+                            text-slate-700
+                            transition
+                            hover:bg-slate-50
+                            disabled:cursor-not-allowed
+                            disabled:opacity-40
+                        "
+                    >
+                        Отмена
+                    </button>
+
+
+                    <button
+                        type="button"
+                        onClick={handleSave}
+                        disabled={!hasChanges}
+                        className="
+                            h-11
+                            min-w-[205px]
+                            rounded-lg
+                            bg-[#4a38e8]
+                            px-6
+                            text-sm
+                            font-semibold
+                            text-white
+                            transition
+                            hover:bg-[#3d2fc9]
+                            disabled:cursor-not-allowed
+                            disabled:bg-slate-400
+                        "
+                    >
+                        Сохранить настройки
+                    </button>
+
                 </div>
+
+            </footer>
+
+        </div>
+    );
+}
+
+
+function InfoItem({
+    children
+}: {
+    children: ReactNode;
+}) {
+    return (
+        <div className="flex gap-3">
+
+            <span
+                className="
+                    mt-[8px]
+                    h-2
+                    w-2
+                    shrink-0
+                    rounded-full
+                    bg-[#4031d0]
+                "
+            />
+
+            <p
+                className="
+                    text-[13px]
+                    leading-relaxed
+                    text-slate-600
+                "
+            >
+                {children}
+            </p>
+
+        </div>
+    );
+}
+
+
+function ResultItem({
+    icon,
+    children
+}: {
+    icon: ReactNode;
+    children: ReactNode;
+}) {
+    return (
+        <div className="flex items-start gap-3">
+
+            <div
+                className="
+                    flex
+                    h-9
+                    w-9
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-full
+                    bg-white/15
+                "
+            >
+                {icon}
             </div>
+
+
+            <div
+                className="
+                    pt-1.5
+                    text-[13px]
+                    leading-relaxed
+                "
+            >
+                {children}
+            </div>
+
         </div>
     );
 }

@@ -65,6 +65,18 @@ export const loginUser = async (email: string, password: string) => {
     }
 }
 
+export const getCurrentUser = async () => {
+    try {
+        const response = await api.get('/api/users/me/', {
+            withCredentials: true
+        });
+
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
 export const logout = async () => {
     try {
         const response = await api.post('/api/users/logout/', null, {
@@ -77,3 +89,4 @@ export const logout = async () => {
         throw error;
     }
 }
+

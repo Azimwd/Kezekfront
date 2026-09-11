@@ -33,14 +33,21 @@ interface DaySchedule {
     recordId?: number;
     breakRecordId?: number;
     dayOffRecordId?: number;
+
     dayName: string;
     date: Date;
+
     isWorking: boolean;
+
     startTime: string;
     endTime: string;
+
     hasBreak: boolean;
     breakStart: string;
     breakEnd: string;
+
+    hasDayOff: boolean;
+
     dayOffDate?: string;
     dayOffReason?: string;
 }
@@ -65,37 +72,24 @@ const generateBaseSchedule = (weekStart: Date): DaySchedule[] => {
             id,
             dayName: dayNames[index],
             date,
+
             isWorking: false,
+
             startTime: '10:00',
             endTime: '18:00',
+
             hasBreak: false,
             breakStart: '13:00',
-            breakEnd: '14:00'
+            breakEnd: '14:00',
+
+            hasDayOff: false,
+
+            dayOffReason: ''
         };
     });
 };
 
-const GRID_HOURS = [
-    '08:00',
-    '09:00',
-    '10:00',
-    '11:00',
-    '12:00',
-    '13:00',
-    '14:00',
-    '15:00',
-    '16:00',
-    '17:00',
-    '18:00',
-    '19:00',
-    '20:00',
-    '21:00',
-    '22:00',
-    '23:00',
-    '00:00'
-];
 
-const START_HOUR = 8;
 const HOUR_HEIGHT = 60;
 
 const timeToHours = (timeStr: string): number => {
@@ -139,6 +133,45 @@ export default function StaffMain({ staffId }: StaffMainProps) {
     const [schedule, setSchedule] = useState<DaySchedule[]>(
         generateBaseSchedule(weekStart)
     );
+
+    const workingDays = schedule.filter(
+        (day) => day.isWorking
+    );
+
+    let gridStartHour = 8;
+    let gridEndHour = 20;
+
+    if (workingDays.length > 0) {
+        const startHours = workingDays.map((day) =>
+            Math.floor(timeToHours(day.startTime))
+        );
+
+        const endHours = workingDays.map((day) =>
+            Math.ceil(timeToHours(day.endTime))
+        );
+
+        gridStartHour = Math.max(
+            0,
+            Math.min(...startHours) - 1
+        );
+
+        gridEndHour = Math.min(
+            24,
+            Math.max(...endHours) + 1
+        );
+    }
+
+    const GRID_HOURS = Array.from(
+        {
+            length: gridEndHour - gridStartHour + 1
+        },
+        (_, index) => {
+            const hour = gridStartHour + index;
+
+            return `${String(hour).padStart(2, '0')}:00`;
+        }
+    );
+
     const [selectedDay, setSelectedDay] = useState<DaySchedule | null>(null);
     const [editForm, setEditForm] = useState<DaySchedule | null>(null);
 
@@ -325,12 +358,15 @@ export default function StaffMain({ staffId }: StaffMainProps) {
                 }
 
                 if (backendDayOffData) {
-                    updatedDay.isWorking = false;
+                    updatedDay.hasDayOff = true;
                     updatedDay.dayOffRecordId = backendDayOffData.id;
-                    updatedDay.dayOffReason = backendDayOffData.reason;
+                    updatedDay.dayOffReason = backendDayOffData.reason || '';
                     updatedDay.dayOffDate = backendDayOffData.date;
                 } else {
+                    updatedDay.hasDayOff = false;
+                    updatedDay.dayOffRecordId = undefined;
                     updatedDay.dayOffReason = '';
+                    updatedDay.dayOffDate = undefined;
                 }
 
                 return updatedDay;
@@ -352,102 +388,89 @@ export default function StaffMain({ staffId }: StaffMainProps) {
     const handleSaveSchedule = () => {
         if (!editForm) return;
 
-        setSchedule((prev) =>
-            prev.map((item) => (item.id === editForm.id ? editForm : item))
-        );
-
         const weekdayIndex = reverseWeekdayMap[editForm.id];
 
-        if (editForm.isWorking) {
-            if (editForm.recordId) {
-                updateScheduleMutation.mutate({
-                    id: editForm.recordId,
+        if (editForm.recordId) {
+            updateScheduleMutation.mutate({
+                id: editForm.recordId,
+                weekday: weekdayIndex,
+                start_time:
+                    editForm.startTime.length === 5
+                        ? `${editForm.startTime}:00`
+                        : editForm.startTime,
+                end_time:
+                    editForm.endTime.length === 5
+                        ? `${editForm.endTime}:00`
+                        : editForm.endTime,
+                is_working_day: editForm.isWorking
+            });
+        }
+
+        if (editForm.isWorking && editForm.hasBreak) {
+            if (editForm.breakRecordId) {
+                updateBreakMutation.mutate({
+                    id: editForm.breakRecordId,
                     weekday: weekdayIndex,
                     start_time:
-                        editForm.startTime.length === 5
-                            ? `${editForm.startTime}:00`
-                            : editForm.startTime,
+                        editForm.breakStart.length === 5
+                            ? `${editForm.breakStart}:00`
+                            : editForm.breakStart,
                     end_time:
-                        editForm.endTime.length === 5
-                            ? `${editForm.endTime}:00`
-                            : editForm.endTime,
-                    is_working_day: true
+                        editForm.breakEnd.length === 5
+                            ? `${editForm.breakEnd}:00`
+                            : editForm.breakEnd
+                });
+            } else {
+                createBreakMutation.mutate({
+                    staffId,
+                    weekday: weekdayIndex,
+                    start_time:
+                        editForm.breakStart.length === 5
+                            ? `${editForm.breakStart}:00`
+                            : editForm.breakStart,
+                    end_time:
+                        editForm.breakEnd.length === 5
+                            ? `${editForm.breakEnd}:00`
+                            : editForm.breakEnd
                 });
             }
+        } else if (editForm.breakRecordId) {
+            deleteBreakMutation.mutate(
+                editForm.breakRecordId
+            );
+        }
 
-            if (editForm.hasBreak) {
-                if (editForm.breakRecordId) {
-                    updateBreakMutation.mutate({
-                        id: editForm.breakRecordId,
-                        weekday: weekdayIndex,
-                        start_time:
-                            editForm.breakStart.length === 5
-                                ? `${editForm.breakStart}:00`
-                                : editForm.breakStart,
-                        end_time:
-                            editForm.breakEnd.length === 5
-                                ? `${editForm.breakEnd}:00`
-                                : editForm.breakEnd
-                    });
-                } else {
-                    createBreakMutation.mutate({
-                        staffId: staffId,
-                        weekday: weekdayIndex,
-                        start_time:
-                            editForm.breakStart.length === 5
-                                ? `${editForm.breakStart}:00`
-                                : editForm.breakStart,
-                        end_time:
-                            editForm.breakEnd.length === 5
-                                ? `${editForm.breakEnd}:00`
-                                : editForm.breakEnd
-                    });
-                }
-            } else {
-                if (editForm.breakRecordId) {
-                    deleteBreakMutation.mutate(editForm.breakRecordId);
-                }
-            }
+        if (editForm.hasDayOff) {
+            const reason =
+                editForm.dayOffReason?.trim() ||
+                'Личный выходной';
 
             if (editForm.dayOffRecordId) {
-                deleteDayOffMutation.mutate(editForm.dayOffRecordId);
-            }
-        } else {
-            if (editForm.dayOffReason) {
-                if (editForm.dayOffRecordId) {
-                    updateDayOffMutation.mutate({
-                        id: editForm.dayOffRecordId,
-                        date: editForm.dayOffDate!,
-                        reason: editForm.dayOffReason
-                    });
-                } else {
-                    createDayOffMutation.mutate({
-                        staffId: staffId,
-                        date: editForm.dayOffDate!,
-                        reason: editForm.dayOffReason
-                    });
-                }
+                updateDayOffMutation.mutate({
+                    id: editForm.dayOffRecordId,
+                    date: editForm.dayOffDate!,
+                    reason
+                });
             } else {
-                if (editForm.recordId) {
-                    updateScheduleMutation.mutate({
-                        id: editForm.recordId,
-                        weekday: weekdayIndex,
-                        start_time:
-                            editForm.startTime.length === 5
-                                ? `${editForm.startTime}:00`
-                                : editForm.startTime,
-                        end_time:
-                            editForm.endTime.length === 5
-                                ? `${editForm.endTime}:00`
-                                : editForm.endTime,
-                        is_working_day: false
-                    });
-                }
-                if (editForm.dayOffRecordId) {
-                    deleteDayOffMutation.mutate(editForm.dayOffRecordId);
-                }
+                createDayOffMutation.mutate({
+                    staffId,
+                    date: editForm.dayOffDate!,
+                    reason
+                });
             }
+        } else if (editForm.dayOffRecordId) {
+            deleteDayOffMutation.mutate(
+                editForm.dayOffRecordId
+            );
         }
+
+        setSchedule((prev) =>
+            prev.map((item) =>
+                item.id === editForm.id
+                    ? editForm
+                    : item
+            )
+        );
 
         setSelectedDay(null);
     };
@@ -520,11 +543,13 @@ export default function StaffMain({ staffId }: StaffMainProps) {
 
                         <div className="grid grid-cols-[45px_repeat(7,1fr)] md:grid-cols-[60px_repeat(7,1fr)] relative">
                             <div className="border-r border-[#e2e4f0] bg-white">
-                                {GRID_HOURS.map((hour) => (
+                                {GRID_HOURS.slice(0, -1).map((hour) => (
                                     <div
                                         key={hour}
-                                        style={{ height: `${HOUR_HEIGHT}px` }}
-                                        className="px-1 md:px-2 text-[8px] md:text-[11px] font-semibold text-slate-400 flex items-start pt-1 border-b border-[#f0f0f5] last:border-b-0 justify-center"
+                                        style={{
+                                            height: `${HOUR_HEIGHT}px`
+                                        }}
+                                        className="px-1 md:px-2 text-[8px] md:text-[11px] font-semibold text-slate-400 flex items-start pt-1 border-b border-[#f0f0f5] justify-center"
                                     >
                                         {hour}
                                     </div>
@@ -533,10 +558,14 @@ export default function StaffMain({ staffId }: StaffMainProps) {
 
                             {schedule.map((day) => {
                                 const startOffset =
-                                    timeToHours(day.startTime) - START_HOUR;
+                                    timeToHours(day.startTime) - gridStartHour;
+
                                 const endOffset =
-                                    timeToHours(day.endTime) - START_HOUR + 1;
-                                const blockTop = startOffset * HOUR_HEIGHT;
+                                    timeToHours(day.endTime) - gridStartHour;
+
+                                const blockTop =
+                                    startOffset * HOUR_HEIGHT;
+
                                 const blockHeight =
                                     (endOffset - startOffset) * HOUR_HEIGHT;
 
@@ -557,7 +586,7 @@ export default function StaffMain({ staffId }: StaffMainProps) {
                                         onClick={() => handleOpenSidePage(day)}
                                         className="relative border-r last:border-r-0 border-[#e2e4f0] cursor-pointer hover:bg-slate-50/60 transition-colors"
                                         style={{
-                                            height: `${GRID_HOURS.length * HOUR_HEIGHT}px`
+                                            height: `${(gridEndHour - gridStartHour) * HOUR_HEIGHT}px`
                                         }}
                                     >
                                         {GRID_HOURS.map((hour) => (
@@ -570,7 +599,7 @@ export default function StaffMain({ staffId }: StaffMainProps) {
                                             />
                                         ))}
 
-                                        {day.isWorking && blockHeight > 0 && (
+                                        {day.isWorking && !day.hasDayOff && blockHeight > 0 && (
                                             <div
                                                 style={{
                                                     top: `${blockTop}px`,
@@ -581,55 +610,55 @@ export default function StaffMain({ staffId }: StaffMainProps) {
                                                 <div className="text-[8px] sm:text-[9px] md:text-xs font-bold text-[#4031d0] leading-tight truncate">
                                                     Рабочий день
                                                 </div>
+
                                                 <div className="text-[7px] sm:text-[8px] md:text-[11px] font-medium text-slate-600 mt-0.5 truncate">
-                                                    {day.startTime}–
-                                                    {day.endTime}
+                                                    {day.startTime}–{day.endTime}
                                                 </div>
 
-                                                {day.hasBreak &&
-                                                    breakHeight > 0 && (
-                                                        <div
-                                                            style={{
-                                                                top: `${breakTop}px`,
-                                                                height: `${breakHeight}px`
-                                                            }}
-                                                            className="absolute left-0 right-0 bg-[#fff9eb] border-l-[3px] md:border-l-4 border-[#f59e0b] p-0.5 sm:p-1 md:p-2 flex flex-col justify-center"
-                                                        >
-                                                            <div className="text-[8px] md:text-[11px] font-semibold text-[#b45309] truncate leading-tight">
-                                                                Перерыв
-                                                            </div>
-                                                            <div className="text-[7px] md:text-[10px] text-slate-600 truncate">
-                                                                {day.breakStart}
-                                                                –{day.breakEnd}
-                                                            </div>
+                                                {day.hasBreak && breakHeight > 0 && (
+                                                    <div
+                                                        style={{
+                                                            top: `${breakTop}px`,
+                                                            height: `${breakHeight}px`
+                                                        }}
+                                                        className="absolute left-0 right-0 bg-[#fff9eb] border-l-[3px] md:border-l-4 border-[#f59e0b] p-0.5 sm:p-1 md:p-2 flex flex-col justify-center"
+                                                    >
+                                                        <div className="text-[8px] md:text-[11px] font-semibold text-[#b45309] truncate leading-tight">
+                                                            Перерыв
                                                         </div>
-                                                    )}
+
+                                                        <div className="text-[7px] md:text-[10px] text-slate-600 truncate">
+                                                            {day.breakStart}–{day.breakEnd}
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
 
-                                        {!day.isWorking &&
-                                            (day.dayOffReason ? (
-                                                <div className="absolute inset-1 top-20 bottom-20 sm:top-24 sm:bottom-24 bg-[#eef4ff] border border-[#d6e4fa] rounded-lg md:rounded-xl flex flex-col items-center justify-center z-20 overflow-hidden px-1 shadow-sm">
-                                                    <Frown className="w-4 h-4 md:w-6 md:h-6 text-[#6b7280] mb-0.5 md:mb-2 opacity-80" />
-                                                    <div className="text-[8px] sm:text-[9px] md:text-xs font-bold text-[#334155] text-center leading-tight">
-                                                        Индив.
-                                                        <br className="md:hidden" />{' '}
-                                                        <span className="hidden md:inline">
-                                                            {' '}
-                                                        </span>
-                                                        выходной
-                                                    </div>
-                                                    <div className="text-[7px] sm:text-[8px] md:text-xs text-[#64748b] mt-0.5 md:mt-1 text-center font-medium line-clamp-2 leading-tight">
-                                                        {day.dayOffReason}
-                                                    </div>
+                                        {day.hasDayOff && (
+                                            <div className="absolute inset-1 top-20 bottom-20 sm:top-24 sm:bottom-24 bg-[#eef4ff] border border-[#d6e4fa] rounded-lg md:rounded-xl flex flex-col items-center justify-center z-20 overflow-hidden px-1 shadow-sm">
+                                                <Frown className="w-4 h-4 md:w-6 md:h-6 text-[#6b7280] mb-0.5 md:mb-2 opacity-80" />
+
+                                                <div className="text-[8px] sm:text-[9px] md:text-xs font-bold text-[#334155] text-center leading-tight">
+                                                    Индив.
+                                                    <br className="md:hidden" />
+                                                    <span className="hidden md:inline"> </span>
+                                                    выходной
                                                 </div>
-                                            ) : (
-                                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                                    <span className="text-[8px] sm:text-[9px] md:text-xs font-medium text-slate-300 uppercase tracking-widest -rotate-90">
-                                                        Выходной
-                                                    </span>
+
+                                                <div className="text-[7px] sm:text-[8px] md:text-xs text-[#64748b] mt-0.5 md:mt-1 text-center font-medium line-clamp-2 leading-tight">
+                                                    {day.dayOffReason || 'Личный выходной'}
                                                 </div>
-                                            ))}
+                                            </div>
+                                        )}
+
+                                        {!day.isWorking && !day.hasDayOff && (
+                                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                <span className="text-[8px] sm:text-[9px] md:text-xs font-medium text-slate-300 uppercase tracking-widest -rotate-90">
+                                                    Выходной
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })}
@@ -642,18 +671,24 @@ export default function StaffMain({ staffId }: StaffMainProps) {
                 isOpen={!!selectedDay}
                 onClose={() => setSelectedDay(null)}
                 title={
-                    editForm ? `Настройка: ${editForm.dayName}` : 'Расписание'
+                    editForm
+                        ? `Настройка: ${editForm.dayName}`
+                        : 'Расписание'
                 }
                 description="Установите рабочее время, перерыв или индивидуальный выходной"
                 maxWidth="max-w-md"
             >
                 {editForm && (
                     <div className="flex flex-col h-full justify-between">
+
                         <div className="flex flex-col gap-5 md:gap-6">
+
+                            {/* ПЕРЕКЛЮЧАТЕЛЬ РАБОЧЕГО ДНЯ */}
                             <div className="flex items-center justify-between p-3.5 md:p-4 bg-slate-50 rounded-xl md:rounded-2xl border border-slate-200">
                                 <span className="text-sm font-semibold text-slate-800">
                                     Рабочий день
                                 </span>
+
                                 <button
                                     type="button"
                                     onClick={() =>
@@ -678,195 +713,251 @@ export default function StaffMain({ staffId }: StaffMainProps) {
                                 </button>
                             </div>
 
-                            {editForm.isWorking ? (
+
+                            {/* РАБОЧИЕ ЧАСЫ */}
+                            {editForm.isWorking && (
                                 <>
                                     <div className="flex flex-col gap-3">
                                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                                             <Clock className="w-4 h-4 text-slate-400" />
                                             Рабочие часы
                                         </label>
+
                                         <div className="flex items-center gap-2 md:gap-3">
+
                                             <div className="flex-1">
                                                 <span className="text-xs text-slate-400 block mb-1">
                                                     Начало
                                                 </span>
+
                                                 <input
                                                     type="time"
                                                     value={editForm.startTime}
                                                     onChange={(e) =>
                                                         setEditForm({
                                                             ...editForm,
-                                                            startTime:
-                                                                e.target.value
+                                                            startTime: e.target.value
                                                         })
                                                     }
                                                     className="w-full h-11 px-2 md:px-3 bg-[#fcfcfd] border border-slate-300 rounded-lg md:rounded-xl text-sm font-medium text-slate-800 outline-none focus:border-[#4031d0] focus:ring-1 focus:ring-[#4031d0]"
                                                 />
                                             </div>
+
                                             <span className="text-slate-400 mt-5">
                                                 –
                                             </span>
+
                                             <div className="flex-1">
                                                 <span className="text-xs text-slate-400 block mb-1">
                                                     Конец
                                                 </span>
+
                                                 <input
                                                     type="time"
                                                     value={editForm.endTime}
                                                     onChange={(e) =>
                                                         setEditForm({
                                                             ...editForm,
-                                                            endTime:
-                                                                e.target.value
+                                                            endTime: e.target.value
                                                         })
                                                     }
                                                     className="w-full h-11 px-2 md:px-3 bg-[#fcfcfd] border border-slate-300 rounded-lg md:rounded-xl text-sm font-medium text-slate-800 outline-none focus:border-[#4031d0] focus:ring-1 focus:ring-[#4031d0]"
                                                 />
                                             </div>
+
                                         </div>
                                     </div>
 
+
+                                    {/* ПЕРЕРЫВ */}
                                     <div className="flex flex-col gap-3 pt-4 border-t border-slate-100">
+
                                         <div className="flex items-center justify-between">
+
                                             <label className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                                                 <Coffee className="w-4 h-4 text-amber-500" />
                                                 Обеденный перерыв
                                             </label>
+
                                             <input
                                                 type="checkbox"
                                                 checked={editForm.hasBreak}
                                                 onChange={(e) =>
                                                     setEditForm({
                                                         ...editForm,
-                                                        hasBreak:
-                                                            e.target.checked
+                                                        hasBreak: e.target.checked
                                                     })
                                                 }
                                                 className="w-4 h-4 md:w-5 md:h-5 text-[#4031d0] rounded border-slate-300 focus:ring-[#4031d0]"
                                             />
+
                                         </div>
 
                                         {editForm.hasBreak && (
-                                            <>
-                                                <div className="flex items-center gap-2 md:gap-3 mt-1">
-                                                    <div className="flex-1">
-                                                        <span className="text-xs text-slate-400 block mb-1">
-                                                            С
-                                                        </span>
-                                                        <input
-                                                            type="time"
-                                                            value={
-                                                                editForm.breakStart
-                                                            }
-                                                            onChange={(e) =>
-                                                                setEditForm({
-                                                                    ...editForm,
-                                                                    breakStart:
-                                                                        e.target
-                                                                            .value
-                                                                })
-                                                            }
-                                                            className="w-full h-11 px-2 md:px-3 bg-[#fcfcfd] border border-slate-300 rounded-lg md:rounded-xl text-sm font-medium text-slate-800 outline-none focus:border-[#4031d0] focus:ring-1 focus:ring-[#4031d0]"
-                                                        />
-                                                    </div>
-                                                    <span className="text-slate-400 mt-5">
-                                                        –
+                                            <div className="flex items-center gap-2 md:gap-3 mt-1">
+
+                                                <div className="flex-1">
+                                                    <span className="text-xs text-slate-400 block mb-1">
+                                                        С
                                                     </span>
-                                                    <div className="flex-1">
-                                                        <span className="text-xs text-slate-400 block mb-1">
-                                                            До
-                                                        </span>
-                                                        <input
-                                                            type="time"
-                                                            value={
-                                                                editForm.breakEnd
-                                                            }
-                                                            onChange={(e) =>
-                                                                setEditForm({
-                                                                    ...editForm,
-                                                                    breakEnd:
-                                                                        e.target
-                                                                            .value
-                                                                })
-                                                            }
-                                                            className="w-full h-11 px-2 md:px-3 bg-[#fcfcfd] border border-slate-300 rounded-lg md:rounded-xl text-sm font-medium text-slate-800 outline-none focus:border-[#4031d0] focus:ring-1 focus:ring-[#4031d0]"
-                                                        />
-                                                    </div>
+
+                                                    <input
+                                                        type="time"
+                                                        value={editForm.breakStart}
+                                                        onChange={(e) =>
+                                                            setEditForm({
+                                                                ...editForm,
+                                                                breakStart: e.target.value
+                                                            })
+                                                        }
+                                                        className="w-full h-11 px-2 md:px-3 bg-[#fcfcfd] border border-slate-300 rounded-lg md:rounded-xl text-sm font-medium text-slate-800 outline-none focus:border-[#4031d0] focus:ring-1 focus:ring-[#4031d0]"
+                                                    />
                                                 </div>
-                                            </>
+
+                                                <span className="text-slate-400 mt-5">
+                                                    –
+                                                </span>
+
+                                                <div className="flex-1">
+                                                    <span className="text-xs text-slate-400 block mb-1">
+                                                        До
+                                                    </span>
+
+                                                    <input
+                                                        type="time"
+                                                        value={editForm.breakEnd}
+                                                        onChange={(e) =>
+                                                            setEditForm({
+                                                                ...editForm,
+                                                                breakEnd: e.target.value
+                                                            })
+                                                        }
+                                                        className="w-full h-11 px-2 md:px-3 bg-[#fcfcfd] border border-slate-300 rounded-lg md:rounded-xl text-sm font-medium text-slate-800 outline-none focus:border-[#4031d0] focus:ring-1 focus:ring-[#4031d0]"
+                                                    />
+                                                </div>
+
+                                            </div>
                                         )}
+
                                     </div>
                                 </>
-                            ) : (
-                                <div className="flex flex-col gap-4 border-t border-slate-100 pt-2">
-                                    <h3 className="text-sm font-semibold text-slate-800">
-                                        Оформить индивидуальный выходной
-                                    </h3>
+                            )}
+
+
+                            {/* ИНДИВИДУАЛЬНЫЙ ВЫХОДНОЙ */}
+                            <div className="flex flex-col gap-4 border-t border-slate-100 pt-5">
+
+                                <div className="flex items-center justify-between gap-4">
+
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <Frown className="w-4 h-4 text-slate-500" />
+
+                                            <h3 className="text-sm font-semibold text-slate-800">
+                                                Индивидуальный выходной
+                                            </h3>
+                                        </div>
+
+                                        <p className="text-xs text-slate-500 mt-1">
+                                            Выходной только на выбранную дату.
+                                            Недельный график не изменится.
+                                        </p>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setEditForm({
+                                                ...editForm,
+                                                hasDayOff: !editForm.hasDayOff
+                                            })
+                                        }
+                                        className={`w-12 h-7 shrink-0 rounded-full relative flex items-center px-1 transition-colors duration-200 ${
+                                            editForm.hasDayOff
+                                                ? 'bg-[#4031d0]'
+                                                : 'bg-slate-300'
+                                        }`}
+                                    >
+                                        <div
+                                            className={`w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform duration-200 ${
+                                                editForm.hasDayOff
+                                                    ? 'translate-x-5'
+                                                    : 'translate-x-0'
+                                            }`}
+                                        />
+                                    </button>
+
+                                </div>
+
+
+                                {editForm.hasDayOff && (
                                     <div className="flex flex-col gap-3">
+
                                         <div>
                                             <label className="text-xs text-slate-500 block mb-1">
                                                 Дата
                                             </label>
+
                                             <input
                                                 type="date"
-                                                value={
-                                                    editForm.dayOffDate || ''
-                                                }
-                                                onChange={(e) =>
-                                                    setEditForm({
-                                                        ...editForm,
-                                                        dayOffDate:
-                                                            e.target.value
-                                                    })
-                                                }
+                                                value={editForm.dayOffDate || ''}
                                                 disabled
                                                 className="w-full h-11 px-3 bg-slate-100 text-slate-500 border border-slate-300 rounded-xl text-sm font-medium outline-none cursor-not-allowed"
                                             />
                                         </div>
+
+
                                         <div>
                                             <label className="text-xs text-slate-500 block mb-1">
                                                 Причина
                                             </label>
+
                                             <select
                                                 value={
-                                                    editForm.dayOffReason || ''
+                                                    editForm.dayOffReason ||
+                                                    'Личный выходной'
                                                 }
                                                 onChange={(e) =>
                                                     setEditForm({
                                                         ...editForm,
-                                                        dayOffReason:
-                                                            e.target.value
+                                                        dayOffReason: e.target.value
                                                     })
                                                 }
                                                 className="w-full h-11 px-3 bg-[#fcfcfd] border border-slate-300 rounded-xl text-sm font-medium text-slate-800 outline-none focus:border-[#4031d0] focus:ring-1 focus:ring-[#4031d0]"
                                             >
-                                                <option value="">
-                                                    Без причины (обычный
-                                                    выходной)
-                                                </option>
                                                 <option value="Личный выходной">
                                                     Личный выходной
                                                 </option>
+
                                                 <option value="По болезни">
                                                     По болезни
                                                 </option>
+
                                                 <option value="Семейные обстоятельства">
                                                     Семейные обстоятельства
                                                 </option>
+
                                                 <option value="Отпуск">
                                                     Отпуск
                                                 </option>
+
                                                 <option value="Другое">
                                                     Другое
                                                 </option>
                                             </select>
                                         </div>
+
                                     </div>
-                                </div>
-                            )}
+                                )}
+
+                            </div>
+
                         </div>
 
+
+                        {/* КНОПКИ */}
                         <div className="flex items-center gap-2 sm:gap-3 pt-6 border-t border-slate-100 mt-6 md:mt-8 pb-4 md:pb-0">
+
                             <button
                                 type="button"
                                 onClick={() => setSelectedDay(null)}
@@ -874,20 +965,13 @@ export default function StaffMain({ staffId }: StaffMainProps) {
                             >
                                 Отмена
                             </button>
+
                             <button
                                 type="button"
                                 onClick={handleSaveSchedule}
-                                disabled={
-                                    isSaving ||
-                                    (!editForm.isWorking &&
-                                        !editForm.dayOffReason &&
-                                        editForm.recordId === undefined)
-                                }
+                                disabled={isSaving}
                                 className={`flex-1 h-11 md:h-12 rounded-xl text-white font-medium text-xs sm:text-sm transition-colors shadow-sm flex items-center justify-center gap-2 ${
-                                    isSaving ||
-                                    (!editForm.isWorking &&
-                                        !editForm.dayOffReason &&
-                                        editForm.recordId === undefined)
+                                    isSaving
                                         ? 'bg-slate-400'
                                         : 'bg-[#4031d0] hover:bg-[#3426a8]'
                                 }`}
@@ -903,9 +987,12 @@ export default function StaffMain({ staffId }: StaffMainProps) {
                                     </>
                                 )}
                             </button>
+
                         </div>
+
                     </div>
                 )}
+
             </SidePage>
         </div>
     );
