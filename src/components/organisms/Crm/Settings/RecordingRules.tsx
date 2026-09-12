@@ -80,7 +80,6 @@ export default function RecordingRules({
                 <SettingRow
                     title="Шаг слотов"
                     description="Определяет, с каким интервалом клиент будет видеть свободное время."
-                    code="slot_step_minutes"
                 >
 
                     <select
@@ -126,7 +125,6 @@ export default function RecordingRules({
                 <SettingRow
                     title="Минимальное время до записи (в часах)"
                     description="Клиент не сможет записаться раньше указанного количества часов от текущего времени."
-                    code="min_booking_notice_hours"
                 >
 
                     <input
@@ -154,7 +152,6 @@ export default function RecordingRules({
                 <SettingRow
                     title="Запись на сколько дней вперёд"
                     description="Ограничивает, насколько далеко вперёд клиент может выбрать дату записи."
-                    code="max_booking_days_ahead"
                 >
 
                     <input
@@ -207,12 +204,10 @@ const inputClass = `
 function SettingRow({
     title,
     description,
-    code,
     children
 }: {
     title: string;
     description: string;
-    code: string;
     children: ReactNode;
 }) {
     return (
@@ -241,21 +236,7 @@ function SettingRow({
             >
 
                 <div>
-
                     {children}
-
-
-                    <div
-                        className="
-                            mt-1.5
-                            font-mono
-                            text-[10px]
-                            text-slate-400
-                        "
-                    >
-                        {code}
-                    </div>
-
                 </div>
 
 

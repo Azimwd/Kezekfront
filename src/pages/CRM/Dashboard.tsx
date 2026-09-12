@@ -1,5 +1,9 @@
-import React from 'react';
+import DashboardControl
+    from '../../components/organisms/Crm/Dashboard/DashboardControl';
+
 
 export default function Dashboard() {
-    return <div>Dashboard</div>;
+    return (
+        <DashboardControl />
+    );
 }

@@ -154,7 +154,10 @@ export default function EditStaff() {
                         position={position}
                         isActive={isActive}
                     />
-                    <StaffEditButtons />
+
+                    <StaffEditButtons
+                        fullName={fullName}
+                    />
                 </div>
             </div>
         </div>

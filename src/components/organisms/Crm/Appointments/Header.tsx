@@ -1,76 +1,268 @@
-import { useQuery } from '@tanstack/react-query';
-import Select, { type SelectOption } from '../../../atoms/Select';
+import {
+    useEffect
+} from 'react';
+
+import {
+    useQuery
+} from '@tanstack/react-query';
+
+import {
+    Plus
+} from 'lucide-react';
+
+import Select, {
+    type SelectOption
+} from '../../../atoms/Select';
+
 import Typography from '../../../atoms/Typography';
-import { listBusinesses } from '../../../../api/businesses';
-import { useEffect } from 'react';
 import Button from '../../../atoms/Button';
 import Icon from '../../../atoms/Icon';
-import { Plus } from 'lucide-react';
-import { useBusiness } from '../../../../context/BusinessContext';
+
+import {
+    listAllBusinesses
+} from '../../../../api/businesses';
+
+import {
+    useBusiness
+} from '../../../../context/BusinessContext';
+
 
 export default function Header() {
-    const { selectedBusiness, setSelectedBusiness } = useBusiness();
+    const {
+        selectedBusiness,
+        setSelectedBusiness
+    } = useBusiness();
 
-    const { data: rawBusinesses, isPending: isBusinessesPending } = useQuery({
-        queryKey: ['businesses'],
-        queryFn: listBusinesses
+
+    const {
+        data: businessOptions = [],
+        isPending: isBusinessesPending
+    } = useQuery({
+        queryKey: [
+            'all-businesses'
+        ],
+
+        queryFn:
+            listAllBusinesses,
+
+        retry: false,
+
+        select: (
+            businesses
+        ): SelectOption[] =>
+            businesses.map(
+                (
+                    business
+                ) => ({
+                    id: business.id,
+                    label: business.name
+                })
+            )
     });
 
-    const rawBizData = rawBusinesses as any;
-    const businessesList = Array.isArray(rawBizData)
-        ? rawBizData
-        : rawBizData?.data || rawBizData?.results || [];
 
-    const businessOptions: SelectOption[] = businessesList.map((b: any) => ({
-        id: b.id,
-        label: b.name
-    }));
-
+    /*
+     * Если бизнес ещё не выбран,
+     * выбираем первый.
+     *
+     * Также проверяем, существует ли
+     * текущий selectedBusiness в списке.
+     */
     useEffect(() => {
-        if (businessOptions.length > 0 && !selectedBusiness) {
-            setSelectedBusiness(businessOptions[0]);
+        if (
+            businessOptions.length === 0
+        ) {
+            return;
         }
-    }, [businessesList, selectedBusiness, setSelectedBusiness]);
 
-    if (isBusinessesPending) {
-        return <div>Загрузка бизнесов...</div>;
+
+        const selectedExists =
+            selectedBusiness
+                ? businessOptions.some(
+                    (
+                        business
+                    ) =>
+                        String(
+                            business.id
+                        ) ===
+                        String(
+                            selectedBusiness.id
+                        )
+                )
+                : false;
+
+
+        if (
+            !selectedExists
+        ) {
+            setSelectedBusiness(
+                businessOptions[0]
+            );
+        }
+
+    }, [
+        businessOptions,
+        selectedBusiness,
+        setSelectedBusiness
+    ]);
+
+
+    if (
+        isBusinessesPending
+    ) {
+        return (
+            <div className="text-sm text-slate-500">
+                Загрузка бизнесов...
+            </div>
+        );
     }
 
+
     return (
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center w-full gap-5">
+        <div
+            className="
+                flex
+                w-full
+                flex-col
+                items-start
+                justify-between
+                gap-5
+                md:flex-row
+                md:items-center
+            "
+        >
+
+            {/* LEFT */}
+
             <div className="flex flex-col">
+
                 <Typography
-                    text={'Записи'}
-                    className="font-bold text-3xl mb-1"
+                    text="Записи"
+                    className="
+                        mb-1
+                        text-3xl
+                        font-bold
+                    "
                 />
+
+
                 <Typography
-                    text={
-                        'Управляйте бронированиями клиентов, статусами и переносом времени.'
-                    }
-                    className="text-slate-500 text-sm"
+                    text="Управляйте бронированиями клиентов, статусами и переносом времени."
+                    className="
+                        text-sm
+                        text-slate-500
+                    "
                 />
+
             </div>
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-5">
-                <div className="w-full sm:w-[250px] bg-white">
-                    <Select
-                        options={businessOptions}
-                        value={
-                            selectedBusiness ?? { id: 0, label: 'Нет данных' }
-                        }
-                        onChange={setSelectedBusiness}
-                        className="w-full border border-[#c7c4d8] rounded-xl"
-                    />
+
+            {/* RIGHT */}
+
+            <div
+                className="
+                    flex
+                    flex-col
+                    items-stretch
+                    gap-5
+                    sm:flex-row
+                    sm:items-center
+                "
+            >
+
+                {/* BUSINESS SELECT */}
+
+                <div
+                    className="
+                        w-full
+                        bg-white
+                        sm:w-[250px]
+                    "
+                >
+
+                    {businessOptions.length > 0 &&
+                    selectedBusiness ? (
+
+                        <Select
+                            options={
+                                businessOptions
+                            }
+                            value={
+                                selectedBusiness
+                            }
+                            onChange={
+                                setSelectedBusiness
+                            }
+                            className="
+                                w-full
+                                rounded-xl
+                                border
+                                border-[#c7c4d8]
+                            "
+                        />
+
+                    ) : (
+
+                        <div
+                            className="
+                                flex
+                                h-11
+                                items-center
+                                rounded-xl
+                                border
+                                border-[#c7c4d8]
+                                px-3
+                                text-sm
+                                text-slate-500
+                            "
+                        >
+                            Нет бизнесов
+                        </div>
+
+                    )}
+
                 </div>
 
-                <Button className="flex justify-center items-center w-full sm:w-auto px-6 py-3 border border-[#4031d0] bg-white text-[#4031d0] gap-2 hover:bg-slate-50 rounded-xl font-medium transition-colors">
-                    <Icon icon={Plus} size={20} />
-                    <Typography
-                        className="text-sm mr-2"
-                        text={'Создать запись'}
+
+                {/* CREATE */}
+
+                <Button
+                    className="
+                        flex
+                        w-full
+                        items-center
+                        justify-center
+                        gap-2
+                        rounded-xl
+                        border
+                        border-[#4031d0]
+                        bg-white
+                        px-6
+                        py-3
+                        font-medium
+                        text-[#4031d0]
+                        transition-colors
+                        hover:bg-slate-50
+                        sm:w-auto
+                    "
+                >
+                    <Icon
+                        icon={Plus}
+                        size={20}
                     />
+
+                    <Typography
+                        className="
+                            mr-2
+                            text-sm
+                        "
+                        text="Создать запись"
+                    />
+
                 </Button>
+
             </div>
+
         </div>
     );
 }

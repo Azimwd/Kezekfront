@@ -1,4 +1,5 @@
 import {
+    useEffect,
     useMemo,
     useState,
     type ReactNode
@@ -15,37 +16,155 @@ import RecordingRules from '../../components/organisms/Crm/Settings/RecordingRul
 import ConfirmationOfRecords from '../../components/organisms/Crm/Settings/ConfirmationOfRecords';
 import CancellationOfClientRecords from '../../components/organisms/Crm/Settings/CancellationOfClientRecords';
 
-import type {
-    BookingSettings
+import {
+    getSettings,
+    patchSettings,
+    type BookingSettings
 } from '../../api/settings';
 
+import {
+    useBusiness
+} from '../../context/BusinessContext';
 
-const DEFAULT_SETTINGS: BookingSettings = {
-    slot_step_minutes: 60,
-    min_booking_notice_hours: 2,
+
+const EMPTY_SETTINGS: BookingSettings = {
+    slot_step_minutes: 30,
+    min_booking_notice_hours: 1,
     max_booking_days_ahead: 30,
     auto_confirm_bookings: true,
     allow_client_cancel: true,
-    cancel_before_hours: 12
+    cancel_before_hours: 2
 };
 
 
 export default function Settings() {
+    const {
+        selectedBusiness
+    } = useBusiness();
+
+
     const [
         settings,
         setSettings
-    ] = useState<BookingSettings>({
-        ...DEFAULT_SETTINGS
-    });
+    ] = useState<BookingSettings>(
+        EMPTY_SETTINGS
+    );
+
 
     const [
         savedSettings,
         setSavedSettings
-    ] = useState<BookingSettings>({
-        ...DEFAULT_SETTINGS
-    });
+    ] = useState<BookingSettings>(
+        EMPTY_SETTINGS
+    );
 
 
+    const [
+        isLoading,
+        setIsLoading
+    ] = useState(false);
+
+
+    const [
+        isSaving,
+        setIsSaving
+    ] = useState(false);
+
+
+    const [
+        error,
+        setError
+    ] = useState<string | null>(null);
+
+
+    /*
+     * ID выбранного бизнеса.
+     *
+     * SelectOption.id имеет тип string | number,
+     * поэтому приводим его к number.
+     */
+    const businessId =
+        selectedBusiness
+            ? Number(selectedBusiness.id)
+            : null;
+
+
+    /*
+     * Загружаем настройки при:
+     *
+     * 1. первом открытии страницы;
+     * 2. смене выбранного бизнеса.
+     */
+    useEffect(() => {
+        if (!businessId) {
+            return;
+        }
+
+
+        const loadSettings = async () => {
+            try {
+                setIsLoading(true);
+                setError(null);
+
+
+                const response =
+                    await getSettings(
+                        businessId
+                    );
+
+
+                const loadedSettings: BookingSettings = {
+                    slot_step_minutes:
+                        response.data.slot_step_minutes,
+
+                    min_booking_notice_hours:
+                        response.data.min_booking_notice_hours,
+
+                    max_booking_days_ahead:
+                        response.data.max_booking_days_ahead,
+
+                    auto_confirm_bookings:
+                        response.data.auto_confirm_bookings,
+
+                    allow_client_cancel:
+                        response.data.allow_client_cancel,
+
+                    cancel_before_hours:
+                        response.data.cancel_before_hours
+                };
+
+
+                setSettings(
+                    loadedSettings
+                );
+
+
+                setSavedSettings(
+                    loadedSettings
+                );
+            } catch (error) {
+                console.error(
+                    'Ошибка загрузки настроек:',
+                    error
+                );
+
+                setError(
+                    'Не удалось загрузить настройки бизнеса.'
+                );
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+
+        loadSettings();
+
+    }, [businessId]);
+
+
+    /*
+     * Универсальное изменение любого поля.
+     */
     const updateField = <
         K extends keyof BookingSettings
     >(
@@ -59,17 +178,26 @@ export default function Settings() {
     };
 
 
-    const hasChanges = useMemo(() => {
-        return (
-            JSON.stringify(settings) !==
-            JSON.stringify(savedSettings)
-        );
-    }, [
-        settings,
-        savedSettings
-    ]);
+    /*
+     * Проверяем, менял ли пользователь форму.
+     */
+    const hasChanges =
+        useMemo(() => {
+            return (
+                JSON.stringify(settings) !==
+                JSON.stringify(savedSettings)
+            );
+        }, [
+            settings,
+            savedSettings
+        ]);
 
 
+    /*
+     * Отмена изменений.
+     *
+     * Backend не вызываем.
+     */
     const handleCancel = () => {
         setSettings({
             ...savedSettings
@@ -77,35 +205,114 @@ export default function Settings() {
     };
 
 
-    const handleSave = () => {
-        setSavedSettings({
-            ...settings
-        });
+    /*
+     * Сохранение через PATCH.
+     */
+    const handleSave = async () => {
+        if (!businessId) {
+            return;
+        }
 
-        console.log(
-            'Сохраняем настройки:',
-            settings
-        );
+
+        try {
+            setIsSaving(true);
+            setError(null);
+
+
+            const response =
+                await patchSettings(
+                    businessId,
+                    settings
+                );
+
+
+            const updatedSettings: BookingSettings = {
+                slot_step_minutes:
+                    response.data.slot_step_minutes,
+
+                min_booking_notice_hours:
+                    response.data.min_booking_notice_hours,
+
+                max_booking_days_ahead:
+                    response.data.max_booking_days_ahead,
+
+                auto_confirm_bookings:
+                    response.data.auto_confirm_bookings,
+
+                allow_client_cancel:
+                    response.data.allow_client_cancel,
+
+                cancel_before_hours:
+                    response.data.cancel_before_hours
+            };
+
+
+            setSettings(
+                updatedSettings
+            );
+
+
+            setSavedSettings(
+                updatedSettings
+            );
+
+        } catch (error) {
+            console.error(
+                'Ошибка сохранения настроек:',
+                error
+            );
+
+            setError(
+                'Не удалось сохранить настройки.'
+            );
+
+        } finally {
+            setIsSaving(false);
+        }
     };
+
+
+    /*
+     * Бизнес ещё не выбран.
+     */
+    if (!businessId) {
+        return (
+            <div className="flex min-h-full items-center justify-center p-10">
+                <p className="text-base text-slate-500">
+                    Выберите бизнес, чтобы изменить настройки записи.
+                </p>
+            </div>
+        );
+    }
+
+
+    /*
+     * Загрузка.
+     */
+    if (isLoading) {
+        return (
+            <div className="flex min-h-full items-center justify-center p-10">
+                <p className="text-base text-slate-500">
+                    Загружаем настройки...
+                </p>
+            </div>
+        );
+    }
 
 
     return (
         <div
             className="
                 flex
-                min-h-[calc(100vh-110px)]
+                min-h-full
                 flex-col
-                bg-[#f7f8fc]
+                bg-[#f8f9ff]
             "
         >
-            
-            <main
-                className="
-                    flex-1
-                    px-7
-                    py-7
-                "
-            >
+
+            {/* CONTENT */}
+
+            <main className="flex-1 px-10 py-8">
 
                 <div
                     className="
@@ -147,7 +354,7 @@ export default function Settings() {
 
                     <aside className="flex flex-col gap-4">
 
-                        {/* INFO */}
+                        {/* HOW IT WORKS */}
 
                         <section
                             className="
@@ -212,7 +419,7 @@ export default function Settings() {
                                         Минимальное время
                                     </strong>{' '}
                                     защищает от слишком поздней
-                                    записи клиента перед визитом.
+                                    записи клиента.
                                 </InfoItem>
 
 
@@ -242,12 +449,7 @@ export default function Settings() {
                             "
                         >
 
-                            <h3
-                                className="
-                                    text-base
-                                    font-semibold
-                                "
-                            >
+                            <h3 className="text-base font-semibold">
                                 Итоговый результат:
                             </h3>
 
@@ -276,9 +478,11 @@ export default function Settings() {
                                     Записи подтверждаются{' '}
 
                                     <strong>
-                                        {settings.auto_confirm_bookings
-                                            ? 'автоматически'
-                                            : 'вручную'}
+                                        {
+                                            settings.auto_confirm_bookings
+                                                ? 'автоматически'
+                                                : 'вручную'
+                                        }
                                     </strong>
                                     .
                                 </ResultItem>
@@ -289,23 +493,30 @@ export default function Settings() {
                                         <CalendarX className="h-5 w-5" />
                                     }
                                 >
-                                    {settings.allow_client_cancel ? (
-                                        <>
-                                            Клиент может отменить
-                                            запись за{' '}
+                                    {
+                                        settings.allow_client_cancel
+                                            ? (
+                                                <>
+                                                    Клиент может отменить
+                                                    запись за{' '}
 
-                                            <strong>
-                                                {settings.cancel_before_hours} ч.
-                                            </strong>{' '}
+                                                    <strong>
+                                                        {
+                                                            settings.cancel_before_hours
+                                                        } ч.
+                                                    </strong>{' '}
 
-                                            до визита.
-                                        </>
-                                    ) : (
-                                        <>
-                                            Клиент не может самостоятельно
-                                            отменять запись.
-                                        </>
-                                    )}
+                                                    до визита.
+                                                </>
+                                            )
+                                            : (
+                                                <>
+                                                    Клиент не может
+                                                    самостоятельно
+                                                    отменять запись.
+                                                </>
+                                            )
+                                    }
                                 </ResultItem>
 
                             </div>
@@ -316,39 +527,54 @@ export default function Settings() {
 
                 </div>
 
+
+                {/* ERROR */}
+
+                {error && (
+                    <div
+                        className="
+                            mt-5
+                            max-w-[1160px]
+                            rounded-xl
+                            border
+                            border-red-200
+                            bg-red-50
+                            px-4
+                            py-3
+                            text-sm
+                            text-red-600
+                        "
+                    >
+                        {error}
+                    </div>
+                )}
+
             </main>
 
 
-            {/* ================================= */}
-            {/* BOTTOM ACTION BAR */}
-            {/* НЕ STICKY, НЕ FIXED */}
-            {/* ================================= */}
+            {/* ACTION BAR */}
 
             <footer
                 className="
                     mt-auto
                     w-full
                     border-t
-                    border-[#d7d8e5]
+                    border-[#c7c4d8]
                     bg-white
-                    px-7
+                    px-10
                     py-4
                 "
             >
 
-                <div
-                    className="
-                        flex
-                        items-center
-                        justify-end
-                        gap-3
-                    "
-                >
+                <div className="flex items-center justify-end gap-3">
 
                     <button
                         type="button"
                         onClick={handleCancel}
-                        disabled={!hasChanges}
+                        disabled={
+                            !hasChanges ||
+                            isSaving
+                        }
                         className="
                             h-11
                             min-w-[110px]
@@ -373,7 +599,10 @@ export default function Settings() {
                     <button
                         type="button"
                         onClick={handleSave}
-                        disabled={!hasChanges}
+                        disabled={
+                            !hasChanges ||
+                            isSaving
+                        }
                         className="
                             h-11
                             min-w-[205px]
@@ -389,7 +618,11 @@ export default function Settings() {
                             disabled:bg-slate-400
                         "
                     >
-                        Сохранить настройки
+                        {
+                            isSaving
+                                ? 'Сохранение...'
+                                : 'Сохранить настройки'
+                        }
                     </button>
 
                 </div>
@@ -420,13 +653,8 @@ function InfoItem({
                 "
             />
 
-            <p
-                className="
-                    text-[13px]
-                    leading-relaxed
-                    text-slate-600
-                "
-            >
+
+            <p className="text-[13px] leading-relaxed text-slate-600">
                 {children}
             </p>
 
@@ -461,13 +689,7 @@ function ResultItem({
             </div>
 
 
-            <div
-                className="
-                    pt-1.5
-                    text-[13px]
-                    leading-relaxed
-                "
-            >
+            <div className="pt-1.5 text-[13px] leading-relaxed">
                 {children}
             </div>
 

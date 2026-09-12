@@ -1,7 +1,7 @@
 import { User } from 'lucide-react';
 
-import Icon from '../../../../atoms/Icon';
-import Typography from '../../../../atoms/Typography';
+import Icon from '../../../atoms/Icon';
+import Typography from '../../../atoms/Typography';
 
 interface ClientInforProps {
     name: string;

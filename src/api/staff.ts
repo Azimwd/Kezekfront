@@ -54,12 +54,64 @@ export const getOneMaster = async (id: number) => {
     return response.data;
 };
 
-export const getMasters = async (id: number) => {
-    const response = await api.get(`/api/businesses/${id}/staff/`, {
-        withCredentials: true
-    });
+export const getMasters = async (
+    id: number,
+    page: number = 1,
+    search: string = '',
+    status: 'all' | 'active' | 'inactive' = 'all'
+) => {
+    const response = await api.get(
+        `/api/businesses/${id}/staff/`,
+        {
+            withCredentials: true,
+            params: {
+                page,
+                search,
+                status
+            }
+        }
+    );
 
     return response.data;
+};
+
+export const getAllMasters = async (
+    id: number
+) => {
+    let page = 1;
+
+    let allMasters: any[] = [];
+
+
+    while (true) {
+
+        const response =
+            await getMasters(
+                id,
+                page
+            );
+
+
+        allMasters = [
+            ...allMasters,
+            ...(response.data ?? [])
+        ];
+
+
+        if (
+            !response.pagination ||
+            page >=
+                response.pagination.total_pages
+        ) {
+            break;
+        }
+
+
+        page += 1;
+    }
+
+
+    return allMasters;
 };
 
 export const editMasters = async ({

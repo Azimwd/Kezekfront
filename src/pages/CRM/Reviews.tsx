@@ -1,5 +1,7 @@
-import React from 'react';
+import ReviewsControl from '../../components/organisms/Crm/Reviews/ReviewsControl';
 
 export default function Reviews() {
-    return <div>Reviews</div>;
+    return (
+        <ReviewsControl />
+    );
 }

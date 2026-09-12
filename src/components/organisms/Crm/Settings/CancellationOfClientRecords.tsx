@@ -108,17 +108,6 @@ export default function CancellationOfClientRecords({
                     </p>
 
 
-                    <div
-                        className="
-                            mt-2
-                            font-mono
-                            text-[10px]
-                            text-slate-400
-                        "
-                    >
-                        allow_client_cancel
-                    </div>
-
                 </div>
 
 
@@ -206,18 +195,6 @@ export default function CancellationOfClientRecords({
                                 "
                             />
 
-
-                            <div
-                                className="
-                                    mt-1.5
-                                    font-mono
-                                    text-[10px]
-                                    text-slate-400
-                                "
-                            >
-                                cancel_before_hours
-                            </div>
-
                         </div>
 
 
@@ -263,6 +240,7 @@ function Toggle({
                 shrink-0
                 rounded-full
                 transition-colors
+                duration-200
                 ${
                     checked
                         ? 'bg-[#4a38e8]'
@@ -270,25 +248,25 @@ function Toggle({
                 }
             `}
         >
-
             <span
                 className={`
                     absolute
+                    left-1
                     top-1
                     h-5
                     w-5
                     rounded-full
                     bg-white
-                    shadow
+                    shadow-sm
                     transition-transform
+                    duration-200
                     ${
                         checked
-                            ? 'translate-x-6'
-                            : 'translate-x-1'
+                            ? 'translate-x-5'
+                            : 'translate-x-0'
                     }
                 `}
             />
-
         </button>
     );
 }

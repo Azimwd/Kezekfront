@@ -24,9 +24,19 @@ interface businessesCreateResponse {
     data: Business;
 }
 
-interface businessesListResponse { 
+interface BusinessesPagination {
+    count: number;
+    total_pages: number;
+    current_page: number;
+    page_size: number;
+    next: string | null;
+    previous: string | null;
+}
+
+interface businessesListResponse {
     message: string;
-    data: Business[]; 
+    pagination: BusinessesPagination;
+    data: Business[];
 }
 
 export const createBusinesses = async(
@@ -65,14 +75,21 @@ export const createBusinesses = async(
     return response.data;
 }
 
-export const listBusinesses = async() => {
-    const response = await api.get<businessesListResponse>('/api/businesses/',
+export const listBusinesses = async (
+    page: number = 1
+) => {
+    const response = await api.get<businessesListResponse>(
+        '/api/businesses/',
         {
-            withCredentials: true
+            withCredentials: true,
+            params: {
+                page
+            }
         }
     );
+
     return response.data;
-}
+};
 
 export const editCardBusinesses = async(
     id: number,
@@ -123,3 +140,28 @@ export const deleteCardBusinesses = async(id: number) => {
 
     return response.data
 }
+
+export const listAllBusinesses = async (): Promise<Business[]> => {
+    let page = 1;
+    let allBusinesses: Business[] = [];
+
+    while (true) {
+        const response = await listBusinesses(page);
+
+        allBusinesses = [
+            ...allBusinesses,
+            ...response.data
+        ];
+
+        if (
+            !response.pagination ||
+            page >= response.pagination.total_pages
+        ) {
+            break;
+        }
+
+        page += 1;
+    }
+
+    return allBusinesses;
+};

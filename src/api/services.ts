@@ -9,10 +9,23 @@ export interface StaffMember {
     description: string;
     photo: string | null;
     is_active: boolean;
+
+    services_count?: number;
+    active_services_count?: number;
+}
+
+export interface StaffPagination {
+    count: number;
+    total_pages: number;
+    current_page: number;
+    page_size: number;
+    next: string | null;
+    previous: string | null;
 }
 
 export interface StaffResponse {
     message: string;
+    pagination: StaffPagination;
     data: StaffMember[];
 }
 
@@ -28,7 +41,6 @@ export interface PutStaffResponse {
     message: string;
     data: ServiceStaffItem[];
 }
-
 export const createService = async (
     id: number,
     name: string,
@@ -95,14 +107,29 @@ export const deleteService = async (id: number) => {
     return response.data;
 };
 
-export const searchStaff = async (id: number, searchQuery: string = ''): Promise<StaffResponse> => {
-    const response = await api.get(`/api/businesses/${id}/staff/`, {
-        params: { search: searchQuery },
-        withCredentials: true
-    });
+export const searchStaff = async (
+    id: number,
+    searchQuery: string = '',
+    status: 'all' | 'active' | 'inactive' = 'all',
+    page: number = 1
+): Promise<StaffResponse> => {
+
+    const response =
+        await api.get<StaffResponse>(
+            `/api/businesses/${id}/staff/`,
+            {
+                params: {
+                    search: searchQuery,
+                    status,
+                    page
+                },
+
+                withCredentials: true
+            }
+        );
+
     return response.data;
 };
-
 export const putStaffToService = async (
     id: number,
     staff_ids: number[]

@@ -1,23 +1,101 @@
-import { useState } from 'react';
-import Select, { type SelectOption } from '../../../atoms/Select';
+import type {
+    StaffStatus
+} from '../../../organisms/Crm/Staff.tsx/StaffControl';
 
-const filterOptions: SelectOption[] = [
-    { id: 1, label: 'Все услуги' },
-    { id: 2, label: 'Активные' },
-    { id: 3, label: 'Неактивные' }
-];
 
-export default function Filter() {
-    const [selectedFilter, setSelectedFilter] = useState<SelectOption>(
-        filterOptions[0]
-    );
+interface FilterProps {
+    value: StaffStatus;
 
+    onChange: (
+        value: StaffStatus
+    ) => void;
+}
+
+
+export default function Filter({
+    value,
+    onChange
+}: FilterProps) {
     return (
-        <Select
-            options={filterOptions}
-            value={selectedFilter}
-            onChange={setSelectedFilter}
-            className="border border-[#c7c4d8] rounded-xl w-[200px]"
-        />
+        <div className="flex items-center gap-2">
+
+            <button
+                type="button"
+                onClick={() =>
+                    onChange(
+                        'all'
+                    )
+                }
+                className={`
+                    rounded-full
+                    px-4
+                    py-2
+                    text-sm
+                    font-medium
+                    transition
+
+                    ${
+                        value === 'all'
+                            ? 'bg-[#4F46E5] text-white'
+                            : 'text-slate-500 hover:bg-slate-100'
+                    }
+                `}
+            >
+                Все
+            </button>
+
+
+            <button
+                type="button"
+                onClick={() =>
+                    onChange(
+                        'active'
+                    )
+                }
+                className={`
+                    rounded-full
+                    px-4
+                    py-2
+                    text-sm
+                    font-medium
+                    transition
+
+                    ${
+                        value === 'active'
+                            ? 'bg-[#4F46E5] text-white'
+                            : 'text-slate-500 hover:bg-slate-100'
+                    }
+                `}
+            >
+                Активные
+            </button>
+
+
+            <button
+                type="button"
+                onClick={() =>
+                    onChange(
+                        'inactive'
+                    )
+                }
+                className={`
+                    rounded-full
+                    px-4
+                    py-2
+                    text-sm
+                    font-medium
+                    transition
+
+                    ${
+                        value === 'inactive'
+                            ? 'bg-[#4F46E5] text-white'
+                            : 'text-slate-500 hover:bg-slate-100'
+                    }
+                `}
+            >
+                Отключённые
+            </button>
+
+        </div>
     );
 }
