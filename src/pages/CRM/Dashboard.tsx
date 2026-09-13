@@ -3,6 +3,7 @@ import DashboardControl
 
 
 export default function Dashboard() {
+
     return (
         <DashboardControl />
     );

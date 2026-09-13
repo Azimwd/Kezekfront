@@ -10,6 +10,10 @@ import {
     Plus
 } from 'lucide-react';
 
+import {
+    useNavigate
+} from 'react-router-dom';
+
 import Select, {
     type SelectOption
 } from '../../../atoms/Select';
@@ -28,16 +32,40 @@ import {
 
 
 export default function Header() {
+
+    /*
+     * ============================================================
+     * NAVIGATION
+     * ============================================================
+     */
+
+    const navigate =
+        useNavigate();
+
+
+    /*
+     * ============================================================
+     * BUSINESS CONTEXT
+     * ============================================================
+     */
+
     const {
         selectedBusiness,
         setSelectedBusiness
     } = useBusiness();
 
 
+    /*
+     * ============================================================
+     * BUSINESSES
+     * ============================================================
+     */
+
     const {
         data: businessOptions = [],
         isPending: isBusinessesPending
     } = useQuery({
+
         queryKey: [
             'all-businesses'
         ],
@@ -45,78 +73,128 @@ export default function Header() {
         queryFn:
             listAllBusinesses,
 
-        retry: false,
+        retry:
+            false,
 
         select: (
             businesses
         ): SelectOption[] =>
+
             businesses.map(
                 (
                     business
                 ) => ({
-                    id: business.id,
-                    label: business.name
+
+                    id:
+                        business.id,
+
+                    label:
+                        business.name
+
                 })
             )
+
     });
 
 
     /*
-     * Если бизнес ещё не выбран,
-     * выбираем первый.
-     *
-     * Также проверяем, существует ли
-     * текущий selectedBusiness в списке.
+     * ============================================================
+     * AUTO SELECT BUSINESS
+     * ============================================================
      */
-    useEffect(() => {
-        if (
-            businessOptions.length === 0
-        ) {
-            return;
-        }
+
+    useEffect(
+        () => {
+
+            if (
+                businessOptions.length === 0
+            ) {
+                return;
+            }
 
 
-        const selectedExists =
-            selectedBusiness
-                ? businessOptions.some(
-                    (
-                        business
-                    ) =>
-                        String(
-                            business.id
-                        ) ===
-                        String(
-                            selectedBusiness.id
-                        )
-                )
-                : false;
+            const selectedExists =
+                selectedBusiness
+
+                    ? businessOptions.some(
+                        (
+                            business
+                        ) =>
+                            String(
+                                business.id
+                            ) ===
+                            String(
+                                selectedBusiness.id
+                            )
+                    )
+
+                    : false;
 
 
-        if (
-            !selectedExists
-        ) {
-            setSelectedBusiness(
-                businessOptions[0]
-            );
-        }
+            if (
+                !selectedExists
+            ) {
 
-    }, [
-        businessOptions,
-        selectedBusiness,
-        setSelectedBusiness
-    ]);
+                setSelectedBusiness(
+                    businessOptions[0]
+                );
 
+            }
+
+        },
+        [
+            businessOptions,
+            selectedBusiness,
+            setSelectedBusiness
+        ]
+    );
+
+
+    /*
+     * ============================================================
+     * LOADING
+     * ============================================================
+     */
 
     if (
         isBusinessesPending
     ) {
+
         return (
-            <div className="text-sm text-slate-500">
+            <div
+                className="
+                    text-sm
+                    text-slate-500
+                "
+            >
                 Загрузка бизнесов...
             </div>
         );
+
     }
 
+
+    /*
+     * ============================================================
+     * CREATE APPOINTMENT
+     * ============================================================
+     */
+
+    const handleCreateAppointment =
+        () => {
+
+            navigate(
+                '/crm/appointments/create'
+            );
+
+        };
+
+
+    /*
+     * ============================================================
+     * RENDER
+     * ============================================================
+     */
 
     return (
         <div
@@ -132,9 +210,16 @@ export default function Header() {
             "
         >
 
-            {/* LEFT */}
+            {/* =====================================================
+                LEFT
+            ===================================================== */}
 
-            <div className="flex flex-col">
+            <div
+                className="
+                    flex
+                    flex-col
+                "
+            >
 
                 <Typography
                     text="Записи"
@@ -157,7 +242,9 @@ export default function Header() {
             </div>
 
 
-            {/* RIGHT */}
+            {/* =====================================================
+                RIGHT
+            ===================================================== */}
 
             <div
                 className="
@@ -170,7 +257,9 @@ export default function Header() {
                 "
             >
 
-                {/* BUSINESS SELECT */}
+                {/* =================================================
+                    BUSINESS SELECT
+                ================================================= */}
 
                 <div
                     className="
@@ -224,12 +313,18 @@ export default function Header() {
                 </div>
 
 
-                {/* CREATE */}
+                {/* =================================================
+                    CREATE APPOINTMENT
+                ================================================= */}
 
                 <Button
+                    onClick={
+                        handleCreateAppointment
+                    }
                     className="
                         flex
                         w-full
+                        cursor-pointer
                         items-center
                         justify-center
                         gap-2
@@ -242,19 +337,27 @@ export default function Header() {
                         font-medium
                         text-[#4031d0]
                         transition-colors
-                        hover:bg-slate-50
+                        hover:bg-[#F5F3FF]
+                        active:bg-[#EDE9FE]
                         sm:w-auto
                     "
                 >
+
                     <Icon
-                        icon={Plus}
-                        size={20}
+                        icon={
+                            Plus
+                        }
+                        size={
+                            20
+                        }
                     />
+
 
                     <Typography
                         className="
                             mr-2
                             text-sm
+                            font-medium
                         "
                         text="Создать запись"
                     />

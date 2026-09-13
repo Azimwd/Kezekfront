@@ -1,3 +1,7 @@
+import {
+    Circle
+} from 'lucide-react';
+
 import type {
     LucideIcon
 } from 'lucide-react';
@@ -6,7 +10,8 @@ import type {
 interface MiniStatCardProps {
     title: string;
     value: string | number;
-    icon: LucideIcon;
+
+    icon?: LucideIcon;
 
     highlight?: boolean;
 }
@@ -15,61 +20,123 @@ interface MiniStatCardProps {
 export default function MiniStatCard({
     title,
     value,
-    icon: Icon,
+    icon,
     highlight = false
 }: MiniStatCardProps) {
+
+    /*
+     * Если переданная иконка undefined,
+     * используем безопасную стандартную иконку.
+     */
+    const Icon =
+        icon ?? Circle;
+
 
     return (
         <div
             className={`
+                min-h-[96px]
                 rounded-2xl
                 border
                 p-4
+                shadow-sm
+                transition
 
                 ${
                     highlight
                         ? `
-                            border-[#CEDBFF]
-                            bg-[#E9F0FF]
+                            border-[#C9D7FF]
+                            bg-[#E8EFFF]
                         `
                         : `
-                            border-[#E6E8F0]
+                            border-[#E2E5EC]
                             bg-white
                         `
                 }
             `}
         >
 
-            <Icon
-                size={15}
-                className={
-                    highlight
-                        ? 'text-[#4F46E5]'
-                        : 'text-slate-500'
-                }
-            />
-
-
             <div
                 className="
-                    mt-2
-                    text-xl
-                    font-bold
-                    text-[#0F172A]
+                    flex
+                    items-start
+                    justify-between
+                    gap-3
                 "
             >
-                {value}
-            </div>
+
+                {/* VALUE + TITLE */}
+
+                <div
+                    className="
+                        min-w-0
+                    "
+                >
+
+                    <div
+                        className={`
+                            text-[26px]
+                            font-bold
+                            leading-none
+
+                            ${
+                                highlight
+                                    ? 'text-[#4338CA]'
+                                    : 'text-[#101828]'
+                            }
+                        `}
+                    >
+                        {value}
+                    </div>
 
 
-            <div
-                className="
-                    mt-0.5
-                    text-[10px]
-                    text-slate-400
-                "
-            >
-                {title}
+                    <div
+                        className="
+                            mt-2
+                            text-[12px]
+                            font-medium
+                            text-[#667085]
+                        "
+                    >
+                        {title}
+                    </div>
+
+                </div>
+
+
+                {/* ICON */}
+
+                <div
+                    className={`
+                        flex
+                        h-9
+                        w-9
+                        shrink-0
+                        items-center
+                        justify-center
+                        rounded-xl
+
+                        ${
+                            highlight
+                                ? `
+                                    bg-white/70
+                                    text-[#4F46E5]
+                                `
+                                : `
+                                    bg-[#F2F4F7]
+                                    text-[#667085]
+                                `
+                        }
+                    `}
+                >
+
+                    <Icon
+                        size={17}
+                        strokeWidth={1.8}
+                    />
+
+                </div>
+
             </div>
 
         </div>

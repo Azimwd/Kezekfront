@@ -20,32 +20,38 @@ export default function QuickActions() {
             className="
                 rounded-2xl
                 border
-                border-[#D9DDED]
+                border-[#D9DDEC]
                 bg-white
-                p-4
+                p-5
                 shadow-sm
             "
         >
 
+            {/* TITLE */}
+
             <h2
                 className="
                     mb-4
-                    text-lg
+                    text-[18px]
                     font-semibold
-                    text-[#0F172A]
+                    text-[#101828]
                 "
             >
                 Быстрые действия
             </h2>
 
 
+            {/* ACTIONS */}
+
             <div
                 className="
                     flex
                     flex-col
-                    gap-2
+                    gap-3
                 "
             >
+
+                {/* CREATE APPOINTMENT */}
 
                 <button
                     type="button"
@@ -55,45 +61,78 @@ export default function QuickActions() {
                         )
                     }
                     className="
+                        group
                         flex
-                        h-11
+                        min-h-[52px]
                         w-full
                         items-center
                         gap-3
-                        rounded-lg
+                        rounded-xl
                         border
                         border-[#C7C4D8]
-                        px-3
+                        bg-white
+                        px-3.5
                         text-left
-                        text-xs
-                        font-medium
-                        text-slate-700
                         transition
-                        hover:bg-slate-50
+                        hover:border-[#AAA5CA]
+                        hover:bg-[#F9FAFB]
                     "
                 >
 
                     <span
                         className="
                             flex
-                            h-7
-                            w-7
+                            h-9
+                            w-9
+                            shrink-0
                             items-center
                             justify-center
-                            rounded-md
+                            rounded-lg
                             bg-[#4F46E5]
                             text-white
+                            transition
+                            group-hover:bg-[#4338CA]
                         "
                     >
                         <CalendarPlus
-                            size={15}
+                            size={17}
                         />
                     </span>
 
-                    Создать запись
+
+                    <div
+                        className="
+                            min-w-0
+                            flex-1
+                        "
+                    >
+
+                        <div
+                            className="
+                                text-[13px]
+                                font-medium
+                                text-[#344054]
+                            "
+                        >
+                            Создать запись
+                        </div>
+
+                        <div
+                            className="
+                                mt-0.5
+                                text-[10px]
+                                text-[#98A2B3]
+                            "
+                        >
+                            Добавить новую запись клиента
+                        </div>
+
+                    </div>
 
                 </button>
 
+
+                {/* SCHEDULE */}
 
                 <button
                     type="button"
@@ -103,45 +142,78 @@ export default function QuickActions() {
                         )
                     }
                     className="
+                        group
                         flex
-                        h-11
+                        min-h-[52px]
                         w-full
                         items-center
                         gap-3
-                        rounded-lg
+                        rounded-xl
                         border
                         border-[#C7C4D8]
-                        px-3
+                        bg-white
+                        px-3.5
                         text-left
-                        text-xs
-                        font-medium
-                        text-slate-700
                         transition
-                        hover:bg-slate-50
+                        hover:border-[#AAA5CA]
+                        hover:bg-[#F9FAFB]
                     "
                 >
 
                     <span
                         className="
                             flex
-                            h-7
-                            w-7
+                            h-9
+                            w-9
+                            shrink-0
                             items-center
                             justify-center
-                            rounded-md
+                            rounded-lg
                             bg-[#EEF2FF]
                             text-[#4F46E5]
+                            transition
+                            group-hover:bg-[#E0E7FF]
                         "
                     >
                         <CalendarDays
-                            size={15}
+                            size={17}
                         />
                     </span>
 
-                    Управление расписанием
+
+                    <div
+                        className="
+                            min-w-0
+                            flex-1
+                        "
+                    >
+
+                        <div
+                            className="
+                                text-[13px]
+                                font-medium
+                                text-[#344054]
+                            "
+                        >
+                            Управление расписанием
+                        </div>
+
+                        <div
+                            className="
+                                mt-0.5
+                                text-[10px]
+                                text-[#98A2B3]
+                            "
+                        >
+                            Настроить рабочее время мастеров
+                        </div>
+
+                    </div>
 
                 </button>
 
+
+                {/* STAFF */}
 
                 <button
                     type="button"
@@ -151,42 +223,73 @@ export default function QuickActions() {
                         )
                     }
                     className="
+                        group
                         flex
-                        h-11
+                        min-h-[52px]
                         w-full
                         items-center
                         gap-3
-                        rounded-lg
+                        rounded-xl
                         border
                         border-[#C7C4D8]
-                        px-3
+                        bg-white
+                        px-3.5
                         text-left
-                        text-xs
-                        font-medium
-                        text-slate-700
                         transition
-                        hover:bg-slate-50
+                        hover:border-[#AAA5CA]
+                        hover:bg-[#F9FAFB]
                     "
                 >
 
                     <span
                         className="
                             flex
-                            h-7
-                            w-7
+                            h-9
+                            w-9
+                            shrink-0
                             items-center
                             justify-center
-                            rounded-md
+                            rounded-lg
                             bg-[#EEF2FF]
                             text-[#4F46E5]
+                            transition
+                            group-hover:bg-[#E0E7FF]
                         "
                     >
                         <UserPlus
-                            size={15}
+                            size={17}
                         />
                     </span>
 
-                    Добавить мастера
+
+                    <div
+                        className="
+                            min-w-0
+                            flex-1
+                        "
+                    >
+
+                        <div
+                            className="
+                                text-[13px]
+                                font-medium
+                                text-[#344054]
+                            "
+                        >
+                            Добавить мастера
+                        </div>
+
+                        <div
+                            className="
+                                mt-0.5
+                                text-[10px]
+                                text-[#98A2B3]
+                            "
+                        >
+                            Управление сотрудниками бизнеса
+                        </div>
+
+                    </div>
 
                 </button>
 

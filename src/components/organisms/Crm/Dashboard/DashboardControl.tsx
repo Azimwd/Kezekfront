@@ -1,14 +1,62 @@
 import {
+    useEffect,
+    useMemo,
+    useRef,
+    useState
+} from 'react';
+
+import {
+    useMutation,
+    useQuery,
+    useQueryClient
+} from '@tanstack/react-query';
+
+import {
+    addDays,
+    format,
+    startOfDay,
+    subDays
+} from 'date-fns';
+
+import {
+    BriefcaseBusiness,
     CalendarCheck,
     CalendarClock,
     CalendarDays,
+    Check,
     CheckCircle2,
+    ChevronDown,
     Percent,
     Scissors,
     UserRound,
-    UsersRound,
-    WalletCards
+    UsersRound
 } from 'lucide-react';
+
+
+import {
+    useBusiness
+} from '../../../../context/BusinessContext';
+
+
+import {
+    listAllBusinesses
+} from '../../../../api/businesses';
+
+
+import {
+    getAppointmentPrice,
+    getDashboardBusiness,
+    getDashboardData,
+    type DashboardAppointment
+} from '../../../../api/dashboard';
+
+
+import {
+    cancelAppointment,
+    completeAppointment,
+    confirmAppointment
+} from '../../../../api/appointments';
+
 
 import StatCard
     from '../../../molecules/Crm/Dashboard/StatCard';
@@ -34,417 +82,1638 @@ import TomorrowCard
 
 export default function DashboardControl() {
 
+    /*
+     * ============================================================
+     * QUERY CLIENT
+     * ============================================================
+     */
+
+    const queryClient =
+        useQueryClient();
+
+
+    /*
+     * ============================================================
+     * BUSINESS CONTEXT
+     * ============================================================
+     */
+
+    const {
+        selectedBusiness,
+        setSelectedBusiness
+    } = useBusiness();
+
+
+    /*
+     * ============================================================
+     * BUSINESS DROPDOWN
+     * ============================================================
+     */
+
+    const [
+        isBusinessMenuOpen,
+        setIsBusinessMenuOpen
+    ] = useState(
+        false
+    );
+
+
+    const businessMenuRef =
+        useRef<HTMLDivElement | null>(
+            null
+        );
+
+
+    /*
+     * ============================================================
+     * ALL BUSINESSES
+     * ============================================================
+     */
+
+    const {
+        data: businesses = [],
+        isLoading: isBusinessesLoading
+    } = useQuery({
+
+        queryKey: [
+            'all-businesses'
+        ],
+
+        queryFn:
+            listAllBusinesses,
+
+        retry:
+            false
+    });
+
+
+    /*
+     * ============================================================
+     * AUTO SELECT BUSINESS
+     * ============================================================
+     */
+
+    useEffect(
+        () => {
+
+            if (
+                businesses.length === 0
+            ) {
+                return;
+            }
+
+
+            const selectedExists =
+                selectedBusiness
+                    ? businesses.some(
+                        business =>
+                            String(
+                                business.id
+                            ) ===
+                            String(
+                                selectedBusiness.id
+                            )
+                    )
+                    : false;
+
+
+            if (
+                !selectedExists
+            ) {
+
+                const firstBusiness =
+                    businesses[0];
+
+
+                setSelectedBusiness({
+                    id:
+                        firstBusiness.id,
+
+                    label:
+                        firstBusiness.name
+                });
+            }
+
+        },
+        [
+            businesses,
+            selectedBusiness,
+            setSelectedBusiness
+        ]
+    );
+
+
+    /*
+     * ============================================================
+     * CLICK OUTSIDE BUSINESS MENU
+     * ============================================================
+     */
+
+    useEffect(
+        () => {
+
+            const handleClickOutside =
+                (
+                    event: MouseEvent
+                ) => {
+
+                    if (
+                        businessMenuRef.current &&
+                        !businessMenuRef.current.contains(
+                            event.target as Node
+                        )
+                    ) {
+                        setIsBusinessMenuOpen(
+                            false
+                        );
+                    }
+                };
+
+
+            document.addEventListener(
+                'mousedown',
+                handleClickOutside
+            );
+
+
+            return () => {
+
+                document.removeEventListener(
+                    'mousedown',
+                    handleClickOutside
+                );
+            };
+
+        },
+        []
+    );
+
+
+    /*
+     * ============================================================
+     * CURRENT BUSINESS ID
+     * ============================================================
+     */
+
+    const businessId =
+        selectedBusiness?.id
+            ? Number(
+                selectedBusiness.id
+            )
+            : null;
+
+
+    /*
+     * ============================================================
+     * ACTION LOADING
+     * ============================================================
+     */
+
+    const [
+        actionLoadingId,
+        setActionLoadingId
+    ] = useState<number | null>(
+        null
+    );
+
+
+    /*
+     * ============================================================
+     * DASHBOARD DATA
+     * ============================================================
+     */
+
+    const {
+        data: dashboardData,
+        isLoading: isDashboardLoading
+    } = useQuery({
+
+        queryKey: [
+            'dashboard-data',
+            businessId
+        ],
+
+        queryFn: () =>
+            getDashboardData(
+                businessId!
+            ),
+
+        enabled:
+            !!businessId
+    });
+
+
+    /*
+     * ============================================================
+     * BUSINESS DETAIL
+     * ============================================================
+     */
+
+    const {
+        data: business
+    } = useQuery({
+
+        queryKey: [
+            'dashboard-business',
+            businessId
+        ],
+
+        queryFn: () =>
+            getDashboardBusiness(
+                businessId!
+            ),
+
+        enabled:
+            !!businessId
+    });
+
+
+    /*
+     * ============================================================
+     * SELECT BUSINESS
+     * ============================================================
+     */
+
+    const handleSelectBusiness =
+        (
+            id: number | string,
+            name: string
+        ) => {
+
+            setSelectedBusiness({
+                id,
+                label:
+                    name
+            });
+
+
+            setIsBusinessMenuOpen(
+                false
+            );
+        };
+
+
+    /*
+     * ============================================================
+     * REFRESH
+     * ============================================================
+     */
+
+    const refreshDashboard =
+        async () => {
+
+            await Promise.all([
+
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        'dashboard-data',
+                        businessId
+                    ]
+                }),
+
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        'dashboard-business',
+                        businessId
+                    ]
+                }),
+
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        'appointments'
+                    ]
+                })
+
+            ]);
+        };
+
+
+    /*
+     * ============================================================
+     * CONFIRM
+     * ============================================================
+     */
+
+    const confirmMutation =
+        useMutation({
+
+            mutationFn: (
+                appointmentId: number
+            ) =>
+                confirmAppointment(
+                    appointmentId
+                ),
+
+            onMutate: (
+                appointmentId
+            ) => {
+
+                setActionLoadingId(
+                    appointmentId
+                );
+            },
+
+            onSuccess:
+                refreshDashboard,
+
+            onSettled: () => {
+
+                setActionLoadingId(
+                    null
+                );
+            }
+        });
+
+
+    /*
+     * ============================================================
+     * COMPLETE
+     * ============================================================
+     */
+
+    const completeMutation =
+        useMutation({
+
+            mutationFn: (
+                appointmentId: number
+            ) =>
+                completeAppointment(
+                    appointmentId
+                ),
+
+            onMutate: (
+                appointmentId
+            ) => {
+
+                setActionLoadingId(
+                    appointmentId
+                );
+            },
+
+            onSuccess:
+                refreshDashboard,
+
+            onSettled: () => {
+
+                setActionLoadingId(
+                    null
+                );
+            }
+        });
+
+
+    /*
+     * ============================================================
+     * CANCEL
+     * ============================================================
+     */
+
+    const cancelMutation =
+        useMutation({
+
+            mutationFn: (
+                appointmentId: number
+            ) =>
+                cancelAppointment(
+                    appointmentId
+                ),
+
+            onMutate: (
+                appointmentId
+            ) => {
+
+                setActionLoadingId(
+                    appointmentId
+                );
+            },
+
+            onSuccess:
+                refreshDashboard,
+
+            onSettled: () => {
+
+                setActionLoadingId(
+                    null
+                );
+            }
+        });
+
+
+    /*
+     * ============================================================
+     * ALL APPOINTMENTS
+     * ============================================================
+     */
+
+    const appointments =
+        useMemo<DashboardAppointment[]>(
+            () =>
+                dashboardData?.data ??
+                [],
+            [
+                dashboardData
+            ]
+        );
+
+
+    /*
+     * ============================================================
+     * DATES
+     * ============================================================
+     */
+
+    const todayKey =
+        format(
+            new Date(),
+            'yyyy-MM-dd'
+        );
+
+
+    const tomorrowKey =
+        format(
+            addDays(
+                new Date(),
+                1
+            ),
+            'yyyy-MM-dd'
+        );
+
+
+    const sevenDaysAgo =
+        startOfDay(
+            subDays(
+                new Date(),
+                6
+            )
+        );
+
+
+    /*
+     * ============================================================
+     * TODAY
+     * ============================================================
+     */
+
+    const todayAppointments =
+        useMemo(
+            () => {
+
+                return appointments.filter(
+                    appointment => {
+
+                        return (
+                            format(
+                                new Date(
+                                    appointment.start_at
+                                ),
+                                'yyyy-MM-dd'
+                            ) ===
+                            todayKey
+                        );
+                    }
+                );
+
+            },
+            [
+                appointments,
+                todayKey
+            ]
+        );
+
+
+    /*
+     * ============================================================
+     * TOMORROW
+     * ============================================================
+     */
+
+    const tomorrowAppointments =
+        useMemo(
+            () => {
+
+                return appointments.filter(
+                    appointment => {
+
+                        return (
+                            format(
+                                new Date(
+                                    appointment.start_at
+                                ),
+                                'yyyy-MM-dd'
+                            ) ===
+                            tomorrowKey
+                        );
+                    }
+                );
+
+            },
+            [
+                appointments,
+                tomorrowKey
+            ]
+        );
+
+
+    /*
+     * ============================================================
+     * LAST 7 DAYS
+     * ============================================================
+     */
+
+    const last7Appointments =
+        useMemo(
+            () => {
+
+                return appointments.filter(
+                    appointment => {
+
+                        const appointmentDate =
+                            new Date(
+                                appointment.start_at
+                            );
+
+
+                        return (
+                            appointmentDate >=
+                            sevenDaysAgo
+                        );
+                    }
+                );
+
+            },
+            [
+                appointments,
+                sevenDaysAgo
+            ]
+        );
+
+
+    /*
+     * ============================================================
+     * LAST 7 DAYS REVENUE
+     * ============================================================
+     */
+
+    const last7Revenue =
+        useMemo(
+            () => {
+
+                return last7Appointments
+                    .filter(
+                        appointment =>
+                            appointment.status ===
+                            'completed'
+                    )
+                    .reduce(
+                        (
+                            total,
+                            appointment
+                        ) =>
+                            total +
+                            getAppointmentPrice(
+                                appointment
+                            ),
+                        0
+                    );
+
+            },
+            [
+                last7Appointments
+            ]
+        );
+
+
+    /*
+     * ============================================================
+     * CANCELLED LAST 7 DAYS
+     * ============================================================
+     */
+
+    const cancelledWeek =
+        useMemo(
+            () => {
+
+                return last7Appointments.filter(
+                    appointment => {
+
+                        return (
+                            appointment.status ===
+                                'cancelled' ||
+
+                            appointment.status ===
+                                'cancelled_by_client' ||
+
+                            appointment.status ===
+                                'cancelled_by_business'
+                        );
+                    }
+                );
+
+            },
+            [
+                last7Appointments
+            ]
+        );
+
+
+    /*
+     * ============================================================
+     * CONVERSION
+     * ============================================================
+     */
+
+    const completedForConversion =
+        appointments.filter(
+            appointment =>
+                appointment.status ===
+                'completed'
+        ).length;
+
+
+    const cancelledForConversion =
+        appointments.filter(
+            appointment =>
+
+                appointment.status ===
+                    'cancelled' ||
+
+                appointment.status ===
+                    'cancelled_by_client' ||
+
+                appointment.status ===
+                    'cancelled_by_business'
+        ).length;
+
+
+    const conversionBase =
+        completedForConversion +
+        cancelledForConversion;
+
+
+    const conversion =
+        conversionBase > 0
+            ? Math.round(
+                (
+                    completedForConversion /
+                    conversionBase
+                ) * 100
+            )
+            : 0;
+
+
+    /*
+     * ============================================================
+     * SUMMARY
+     * ============================================================
+     */
+
+    const summary =
+        dashboardData?.summary;
+
+
+    const todayCount =
+        summary?.today_count ??
+        todayAppointments.length;
+
+
+    const pendingCount =
+        summary?.pending_count ??
+        0;
+
+
+    const confirmedCount =
+        summary?.confirmed_count ??
+        0;
+
+
+    const completedCount =
+        summary?.completed_count ??
+        0;
+
+
+    const completedRevenue =
+        Number(
+            summary?.completed_revenue ??
+            0
+        );
+
+
+    const expectedRevenue =
+        Number(
+            summary?.expected_revenue ??
+            0
+        );
+
+
+    /*
+     * ============================================================
+     * BUSINESS INFO
+     * ============================================================
+     */
+
+    const businessName =
+        business?.name ??
+        selectedBusiness?.label ??
+        'Бизнес';
+
+
+    const businessLocation =
+        [
+            business?.city_name,
+            business?.address
+        ]
+            .filter(
+                Boolean
+            )
+            .join(
+                ', '
+            );
+
+
+    /*
+     * ============================================================
+     * NO BUSINESSES
+     * ============================================================
+     */
+
+    if (
+        !isBusinessesLoading &&
+        businesses.length === 0
+    ) {
+
+        return (
+            <div
+                className="
+                    flex
+                    min-h-[500px]
+                    items-center
+                    justify-center
+                    bg-[#F7F8FD]
+                "
+            >
+                <div
+                    className="
+                        rounded-2xl
+                        border
+                        border-[#D9DDEC]
+                        bg-white
+                        px-8
+                        py-6
+                        text-[14px]
+                        text-[#667085]
+                        shadow-sm
+                    "
+                >
+                    У вас пока нет бизнесов
+                </div>
+            </div>
+        );
+    }
+
+
+    /*
+     * ============================================================
+     * RENDER
+     * ============================================================
+     */
+
     return (
         <div
             className="
                 min-h-full
                 bg-[#F7F8FD]
-                p-4
-                sm:p-6
+                px-4
+                py-5
+                md:px-5
+                xl:px-6
+                xl:py-6
             "
         >
 
-            {/* HEADER */}
-
             <div
                 className="
-                    mb-6
-                    flex
-                    flex-col
-                    gap-4
-                    xl:flex-row
-                    xl:items-start
-                    xl:justify-between
+                    mx-auto
+                    w-full
+                    max-w-[1600px]
                 "
             >
 
-                <div>
-
-                    <h1
-                        className="
-                            text-3xl
-                            font-bold
-                            tracking-tight
-                            text-[#0F172A]
-                        "
-                    >
-                        Dashboard
-                    </h1>
-
-
-                    <p
-                        className="
-                            mt-1
-                            text-xs
-                            text-slate-500
-                        "
-                    >
-                        Обзор бизнеса, записей,
-                        мастеров, услуг и дохода.
-                    </p>
-
-                </div>
-
-
-                {/* BUSINESS */}
-
-                <button
-                    type="button"
-                    className="
-                        flex
-                        min-w-[230px]
-                        items-center
-                        gap-3
-                        self-start
-                        rounded-2xl
-                        border
-                        border-[#D9DDED]
-                        bg-white
-                        px-3
-                        py-2.5
-                        shadow-sm
-                    "
-                >
-
-                    <div
-                        className="
-                            flex
-                            h-9
-                            w-9
-                            items-center
-                            justify-center
-                            rounded-lg
-                            bg-slate-50
-                        "
-                    >
-                        <Scissors
-                            size={17}
-                            className="
-                                text-[#4F46E5]
-                            "
-                        />
-                    </div>
-
-
-                    <div
-                        className="
-                            flex-1
-                            text-left
-                        "
-                    >
-
-                        <div
-                            className="
-                                flex
-                                items-center
-                                gap-2
-                            "
-                        >
-
-                            <span
-                                className="
-                                    text-xs
-                                    font-semibold
-                                    text-slate-800
-                                "
-                            >
-                                Premium Barbershop
-                            </span>
-
-
-                            <span
-                                className="
-                                    rounded
-                                    bg-green-50
-                                    px-1.5
-                                    py-0.5
-                                    text-[8px]
-                                    font-semibold
-                                    text-green-600
-                                "
-                            >
-                                ACTIVE
-                            </span>
-
-                        </div>
-
-
-                        <div
-                            className="
-                                mt-0.5
-                                text-[9px]
-                                text-slate-400
-                            "
-                        >
-                            Алматы, пр. Абая
-                        </div>
-
-                    </div>
-
-
-                    <span
-                        className="
-                            text-xs
-                            text-slate-400
-                        "
-                    >
-                        ⌄
-                    </span>
-
-                </button>
-
-            </div>
-
-
-            {/* MAIN GRID */}
-
-            <div
-                className="
-                    grid
-                    grid-cols-1
-                    gap-5
-                    xl:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]
-                "
-            >
-
-                {/* LEFT */}
+                {/* =================================================
+                    HEADER
+                ================================================= */}
 
                 <div
                     className="
-                        min-w-0
-                        space-y-5
+                        mb-6
+                        flex
+                        w-full
+                        justify-end
                     "
                 >
 
-                    {/* TOP STATS */}
+                    {/* =================================================
+                        BUSINESS SELECT
+                    ================================================= */}
 
                     <div
+                        ref={businessMenuRef}
                         className="
-                            grid
-                            grid-cols-1
-                            gap-3
-                            sm:grid-cols-2
-                            lg:grid-cols-4
+                            relative
+                            w-full
+                            sm:w-[310px]
                         "
                     >
 
-                        <StatCard
-                            title="Сегодня"
-                            value={12}
-                            subtitle="записей"
-                            icon={CalendarDays}
-                            variant="blue"
-                        />
-
-
-                        <StatCard
-                            title="Ожидают"
-                            value={3}
-                            icon={CalendarClock}
-                            variant="orange"
-                            badge="+1"
-                        />
-
-
-                        <StatCard
-                            title="Подтверждены"
-                            value={5}
-                            icon={CalendarCheck}
-                            variant="blue"
-                        />
-
-
-                        <StatCard
-                            title="Завершены"
-                            value={4}
-                            icon={CheckCircle2}
-                            variant="green"
-                        />
-
-                    </div>
-
-
-                    {/* REVENUE + CHART */}
-
-                    <div
-                        className="
-                            grid
-                            grid-cols-1
-                            gap-4
-                            lg:grid-cols-[190px_1fr]
-                        "
-                    >
-
-                        <div
-                            className="
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setIsBusinessMenuOpen(
+                                    previous =>
+                                        !previous
+                                )
+                            }
+                            className={`
                                 flex
-                                flex-col
+                                min-h-[58px]
+                                w-full
+                                items-center
                                 gap-3
-                            "
+                                rounded-2xl
+                                border
+                                bg-white
+                                px-3.5
+                                text-left
+                                shadow-sm
+                                transition
+
+                                ${
+                                    isBusinessMenuOpen
+                                        ? `
+                                            border-[#4F46E5]
+                                            ring-2
+                                            ring-[#4F46E5]/10
+                                        `
+                                        : `
+                                            border-[#D9DDEC]
+                                            hover:border-[#B9B5D3]
+                                        `
+                                }
+                            `}
                         >
+
+                            {/* ICON */}
 
                             <div
                                 className="
-                                    rounded-2xl
+                                    flex
+                                    h-10
+                                    w-10
+                                    shrink-0
+                                    items-center
+                                    justify-center
+                                    rounded-xl
                                     border
-                                    border-[#D9DDED]
-                                    border-l-4
-                                    border-l-[#4F46E5]
-                                    bg-white
-                                    p-4
-                                    shadow-sm
+                                    border-[#E5E7EB]
+                                    bg-[#F8FAFC]
+                                "
+                            >
+                                <Scissors
+                                    size={18}
+                                    className="
+                                        text-[#667085]
+                                    "
+                                />
+                            </div>
+
+
+                            {/* INFO */}
+
+                            <div
+                                className="
+                                    min-w-0
+                                    flex-1
                                 "
                             >
 
                                 <div
                                     className="
-                                        text-[10px]
-                                        text-slate-500
+                                        flex
+                                        items-center
+                                        gap-2
                                     "
                                 >
-                                    Доход (Завершенные)
+
+                                    <span
+                                        className="
+                                            truncate
+                                            text-[13px]
+                                            font-semibold
+                                            text-[#101828]
+                                        "
+                                    >
+                                        {businessName}
+                                    </span>
+
+
+                                    {business?.status ===
+                                        'active' && (
+
+                                        <span
+                                            className="
+                                                shrink-0
+                                                rounded-md
+                                                bg-[#ECFDF3]
+                                                px-1.5
+                                                py-0.5
+                                                text-[9px]
+                                                font-semibold
+                                                text-[#16A34A]
+                                            "
+                                        >
+                                            ACTIVE
+                                        </span>
+
+                                    )}
+
                                 </div>
 
 
                                 <div
                                     className="
                                         mt-1
-                                        text-2xl
-                                        font-bold
-                                        text-[#0F172A]
+                                        truncate
+                                        text-[11px]
+                                        text-[#667085]
                                     "
                                 >
-                                    10 000 ₸
-                                </div>
-
-
-                                <div
-                                    className="
-                                        mt-2
-                                        inline-flex
-                                        rounded
-                                        bg-green-50
-                                        px-1.5
-                                        py-0.5
-                                        text-[8px]
-                                        text-green-600
-                                    "
-                                >
-                                    ↑ 12% к прошлому дню
+                                    {businessLocation ||
+                                        'Выберите бизнес'
+                                    }
                                 </div>
 
                             </div>
 
 
+                            {/* ARROW */}
+
+                            <ChevronDown
+                                size={17}
+                                className={`
+                                    shrink-0
+                                    text-[#667085]
+                                    transition-transform
+                                    duration-200
+
+                                    ${
+                                        isBusinessMenuOpen
+                                            ? 'rotate-180'
+                                            : ''
+                                    }
+                                `}
+                            />
+
+                        </button>
+
+
+                        {/* =================================================
+                            DROPDOWN
+                        ================================================= */}
+
+                        {isBusinessMenuOpen && (
+
                             <div
                                 className="
-                                    flex-1
+                                    absolute
+                                    right-0
+                                    top-[calc(100%+8px)]
+                                    z-[100]
+                                    w-full
+                                    overflow-hidden
                                     rounded-2xl
                                     border
-                                    border-[#D9DDED]
+                                    border-[#D9DDEC]
                                     bg-white
-                                    p-4
-                                    shadow-sm
+                                    shadow-[0_14px_35px_rgba(15,23,42,0.12)]
+                                "
+                            >
+
+                                {/* TITLE */}
+
+                                <div
+                                    className="
+                                        border-b
+                                        border-[#EAECF0]
+                                        px-4
+                                        py-3
+                                    "
+                                >
+
+                                    <div
+                                        className="
+                                            text-[12px]
+                                            font-semibold
+                                            text-[#344054]
+                                        "
+                                    >
+                                        Выберите бизнес
+                                    </div>
+
+
+                                    <div
+                                        className="
+                                            mt-0.5
+                                            text-[10px]
+                                            text-[#98A2B3]
+                                        "
+                                    >
+                                        {businesses.length} бизнесов
+                                    </div>
+
+                                </div>
+
+
+                                {/* BUSINESS LIST */}
+
+                                <div
+                                    className="
+                                        max-h-[320px]
+                                        overflow-y-auto
+                                        p-2
+                                    "
+                                >
+
+                                    {businesses.map(
+                                        item => {
+
+                                            const selected =
+                                                String(
+                                                    item.id
+                                                ) ===
+                                                String(
+                                                    selectedBusiness?.id
+                                                );
+
+
+                                            const location =
+                                                [
+                                                    item.city_name,
+                                                    item.address
+                                                ]
+                                                    .filter(Boolean)
+                                                    .join(', ');
+
+
+                                            return (
+                                                <button
+                                                    key={item.id}
+                                                    type="button"
+                                                    onClick={() =>
+                                                        handleSelectBusiness(
+                                                            item.id,
+                                                            item.name
+                                                        )
+                                                    }
+                                                    className={`
+                                                        flex
+                                                        w-full
+                                                        items-center
+                                                        gap-3
+                                                        rounded-xl
+                                                        px-3
+                                                        py-3
+                                                        text-left
+                                                        transition
+
+                                                        ${
+                                                            selected
+                                                                ? 'bg-[#EEF2FF]'
+                                                                : 'hover:bg-[#F9FAFB]'
+                                                        }
+                                                    `}
+                                                >
+
+                                                    <div
+                                                        className={`
+                                                            flex
+                                                            h-9
+                                                            w-9
+                                                            shrink-0
+                                                            items-center
+                                                            justify-center
+                                                            rounded-lg
+
+                                                            ${
+                                                                selected
+                                                                    ? `
+                                                                        bg-white
+                                                                        text-[#4F46E5]
+                                                                    `
+                                                                    : `
+                                                                        bg-[#F2F4F7]
+                                                                        text-[#667085]
+                                                                    `
+                                                            }
+                                                        `}
+                                                    >
+                                                        <BriefcaseBusiness
+                                                            size={16}
+                                                        />
+                                                    </div>
+
+
+                                                    <div
+                                                        className="
+                                                            min-w-0
+                                                            flex-1
+                                                        "
+                                                    >
+
+                                                        <div
+                                                            className="
+                                                                flex
+                                                                items-center
+                                                                gap-2
+                                                            "
+                                                        >
+
+                                                            <span
+                                                                className="
+                                                                    truncate
+                                                                    text-[13px]
+                                                                    font-semibold
+                                                                    text-[#101828]
+                                                                "
+                                                            >
+                                                                {item.name}
+                                                            </span>
+
+
+                                                            {item.status ===
+                                                                'active' && (
+
+                                                                <span
+                                                                    className="
+                                                                        rounded
+                                                                        bg-[#ECFDF3]
+                                                                        px-1.5
+                                                                        py-0.5
+                                                                        text-[8px]
+                                                                        font-semibold
+                                                                        text-[#16A34A]
+                                                                    "
+                                                                >
+                                                                    ACTIVE
+                                                                </span>
+
+                                                            )}
+
+                                                        </div>
+
+
+                                                        {location && (
+
+                                                            <div
+                                                                className="
+                                                                    mt-1
+                                                                    truncate
+                                                                    text-[10px]
+                                                                    text-[#98A2B3]
+                                                                "
+                                                            >
+                                                                {location}
+                                                            </div>
+
+                                                        )}
+
+                                                    </div>
+
+
+                                                    {selected && (
+
+                                                        <div
+                                                            className="
+                                                                flex
+                                                                h-6
+                                                                w-6
+                                                                shrink-0
+                                                                items-center
+                                                                justify-center
+                                                                rounded-full
+                                                                bg-[#4F46E5]
+                                                                text-white
+                                                            "
+                                                        >
+                                                            <Check
+                                                                size={13}
+                                                            />
+                                                        </div>
+
+                                                    )}
+
+                                                </button>
+                                            );
+                                        }
+                                    )}
+
+                                </div>
+
+                            </div>
+
+                        )}
+
+                    </div>
+
+                </div>
+
+
+                {/* =================================================
+                    MAIN
+                ================================================= */}
+
+                {!businessId ? (
+
+                    <div
+                        className="
+                            flex
+                            min-h-[400px]
+                            items-center
+                            justify-center
+                            rounded-2xl
+                            border
+                            border-[#D9DDEC]
+                            bg-white
+                        "
+                    >
+                        <span
+                            className="
+                                text-[14px]
+                                text-[#667085]
+                            "
+                        >
+                            Выберите бизнес
+                        </span>
+                    </div>
+
+                ) : (
+
+                    <div
+                        className="
+                            grid
+                            grid-cols-1
+                            gap-5
+                            xl:grid-cols-[minmax(0,2.1fr)_minmax(320px,0.9fr)]
+                        "
+                    >
+
+                        {/* =============================================
+                            LEFT
+                        ============================================= */}
+
+                        <div
+                            className="
+                                min-w-0
+                                space-y-5
+                            "
+                        >
+
+                            {/* KPI */}
+
+                            <div
+                                className="
+                                    grid
+                                    grid-cols-1
+                                    gap-4
+                                    sm:grid-cols-2
+                                    lg:grid-cols-4
+                                "
+                            >
+
+                                <StatCard
+                                    title="Сегодня"
+                                    value={
+                                        isDashboardLoading
+                                            ? '...'
+                                            : todayCount
+                                    }
+                                    subtitle="записей"
+                                    icon={
+                                        CalendarDays
+                                    }
+                                />
+
+
+                                <StatCard
+                                    title="Ожидают"
+                                    value={
+                                        isDashboardLoading
+                                            ? '...'
+                                            : pendingCount
+                                    }
+                                    icon={
+                                        CalendarClock
+                                    }
+                                    variant="orange"
+                                />
+
+
+                                <StatCard
+                                    title="Подтверждены"
+                                    value={
+                                        isDashboardLoading
+                                            ? '...'
+                                            : confirmedCount
+                                    }
+                                    icon={
+                                        CalendarCheck
+                                    }
+                                />
+
+
+                                <StatCard
+                                    title="Завершены"
+                                    value={
+                                        isDashboardLoading
+                                            ? '...'
+                                            : completedCount
+                                    }
+                                    icon={
+                                        CheckCircle2
+                                    }
+                                    variant="green"
+                                />
+
+                            </div>
+
+
+                            {/* =============================================
+                                REVENUE + CHART
+                            ============================================= */}
+
+                            <div
+                                className="
+                                    grid
+                                    grid-cols-1
+                                    gap-4
+                                    lg:grid-cols-[230px_minmax(0,1fr)]
                                 "
                             >
 
                                 <div
                                     className="
-                                        text-[10px]
-                                        text-slate-500
+                                        grid
+                                        grid-cols-1
+                                        gap-4
+                                        sm:grid-cols-2
+                                        lg:grid-cols-1
                                     "
                                 >
-                                    Ожидаемый (Подтв.)
+
+                                    {/* COMPLETED REVENUE */}
+
+                                    <div
+                                        className="
+                                            flex
+                                            min-h-[108px]
+                                            flex-col
+                                            justify-center
+                                            rounded-2xl
+                                            border
+                                            border-[#D9DDEC]
+                                            border-l-4
+                                            border-l-[#4F46E5]
+                                            bg-white
+                                            p-4
+                                            shadow-sm
+                                        "
+                                    >
+
+                                        <div
+                                            className="
+                                                text-[12px]
+                                                font-medium
+                                                text-[#667085]
+                                            "
+                                        >
+                                            Доход (Завершенные)
+                                        </div>
+
+
+                                        <div
+                                            className="
+                                                mt-3
+                                                whitespace-nowrap
+                                                text-[26px]
+                                                font-bold
+                                                leading-none
+                                                text-[#101828]
+                                            "
+                                        >
+                                            {
+                                                completedRevenue
+                                                    .toLocaleString(
+                                                        'ru-RU'
+                                                    )
+                                            } ₸
+                                        </div>
+
+                                    </div>
+
+
+                                    {/* EXPECTED */}
+
+                                    <div
+                                        className="
+                                            flex
+                                            min-h-[108px]
+                                            flex-col
+                                            justify-center
+                                            rounded-2xl
+                                            border
+                                            border-[#D9DDEC]
+                                            bg-white
+                                            p-4
+                                            shadow-sm
+                                        "
+                                    >
+
+                                        <div
+                                            className="
+                                                text-[12px]
+                                                font-medium
+                                                text-[#667085]
+                                            "
+                                        >
+                                            Ожидаемый (Подтв.)
+                                        </div>
+
+
+                                        <div
+                                            className="
+                                                mt-3
+                                                whitespace-nowrap
+                                                text-[24px]
+                                                font-bold
+                                                leading-none
+                                                text-[#101828]
+                                            "
+                                        >
+                                            {
+                                                expectedRevenue
+                                                    .toLocaleString(
+                                                        'ru-RU'
+                                                    )
+                                            } ₸
+                                        </div>
+
+                                    </div>
+
                                 </div>
 
 
-                                <div
-                                    className="
-                                        mt-2
-                                        text-xl
-                                        font-bold
-                                        text-[#0F172A]
-                                    "
-                                >
-                                    5 000 ₸
-                                </div>
+                                <AppointmentsChart
+                                    appointments={
+                                        last7Appointments
+                                    }
+                                    revenue={
+                                        last7Revenue
+                                    }
+                                />
 
                             </div>
+
+
+                            {/* TODAY */}
+
+                            <TodayAppointments
+                                appointments={
+                                    todayAppointments
+                                }
+                                totalCount={
+                                    todayAppointments.length
+                                }
+                                isLoading={
+                                    isDashboardLoading
+                                }
+                                actionLoadingId={
+                                    actionLoadingId
+                                }
+                                onConfirm={(
+                                    id
+                                ) =>
+                                    confirmMutation.mutate(
+                                        id
+                                    )
+                                }
+                                onComplete={(
+                                    id
+                                ) =>
+                                    completeMutation.mutate(
+                                        id
+                                    )
+                                }
+                                onCancel={(
+                                    id
+                                ) =>
+                                    cancelMutation.mutate(
+                                        id
+                                    )
+                                }
+                            />
 
                         </div>
 
 
-                        <AppointmentsChart />
+                        {/* =============================================
+                            RIGHT
+                        ============================================= */}
+
+                        <div
+                            className="
+                                min-w-0
+                                space-y-5
+                            "
+                        >
+
+                            <div
+                                className="
+                                    grid
+                                    grid-cols-2
+                                    gap-4
+                                "
+                            >
+
+                                <MiniStatCard
+                                    title="Услуги"
+                                    value={
+                                        business
+                                            ?.services_count ??
+                                        0
+                                    }
+                                    icon={
+                                        BriefcaseBusiness
+                                    }
+                                />
+
+
+                                <MiniStatCard
+                                    title="Мастеров"
+                                    value={
+                                        business
+                                            ?.staff_count ??
+                                        0
+                                    }
+                                    icon={
+                                        UserRound
+                                    }
+                                />
+
+
+                                <MiniStatCard
+                                    title="Отмены (7 дн.)"
+                                    value={
+                                        cancelledWeek.length
+                                    }
+                                    icon={
+                                        UsersRound
+                                    }
+                                />
+
+
+                                <MiniStatCard
+                                    title="Конверсия"
+                                    value={
+                                        `${conversion}%`
+                                    }
+                                    icon={
+                                        Percent
+                                    }
+                                    highlight
+                                />
+
+                            </div>
+
+
+                            <AttentionCard
+                                pendingCount={
+                                    pendingCount
+                                }
+                            />
+
+
+                            <QuickActions />
+
+
+                            <TomorrowCard
+                                appointments={
+                                    tomorrowAppointments
+                                }
+                            />
+
+                        </div>
 
                     </div>
 
-
-                    {/* TABLE */}
-
-                    <TodayAppointments />
-
-                </div>
-
-
-                {/* RIGHT */}
-
-                <div
-                    className="
-                        min-w-0
-                        space-y-5
-                    "
-                >
-
-                    {/* SMALL STATS */}
-
-                    <div
-                        className="
-                            grid
-                            grid-cols-2
-                            gap-3
-                        "
-                    >
-
-                        <MiniStatCard
-                            title="Услуги"
-                            value={24}
-                            icon={WalletCards}
-                        />
-
-
-                        <MiniStatCard
-                            title="Мастеров"
-                            value={5}
-                            icon={UserRound}
-                        />
-
-
-                        <MiniStatCard
-                            title="Отмены (нед)"
-                            value={2}
-                            icon={UsersRound}
-                        />
-
-
-                        <MiniStatCard
-                            title="Конверсия"
-                            value="85%"
-                            icon={Percent}
-                            highlight
-                        />
-
-                    </div>
-
-
-                    <AttentionCard />
-
-
-                    <QuickActions />
-
-
-                    <TomorrowCard />
-
-                </div>
+                )}
 
             </div>
 

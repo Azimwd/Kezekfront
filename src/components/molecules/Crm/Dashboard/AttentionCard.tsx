@@ -1,9 +1,25 @@
 import {
-    AlertCircle
+    AlertCircle,
+    ChevronRight
 } from 'lucide-react';
 
+import {
+    useNavigate
+} from 'react-router-dom';
 
-export default function AttentionCard() {
+
+interface AttentionCardProps {
+    pendingCount: number;
+}
+
+
+export default function AttentionCard({
+    pendingCount
+}: AttentionCardProps) {
+
+    const navigate =
+        useNavigate();
+
 
     return (
         <div
@@ -11,97 +27,203 @@ export default function AttentionCard() {
                 overflow-hidden
                 rounded-2xl
                 border
-                border-[#F0D99B]
+                border-[#F2D79A]
                 bg-white
+                shadow-sm
             "
         >
+
+            {/* HEADER */}
 
             <div
                 className="
                     flex
                     items-center
                     gap-2
-                    bg-[#FFF5DB]
+                    bg-[#FFF4DA]
                     px-4
                     py-3
-                    text-xs
-                    font-medium
-                    text-orange-600
+                    text-[13px]
+                    font-semibold
+                    text-[#F79009]
                 "
             >
+
                 <AlertCircle
-                    size={14}
+                    size={17}
                 />
 
                 Требуют внимания
+
             </div>
 
 
-            <div
+            {/* PENDING APPOINTMENTS */}
+
+            <button
+                type="button"
+                onClick={() =>
+                    navigate(
+                        '/crm/appointments?status=pending'
+                    )
+                }
                 className="
-                    divide-y
-                    divide-slate-100
+                    flex
+                    w-full
+                    items-center
+                    gap-3
+                    border-b
+                    border-[#EAECF0]
+                    px-4
+                    py-4
+                    text-left
+                    transition
+                    hover:bg-[#F9FAFB]
                 "
             >
 
                 <div
                     className="
-                        px-4
-                        py-3
+                        min-w-0
+                        flex-1
                     "
                 >
+
                     <div
                         className="
-                            text-xs
-                            font-medium
-                            text-slate-800
+                            flex
+                            items-center
+                            gap-2
                         "
                     >
-                        Неподтвержденные записи (3)
+
+                        <span
+                            className="
+                                text-[13px]
+                                font-medium
+                                text-[#344054]
+                            "
+                        >
+                            Неподтвержденные записи
+                        </span>
+
+
+                        {pendingCount > 0 && (
+
+                            <span
+                                className="
+                                    flex
+                                    min-w-[22px]
+                                    items-center
+                                    justify-center
+                                    rounded-full
+                                    bg-[#FFF7ED]
+                                    px-1.5
+                                    py-0.5
+                                    text-[10px]
+                                    font-semibold
+                                    text-[#F79009]
+                                "
+                            >
+                                {pendingCount}
+                            </span>
+
+                        )}
+
                     </div>
+
 
                     <div
                         className="
                             mt-1
-                            text-[10px]
-                            text-slate-400
+                            text-[11px]
+                            leading-4
+                            text-[#98A2B3]
                         "
                     >
-                        Свяжитесь с клиентами
-                        для подтверждения
+                        {pendingCount > 0
+                            ? 'Записи ожидают подтверждения'
+                            : 'Все записи обработаны'
+                        }
                     </div>
+
                 </div>
 
+
+                <ChevronRight
+                    size={17}
+                    className="
+                        shrink-0
+                        text-[#98A2B3]
+                    "
+                />
+
+            </button>
+
+
+            {/* SCHEDULE */}
+
+            <button
+                type="button"
+                onClick={() =>
+                    navigate(
+                        '/crm/schedule'
+                    )
+                }
+                className="
+                    flex
+                    w-full
+                    items-center
+                    gap-3
+                    px-4
+                    py-4
+                    text-left
+                    transition
+                    hover:bg-[#F9FAFB]
+                "
+            >
 
                 <div
                     className="
-                        px-4
-                        py-3
+                        min-w-0
+                        flex-1
                     "
                 >
+
                     <div
                         className="
-                            text-xs
+                            text-[13px]
                             font-medium
-                            text-slate-800
+                            text-[#344054]
                         "
                     >
-                        Расписание не заполнено
+                        Расписание мастеров
                     </div>
+
 
                     <div
                         className="
                             mt-1
-                            text-[10px]
-                            text-slate-400
+                            text-[11px]
+                            leading-4
+                            text-[#98A2B3]
                         "
                     >
-                        У мастера “Тимур”
-                        нет графика на след. неделю
+                        Проверьте рабочий график сотрудников
                     </div>
+
                 </div>
 
-            </div>
+
+                <ChevronRight
+                    size={17}
+                    className="
+                        shrink-0
+                        text-[#98A2B3]
+                    "
+                />
+
+            </button>
 
         </div>
     );
