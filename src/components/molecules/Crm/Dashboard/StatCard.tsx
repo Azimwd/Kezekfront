@@ -5,13 +5,9 @@ import type {
 
 interface StatCardProps {
     title: string;
-
     value: string | number;
-
     subtitle?: string;
-
     icon: LucideIcon;
-
     variant?:
         | 'default'
         | 'orange'
@@ -26,19 +22,31 @@ export default function StatCard({
     icon: Icon,
     variant = 'default'
 }: StatCardProps) {
-
     const isGreen =
         variant === 'green';
+
+
+    const accentColor =
+        variant === 'orange'
+            ? 'bg-[#F59E0B]'
+            : isGreen
+                ? 'bg-[#10B981]'
+                : 'bg-[#4F46E5]';
 
 
     return (
         <div
             className={`
-                min-h-[108px]
+                relative
+                w-full
+                min-w-0
+                min-h-[116px]
+                overflow-hidden
                 rounded-2xl
                 border
-                p-4
                 shadow-sm
+
+                sm:min-h-[125px]
 
                 ${
                     isGreen
@@ -53,107 +61,131 @@ export default function StatCard({
                 }
             `}
         >
+            <div
+                className={`
+                    absolute
+                    inset-x-0
+                    top-0
+                    h-[4px]
+                    ${accentColor}
+                `}
+            />
+
 
             <div
                 className="
                     flex
-                    items-start
-                    justify-between
-                    gap-3
+                    min-h-[116px]
+                    min-w-0
+                    flex-col
+                    px-4
+                    pb-4
+                    pt-5
+
+                    sm:min-h-[125px]
                 "
             >
+                <div
+                    className="
+                        flex
+                        min-w-0
+                        items-start
+                        justify-between
+                        gap-3
+                    "
+                >
+                    <div
+                        className="
+                            min-w-0
+                            flex-1
+                            break-words
+                            text-[13px]
+                            font-medium
+                            leading-5
+                            text-[#667085]
+                        "
+                    >
+                        {title}
+                    </div>
+
+
+                    <div
+                        className={`
+                            flex
+                            h-9
+                            w-9
+                            shrink-0
+                            items-center
+                            justify-center
+                            rounded-xl
+
+                            ${
+                                variant === 'orange'
+                                    ? `
+                                        bg-[#FFF7ED]
+                                        text-[#F97316]
+                                    `
+                                    : isGreen
+                                        ? `
+                                            bg-[#ECFDF3]
+                                            text-[#16A34A]
+                                        `
+                                        : `
+                                            bg-[#EEF2FF]
+                                            text-[#4F46E5]
+                                        `
+                            }
+                        `}
+                    >
+                        <Icon
+                            size={18}
+                        />
+                    </div>
+                </div>
+
 
                 <div
                     className="
-                        text-[12px]
-                        font-medium
-                        text-[#667085]
+                        mt-auto
+                        min-w-0
+                        pt-3
                     "
                 >
-                    {title}
-                </div>
+                    <div
+                        className={`
+                            break-words
+                            text-[30px]
+                            font-bold
+                            leading-none
 
+                            sm:text-[32px]
 
-                <div
-                    className={`
-                        flex
-                        h-9
-                        w-9
-                        shrink-0
-                        items-center
-                        justify-center
-                        rounded-xl
-
-                        ${
-                            variant === 'orange'
-                                ? `
-                                    bg-[#FFF7ED]
-                                    text-[#F97316]
-                                `
-
-                                : isGreen
-                                    ? `
-                                        bg-[#ECFDF3]
-                                        text-[#16A34A]
-                                    `
-
-                                    : `
-                                        bg-[#EEF2FF]
-                                        text-[#4F46E5]
-                                    `
-                        }
-                    `}
-                >
-                    <Icon
-                        size={17}
-                    />
-                </div>
-
-            </div>
-
-
-            <div
-                className="
-                    mt-3
-                    flex
-                    items-end
-                    gap-2
-                "
-            >
-
-                <span
-                    className={`
-                        text-[32px]
-                        font-bold
-                        leading-none
-
-                        ${
-                            isGreen
-                                ? 'text-[#166534]'
-                                : 'text-[#101828]'
-                        }
-                    `}
-                >
-                    {value}
-                </span>
-
-
-                {subtitle && (
-
-                    <span
-                        className="
-                            mb-1
-                            text-[11px]
-                            text-[#98A2B3]
-                        "
+                            ${
+                                isGreen
+                                    ? 'text-[#166534]'
+                                    : 'text-[#101828]'
+                            }
+                        `}
                     >
-                        {subtitle}
-                    </span>
+                        {value}
+                    </div>
 
-                )}
 
+                    {subtitle && (
+                        <div
+                            className="
+                                mt-2
+                                break-words
+                                text-[11px]
+                                leading-4
+                                text-[#98A2B3]
+                            "
+                        >
+                            {subtitle}
+                        </div>
+                    )}
+                </div>
             </div>
-
         </div>
     );
 }

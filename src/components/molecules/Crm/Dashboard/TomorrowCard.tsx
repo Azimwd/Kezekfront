@@ -30,16 +30,9 @@ interface TomorrowCardProps {
 export default function TomorrowCard({
     appointments
 }: TomorrowCardProps) {
-
     const navigate =
         useNavigate();
 
-
-    /*
-     * ============================================================
-     * ЗАВТРАШНЯЯ ДАТА
-     * ============================================================
-     */
 
     const tomorrow =
         addDays(
@@ -57,12 +50,6 @@ export default function TomorrowCard({
             }
         );
 
-
-    /*
-     * ============================================================
-     * СОРТИРОВКА ЗАПИСЕЙ
-     * ============================================================
-     */
 
     const visibleAppointments =
         appointments
@@ -85,15 +72,11 @@ export default function TomorrowCard({
             );
 
 
-    /*
-     * ============================================================
-     * RENDER
-     * ============================================================
-     */
-
     return (
         <div
             className="
+                w-full
+                min-w-0
                 overflow-hidden
                 rounded-2xl
                 border
@@ -102,9 +85,6 @@ export default function TomorrowCard({
                 shadow-sm
             "
         >
-
-            {/* HEADER */}
-
             <button
                 type="button"
                 onClick={() =>
@@ -114,24 +94,32 @@ export default function TomorrowCard({
                 }
                 className="
                     flex
+                    min-h-[50px]
                     w-full
+                    min-w-0
+                    cursor-pointer
                     items-center
                     justify-between
+                    gap-3
                     border-b
                     border-[#EAECF0]
-                    px-4
+                    px-3.5
                     py-3.5
                     text-left
                     transition
                     hover:bg-[#F9FAFB]
+
+                    sm:px-4
                 "
             >
-
                 <span
                     className="
+                        min-w-0
+                        break-words
                         text-[13px]
                         font-semibold
                         capitalize
+                        leading-5
                         text-[#344054]
                     "
                 >
@@ -146,47 +134,45 @@ export default function TomorrowCard({
                         text-[#4F46E5]
                     "
                 />
-
             </button>
 
 
-            {/* CONTENT */}
-
             <div
                 className="
-                    p-4
+                    p-3.5
+
+                    sm:p-4
                 "
             >
-
                 {visibleAppointments.length === 0 ? (
-
                     <div
                         className="
                             flex
                             min-h-[90px]
                             items-center
                             justify-center
+                            px-2
                             text-center
                             text-[12px]
+                            leading-5
                             text-[#98A2B3]
                         "
                     >
                         На завтра записей нет
                     </div>
-
                 ) : (
-
                     <div
                         className="
                             flex
+                            min-w-0
                             flex-col
-                            gap-4
+                            gap-2
+
+                            sm:gap-3
                         "
                     >
-
                         {visibleAppointments.map(
                             appointment => {
-
                                 const clientName =
                                     getAppointmentClientName(
                                         appointment
@@ -206,9 +192,7 @@ export default function TomorrowCard({
 
                                 return (
                                     <button
-                                        key={
-                                            appointment.id
-                                        }
+                                        key={appointment.id}
                                         type="button"
                                         onClick={() =>
                                             navigate(
@@ -219,18 +203,19 @@ export default function TomorrowCard({
                                             group
                                             grid
                                             w-full
-                                            grid-cols-[54px_minmax(0,1fr)]
-                                            gap-3
+                                            min-w-0
+                                            grid-cols-[46px_minmax(0,1fr)]
+                                            gap-2.5
                                             rounded-xl
-                                            p-2
+                                            p-2.5
                                             text-left
                                             transition
                                             hover:bg-[#F9FAFB]
+
+                                            sm:grid-cols-[54px_minmax(0,1fr)]
+                                            sm:gap-3
                                         "
                                     >
-
-                                        {/* TIME */}
-
                                         <div
                                             className="
                                                 pt-0.5
@@ -250,14 +235,11 @@ export default function TomorrowCard({
                                         </div>
 
 
-                                        {/* INFO */}
-
                                         <div
                                             className="
                                                 min-w-0
                                             "
                                         >
-
                                             <div
                                                 className="
                                                     truncate
@@ -289,25 +271,17 @@ export default function TomorrowCard({
                                                     </>
                                                 )}
                                             </div>
-
                                         </div>
-
                                     </button>
                                 );
                             }
                         )}
-
                     </div>
-
                 )}
-
             </div>
 
 
-            {/* FOOTER */}
-
             {appointments.length > 3 && (
-
                 <button
                     type="button"
                     onClick={() =>
@@ -317,8 +291,10 @@ export default function TomorrowCard({
                     }
                     className="
                         w-full
+                        cursor-pointer
                         border-t
                         border-[#EAECF0]
+                        px-3
                         py-3
                         text-[12px]
                         font-medium
@@ -327,13 +303,9 @@ export default function TomorrowCard({
                         hover:bg-[#F9FAFB]
                     "
                 >
-                    Показать все записи
-                    {' '}
-                    ({appointments.length})
+                    Показать все записи ({appointments.length})
                 </button>
-
             )}
-
         </div>
     );
 }

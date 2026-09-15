@@ -26,33 +26,51 @@ export default function ConfirmationOfRecords({
     return (
         <section
             className="
+                w-full
+                min-w-0
                 rounded-2xl
                 border
                 border-[#cbc9df]
                 bg-white
-                p-6
+                p-4
+
+                sm:p-5
+                md:p-6
             "
         >
+            {/* HEADER */}
 
-            <div className="flex items-center gap-3">
-
+            <div
+                className="
+                    flex
+                    min-w-0
+                    items-center
+                    gap-3
+                "
+            >
                 <div
                     className="
                         flex
-                        h-10
-                        w-10
+                        h-9
+                        w-9
                         shrink-0
                         items-center
                         justify-center
                         rounded-full
                         bg-[#f1efff]
+
+                        sm:h-10
+                        sm:w-10
                     "
                 >
                     <CircleCheckBig
                         className="
-                            h-5
-                            w-5
+                            h-4
+                            w-4
                             text-[#4031d0]
+
+                            sm:h-5
+                            sm:w-5
                         "
                     />
                 </div>
@@ -60,34 +78,51 @@ export default function ConfirmationOfRecords({
 
                 <h2
                     className="
-                        text-xl
+                        min-w-0
+                        text-lg
                         font-semibold
+                        leading-6
                         text-slate-900
+
+                        sm:text-xl
                     "
                 >
                     Подтверждение записей
                 </h2>
-
             </div>
 
 
+            {/* CONTENT */}
+
             <div
                 className="
-                    mt-7
+                    mt-5
                     flex
-                    items-center
-                    justify-between
-                    gap-6
+                    min-w-0
+                    flex-col
+                    gap-4
+
+                    sm:mt-7
+                    sm:flex-row
+                    sm:items-center
+                    sm:justify-between
+                    sm:gap-6
                 "
             >
-
-                <div>
-
+                <div
+                    className="
+                        min-w-0
+                        flex-1
+                    "
+                >
                     <div
                         className="
-                            text-sm
+                            text-[13px]
                             font-semibold
+                            leading-5
                             text-slate-700
+
+                            sm:text-sm
                         "
                     >
                         Автоматически подтверждать записи
@@ -98,33 +133,42 @@ export default function ConfirmationOfRecords({
                         className="
                             mt-1.5
                             max-w-[530px]
-                            text-[13px]
-                            leading-relaxed
+                            text-[12px]
+                            leading-5
                             text-slate-500
+
+                            sm:text-[13px]
                         "
                     >
                         Если включено, записи клиентов подтверждаются
                         автоматически. Если выключено — новые записи
                         требуют ручного подтверждения администратором.
                     </p>
-
                 </div>
 
 
-                <Toggle
-                    checked={
-                        settings.auto_confirm_bookings
-                    }
-                    onChange={() =>
-                        updateField(
-                            'auto_confirm_bookings',
-                            !settings.auto_confirm_bookings
-                        )
-                    }
-                />
+                <div
+                    className="
+                        flex
+                        w-full
+                        justify-end
 
+                        sm:w-auto
+                    "
+                >
+                    <Toggle
+                        checked={
+                            settings.auto_confirm_bookings
+                        }
+                        onChange={() =>
+                            updateField(
+                                'auto_confirm_bookings',
+                                !settings.auto_confirm_bookings
+                            )
+                        }
+                    />
+                </div>
             </div>
-
         </section>
     );
 }
@@ -148,9 +192,11 @@ function Toggle({
                 h-7
                 w-12
                 shrink-0
+                cursor-pointer
                 rounded-full
                 transition-colors
                 duration-200
+
                 ${
                     checked
                         ? 'bg-[#4a38e8]'
@@ -170,6 +216,7 @@ function Toggle({
                     shadow-sm
                     transition-transform
                     duration-200
+
                     ${
                         checked
                             ? 'translate-x-5'

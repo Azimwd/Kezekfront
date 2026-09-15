@@ -4,7 +4,7 @@ import Logo from '../../molecules/Crm/Logo';
 import Typography from '../../atoms/Typography';
 import Icon from '../../atoms/Icon';
 import { Menu, LogOut, type LucideIcon } from 'lucide-react';
-import Logout from './Logout';
+import Logout from './BackToCatalog';
 
 export interface NavType {
     id: number;

@@ -10,9 +10,7 @@ import type {
 interface MiniStatCardProps {
     title: string;
     value: string | number;
-
     icon?: LucideIcon;
-
     highlight?: boolean;
 }
 
@@ -23,11 +21,6 @@ export default function MiniStatCard({
     icon,
     highlight = false
 }: MiniStatCardProps) {
-
-    /*
-     * Если переданная иконка undefined,
-     * используем безопасную стандартную иконку.
-     */
     const Icon =
         icon ?? Circle;
 
@@ -35,12 +28,17 @@ export default function MiniStatCard({
     return (
         <div
             className={`
-                min-h-[96px]
+                w-full
+                min-w-0
+                min-h-[92px]
                 rounded-2xl
                 border
-                p-4
+                p-3.5
                 shadow-sm
                 transition
+
+                sm:min-h-[96px]
+                sm:p-4
 
                 ${
                     highlight
@@ -55,29 +53,29 @@ export default function MiniStatCard({
                 }
             `}
         >
-
             <div
                 className="
                     flex
+                    min-w-0
                     items-start
                     justify-between
-                    gap-3
+                    gap-2.5
                 "
             >
-
-                {/* VALUE + TITLE */}
-
                 <div
                     className="
                         min-w-0
+                        flex-1
                     "
                 >
-
                     <div
                         className={`
-                            text-[26px]
+                            break-words
+                            text-[24px]
                             font-bold
                             leading-none
+
+                            sm:text-[26px]
 
                             ${
                                 highlight
@@ -93,28 +91,32 @@ export default function MiniStatCard({
                     <div
                         className="
                             mt-2
-                            text-[12px]
+                            break-words
+                            text-[11px]
                             font-medium
+                            leading-4
                             text-[#667085]
+
+                            sm:text-[12px]
                         "
                     >
                         {title}
                     </div>
-
                 </div>
 
-
-                {/* ICON */}
 
                 <div
                     className={`
                         flex
-                        h-9
-                        w-9
+                        h-8
+                        w-8
                         shrink-0
                         items-center
                         justify-center
                         rounded-xl
+
+                        sm:h-9
+                        sm:w-9
 
                         ${
                             highlight
@@ -129,16 +131,12 @@ export default function MiniStatCard({
                         }
                     `}
                 >
-
                     <Icon
-                        size={17}
+                        size={16}
                         strokeWidth={1.8}
                     />
-
                 </div>
-
             </div>
-
         </div>
     );
 }

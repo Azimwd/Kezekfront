@@ -79,21 +79,15 @@ export default function Header() {
         select: (
             businesses
         ): SelectOption[] =>
-
             businesses.map(
-                (
-                    business
-                ) => ({
-
+                business => ({
                     id:
                         business.id,
 
                     label:
                         business.name
-
                 })
             )
-
     });
 
 
@@ -107,7 +101,8 @@ export default function Header() {
         () => {
 
             if (
-                businessOptions.length === 0
+                businessOptions.length ===
+                0
             ) {
                 return;
             }
@@ -115,11 +110,8 @@ export default function Header() {
 
             const selectedExists =
                 selectedBusiness
-
                     ? businessOptions.some(
-                        (
-                            business
-                        ) =>
+                        business =>
                             String(
                                 business.id
                             ) ===
@@ -127,7 +119,6 @@ export default function Header() {
                                 selectedBusiness.id
                             )
                     )
-
                     : false;
 
 
@@ -138,7 +129,6 @@ export default function Header() {
                 setSelectedBusiness(
                     businessOptions[0]
                 );
-
             }
 
         },
@@ -148,30 +138,6 @@ export default function Header() {
             setSelectedBusiness
         ]
     );
-
-
-    /*
-     * ============================================================
-     * LOADING
-     * ============================================================
-     */
-
-    if (
-        isBusinessesPending
-    ) {
-
-        return (
-            <div
-                className="
-                    text-sm
-                    text-slate-500
-                "
-            >
-                Загрузка бизнесов...
-            </div>
-        );
-
-    }
 
 
     /*
@@ -186,7 +152,6 @@ export default function Header() {
             navigate(
                 '/crm/appointments/create'
             );
-
         };
 
 
@@ -201,170 +166,175 @@ export default function Header() {
             className="
                 flex
                 w-full
+                min-w-0
                 flex-col
-                items-start
-                justify-between
-                gap-5
-                md:flex-row
-                md:items-center
+                gap-3
+
+                sm:flex-row
+                sm:items-center
+                sm:justify-end
+                sm:gap-4
             "
         >
 
             {/* =====================================================
-                LEFT
+                BUSINESS SELECT
             ===================================================== */}
 
             <div
                 className="
-                    flex
-                    flex-col
+                    w-full
+                    min-w-0
+
+                    sm:w-[250px]
+                    sm:shrink-0
                 "
             >
 
-                <Typography
-                    text="Записи"
-                    className="
-                        mb-1
-                        text-3xl
-                        font-bold
-                    "
-                />
+                {isBusinessesPending ? (
 
+                    <div
+                        className="
+                            flex
+                            h-[46px]
+                            w-full
+                            items-center
+                            rounded-xl
+                            border
+                            border-[#c7c4d8]
+                            bg-white
+                            px-4
+                            text-sm
+                            text-slate-500
+                        "
+                    >
+                        Загрузка бизнесов...
+                    </div>
 
-                <Typography
-                    text="Управляйте бронированиями клиентов, статусами и переносом времени."
-                    className="
-                        text-sm
-                        text-slate-500
-                    "
-                />
+                ) : businessOptions.length > 0 &&
+                    selectedBusiness ? (
+
+                    <Select
+                        options={
+                            businessOptions
+                        }
+                        value={
+                            selectedBusiness
+                        }
+                        onChange={
+                            setSelectedBusiness
+                        }
+                        className="
+                            w-full
+                            min-w-0
+                            rounded-xl
+                            border
+                            border-[#c7c4d8]
+                            bg-white
+                        "
+                    />
+
+                ) : (
+
+                    <div
+                        className="
+                            flex
+                            h-[46px]
+                            w-full
+                            items-center
+                            rounded-xl
+                            border
+                            border-[#c7c4d8]
+                            bg-white
+                            px-4
+                            text-sm
+                            text-slate-500
+                        "
+                    >
+                        Нет бизнесов
+                    </div>
+
+                )}
 
             </div>
 
 
             {/* =====================================================
-                RIGHT
+                DIVIDER
             ===================================================== */}
 
             <div
                 className="
+                    hidden
+                    h-8
+                    w-px
+                    shrink-0
+                    bg-gray-200
+
+                    sm:block
+                "
+            />
+
+
+            {/* =====================================================
+                CREATE APPOINTMENT
+            ===================================================== */}
+
+            <Button
+                type="button"
+                onClick={
+                    handleCreateAppointment
+                }
+                className="
                     flex
-                    flex-col
-                    items-stretch
-                    gap-5
-                    sm:flex-row
-                    sm:items-center
+                    h-[46px]
+                    w-full
+                    cursor-pointer
+                    items-center
+                    justify-center
+                    gap-2
+                    rounded-xl
+                    border
+                    border-[#4031d0]
+                    bg-white
+                    px-5
+                    text-[#4031d0]
+                    transition-colors
+
+                    hover:bg-[#F5F3FF]
+                    active:bg-[#EDE9FE]
+
+                    sm:w-auto
+                    sm:shrink-0
+                    sm:px-6
                 "
             >
 
-                {/* =================================================
-                    BUSINESS SELECT
-                ================================================= */}
-
-                <div
-                    className="
-                        w-full
-                        bg-white
-                        sm:w-[250px]
-                    "
-                >
-
-                    {businessOptions.length > 0 &&
-                    selectedBusiness ? (
-
-                        <Select
-                            options={
-                                businessOptions
-                            }
-                            value={
-                                selectedBusiness
-                            }
-                            onChange={
-                                setSelectedBusiness
-                            }
-                            className="
-                                w-full
-                                rounded-xl
-                                border
-                                border-[#c7c4d8]
-                            "
-                        />
-
-                    ) : (
-
-                        <div
-                            className="
-                                flex
-                                h-11
-                                items-center
-                                rounded-xl
-                                border
-                                border-[#c7c4d8]
-                                px-3
-                                text-sm
-                                text-slate-500
-                            "
-                        >
-                            Нет бизнесов
-                        </div>
-
-                    )}
-
-                </div>
-
-
-                {/* =================================================
-                    CREATE APPOINTMENT
-                ================================================= */}
-
-                <Button
-                    onClick={
-                        handleCreateAppointment
+                <Icon
+                    icon={
+                        Plus
+                    }
+                    size={
+                        20
                     }
                     className="
-                        flex
-                        w-full
-                        cursor-pointer
-                        items-center
-                        justify-center
-                        gap-2
-                        rounded-xl
-                        border
-                        border-[#4031d0]
-                        bg-white
-                        px-6
-                        py-3
+                        shrink-0
+                        text-[#4031d0]
+                    "
+                />
+
+
+                <Typography
+                    text="Создать запись"
+                    className="
+                        whitespace-nowrap
+                        text-sm
                         font-medium
                         text-[#4031d0]
-                        transition-colors
-                        hover:bg-[#F5F3FF]
-                        active:bg-[#EDE9FE]
-                        sm:w-auto
                     "
-                >
+                />
 
-                    <Icon
-                        icon={
-                            Plus
-                        }
-                        size={
-                            20
-                        }
-                    />
-
-
-                    <Typography
-                        className="
-                            mr-2
-                            text-sm
-                            font-medium
-                        "
-                        text="Создать запись"
-                    />
-
-                </Button>
-
-            </div>
+            </Button>
 
         </div>
     );

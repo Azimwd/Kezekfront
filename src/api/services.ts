@@ -1,5 +1,46 @@
 import { api } from './api';
 
+
+export interface ServiceItem {
+    id: number;
+    business: number;
+    category: number | null;
+    category_name: string | null;
+    name: string;
+    description: string | null;
+    price: string | number;
+    duration_minutes: number;
+    buffer_before_minutes: number;
+    buffer_after_minutes: number;
+    is_active: boolean;
+    created_at?: string;
+    updated_at?: string;
+}
+
+
+export interface ServicePagination {
+    count: number;
+    total_pages: number;
+    current_page: number;
+    page_size: number;
+    next: string | null;
+    previous: string | null;
+}
+
+
+export interface ServicesResponse {
+    message: string;
+    pagination: ServicePagination;
+    data: ServiceItem[];
+}
+
+
+export interface ServiceResponse {
+    message: string;
+    data: ServiceItem;
+}
+
+
 export interface StaffMember {
     id: number;
     business: number;
@@ -9,10 +50,10 @@ export interface StaffMember {
     description: string;
     photo: string | null;
     is_active: boolean;
-
     services_count?: number;
     active_services_count?: number;
 }
+
 
 export interface StaffPagination {
     count: number;
@@ -23,11 +64,13 @@ export interface StaffPagination {
     previous: string | null;
 }
 
+
 export interface StaffResponse {
     message: string;
     pagination: StaffPagination;
     data: StaffMember[];
 }
+
 
 export interface ServiceStaffItem {
     id: number;
@@ -37,12 +80,22 @@ export interface ServiceStaffItem {
     service_name: string;
 }
 
+
 export interface PutStaffResponse {
     message: string;
     data: ServiceStaffItem[];
 }
+
+
+/*
+ * ============================================================
+ * CREATE SERVICE
+ * ============================================================
+ */
+
 export const createService = async (
-    id: number,
+    businessId: number,
+    category: number | null,
     name: string,
     description: string,
     price: number,
@@ -50,32 +103,72 @@ export const createService = async (
     buffer_before_minutes: number,
     buffer_after_minutes: number,
     is_active: boolean
-) => {
-    const response = await api.post(
-        `/api/businesses/${id}/services/`,
-        {
-            name,
-            description,
-            price,
-            duration_minutes,
-            buffer_before_minutes,
-            buffer_after_minutes,
-            is_active
-        },
-        { withCredentials: true }
-    );
+): Promise<ServiceItem> => {
+
+    const response =
+        await api.post<ServiceResponse>(
+            `/api/businesses/${businessId}/services/`,
+            {
+                category,
+                name,
+                description,
+                price,
+                duration_minutes,
+                buffer_before_minutes,
+                buffer_after_minutes,
+                is_active
+            },
+            {
+                withCredentials: true
+            }
+        );
+
+
+    const payload =
+        response.data as any;
+
+
+    return payload.data ?? payload;
+};
+
+
+/*
+ * ============================================================
+ * LIST SERVICES
+ * ============================================================
+ */
+
+export const listOfServices = async (
+    businessId: number,
+    page: number = 1
+): Promise<ServicesResponse> => {
+
+    const response =
+        await api.get<ServicesResponse>(
+            `/api/businesses/${businessId}/services/`,
+            {
+                params: {
+                    page
+                },
+
+                withCredentials: true
+            }
+        );
+
+
     return response.data;
 };
 
-export const listOfServices = async (id: number) => {
-    const response = await api.get(`/api/businesses/${id}/services/`, {
-        withCredentials: true
-    });
-    return response.data;
-};
+
+/*
+ * ============================================================
+ * EDIT SERVICE
+ * ============================================================
+ */
 
 export const editService = async (
-    id: number,
+    serviceId: number,
+    category: number | null,
     name: string,
     description: string,
     price: number,
@@ -83,32 +176,66 @@ export const editService = async (
     buffer_before_minutes: number,
     buffer_after_minutes: number,
     is_active: boolean
+): Promise<ServiceItem> => {
+
+    const response =
+        await api.patch<ServiceResponse>(
+            `/api/businesses/services/${serviceId}/`,
+            {
+                category,
+                name,
+                description,
+                price,
+                duration_minutes,
+                buffer_before_minutes,
+                buffer_after_minutes,
+                is_active
+            },
+            {
+                withCredentials: true
+            }
+        );
+
+
+    const payload =
+        response.data as any;
+
+
+    return payload.data ?? payload;
+};
+
+
+/*
+ * ============================================================
+ * DELETE SERVICE
+ * ============================================================
+ */
+
+export const deleteService = async (
+    serviceId: number
 ) => {
-    const response = await api.patch(
-        `/api/businesses/services/${id}/`,
-        {
-            name,
-            description,
-            price,
-            duration_minutes,
-            buffer_before_minutes,
-            buffer_after_minutes,
-            is_active
-        },
-        { withCredentials: true }
-    );
+
+    const response =
+        await api.delete(
+            `/api/businesses/services/${serviceId}/`,
+            {
+                withCredentials: true
+            }
+        );
+
+
     return response.data;
 };
 
-export const deleteService = async (id: number) => {
-    const response = await api.delete(`/api/businesses/services/${id}/`, {
-        withCredentials: true
-    });
-    return response.data;
-};
+
+/*
+ * ============================================================
+ * SEARCH STAFF
+ * ============================================================
+ */
 
 export const searchStaff = async (
-    id: number,
+    businessId: number,
     searchQuery: string = '',
     status: 'all' | 'active' | 'inactive' = 'all',
     page: number = 1
@@ -116,7 +243,7 @@ export const searchStaff = async (
 
     const response =
         await api.get<StaffResponse>(
-            `/api/businesses/${id}/staff/`,
+            `/api/businesses/${businessId}/staff/`,
             {
                 params: {
                     search: searchQuery,
@@ -128,27 +255,60 @@ export const searchStaff = async (
             }
         );
 
-    return response.data;
-};
-export const putStaffToService = async (
-    id: number,
-    staff_ids: number[]
-): Promise<PutStaffResponse> => {
-    const response = await api.put(
-        `/api/businesses/services/${id}/staff/`,
-        { staff_ids: staff_ids },
-        { withCredentials: true }
-    );
+
     return response.data;
 };
 
-export const getAssignedStaffForService = async (serviceId: number) => {
-    const response = await api.get(
-        `/api/businesses/services/${serviceId}/staff/`,
-        {
-            params: { assigned_only: true },
-            withCredentials: true
-        }
-    );
+
+/*
+ * ============================================================
+ * PUT STAFF TO SERVICE
+ * ============================================================
+ */
+
+export const putStaffToService = async (
+    serviceId: number,
+    staff_ids: number[]
+): Promise<PutStaffResponse> => {
+
+    const response =
+        await api.put<PutStaffResponse>(
+            `/api/businesses/services/${serviceId}/staff/`,
+            {
+                staff_ids
+            },
+            {
+                withCredentials: true
+            }
+        );
+
+
+    return response.data;
+};
+
+
+/*
+ * ============================================================
+ * GET ASSIGNED STAFF
+ * ============================================================
+ */
+
+export const getAssignedStaffForService = async (
+    serviceId: number
+) => {
+
+    const response =
+        await api.get(
+            `/api/businesses/services/${serviceId}/staff/`,
+            {
+                params: {
+                    assigned_only: true
+                },
+
+                withCredentials: true
+            }
+        );
+
+
     return response.data;
 };

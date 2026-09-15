@@ -1,100 +1,432 @@
 import {
-    Car,
     BriefcaseMedical,
+    Car,
+    Dumbbell,
+    GraduationCap,
+    LayoutGrid,
+    Scale,
     UserRound,
     Wrench,
-    GraduationCap,
-    Scale,
-    Dumbbell,
-    LayoutGrid
+    type LucideIcon
 } from 'lucide-react';
+
+import {
+    useQuery
+} from '@tanstack/react-query';
+
+import {
+    useNavigate
+} from 'react-router-dom';
+
 import Typography from '../../atoms/Typography';
 import Icon from '../../atoms/Icon';
 import Button from '../../atoms/Button';
 
-const categories = [
-    {
-        id: 1,
-        icon: UserRound,
-        title: 'Красота',
-        subtitle: '0 услуг'
-    },
-    {
-        id: 2,
-        icon: BriefcaseMedical,
-        title: 'Медицина',
-        subtitle: '0 специалистов'
-    },
-    {
-        id: 3,
-        icon: Car,
-        title: 'Авто',
-        subtitle: '0 сервисов'
-    },
-    {
-        id: 4,
-        icon: Wrench,
-        title: 'Ремонт',
-        subtitle: '0 мастеров'
-    },
-    {
-        id: 5,
-        icon: GraduationCap,
-        title: 'Образование',
-        subtitle: '0 курсов'
-    },
-    {
-        id: 6,
-        icon: Scale,
-        title: 'Юристы',
-        subtitle: '0 контор'
-    },
-    {
-        id: 7,
-        icon: Dumbbell,
-        title: 'Спорт',
-        subtitle: '0 залов'
+import {
+    getCatalogCategories,
+    type CatalogCategory
+} from '../../../api/catalog';
+
+
+/*
+ * ============================================================
+ * CATEGORY ICON
+ * ============================================================
+ */
+
+const getCategoryIcon = (
+    name: string
+): LucideIcon => {
+
+    const normalizedName =
+        name
+            .trim()
+            .toLocaleLowerCase(
+                'ru'
+            );
+
+
+    if (
+        normalizedName.includes(
+            'крас'
+        )
+    ) {
+        return UserRound;
     }
-];
+
+
+    if (
+        normalizedName.includes(
+            'мед'
+        )
+    ) {
+        return BriefcaseMedical;
+    }
+
+
+    if (
+        normalizedName.includes(
+            'авто'
+        )
+    ) {
+        return Car;
+    }
+
+
+    if (
+        normalizedName.includes(
+            'ремонт'
+        )
+    ) {
+        return Wrench;
+    }
+
+
+    if (
+        normalizedName.includes(
+            'образ'
+        )
+    ) {
+        return GraduationCap;
+    }
+
+
+    if (
+        normalizedName.includes(
+            'юрист'
+        ) ||
+        normalizedName.includes(
+            'прав'
+        )
+    ) {
+        return Scale;
+    }
+
+
+    if (
+        normalizedName.includes(
+            'спорт'
+        )
+    ) {
+        return Dumbbell;
+    }
+
+
+    return LayoutGrid;
+};
+
 
 export default function CategoryCard() {
+
+    const navigate =
+        useNavigate();
+
+
+    const {
+        data: categories = [],
+        isLoading
+    } =
+        useQuery<
+            CatalogCategory[],
+            Error
+        >({
+
+            queryKey: [
+                'catalog-categories'
+            ],
+
+            queryFn:
+                getCatalogCategories,
+
+            retry:
+                false
+        });
+
+
+    /*
+     * На главной показываем первые 7.
+     */
+
+    const visibleCategories =
+        categories.slice(
+            0,
+            7
+        );
+
+
+    if (
+        isLoading
+    ) {
+
+        return (
+            <div
+                className="
+                    grid
+                    w-full
+                    grid-cols-1
+                    gap-4
+                    rounded-3xl
+                    border
+                    border-[#E1E4F5]
+                    bg-white
+                    p-4
+
+                    sm:grid-cols-2
+                    md:grid-cols-4
+                "
+            >
+
+                {Array.from({
+                    length: 8
+                }).map(
+                    (
+                        _,
+                        index
+                    ) => (
+
+                        <div
+                            key={
+                                index
+                            }
+
+                            className="
+                                h-35
+                                animate-pulse
+                                rounded-2xl
+                                bg-[#F4F6FC]
+
+                                md:h-62.5
+                            "
+                        />
+
+                    )
+                )}
+
+            </div>
+        );
+    }
+
+
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 w-full p-4 bg-white rounded-3xl border border-[#E1E4F5] c7c4d8">
-            {categories.map((item) => (
-                <Button
-                    key={item.id}
-                    className="relative w-full h-[] h-35 md:h-62.5 bg-[#F4F6FC] rounded-2xl p-5 flex flex-col justify-between overflow-hidden cursor-pointer hover:shadow-md transition-all border border-transparent hover:border-[#c7c4d8] E1E4F5 group select-none text-left"
-                >
-                    <div className="absolute -top-8 -right-8 w-28 h-28 bg-[#E6E9FA] rounded-full opacity-60 group-hover:bg-[#c1c6e3] duration-300"></div>
+        <div
+            className="
+                grid
+                w-full
+                grid-cols-1
+                gap-4
+                rounded-3xl
+                border
+                border-[#E1E4F5]
+                bg-white
+                p-4
 
-                    <div className="w-20 h-20 bg-white rounded-xl flex items-center justify-center relative z-10 shadow-sm">
-                        <Icon
-                            icon={item.icon}
-                            size={35}
-                            className="text-[#3624C7]"
-                        />
-                    </div>
+                sm:grid-cols-2
+                md:grid-cols-4
+            "
+        >
 
-                    <div className="relative z-10">
-                        <Typography
-                            text={item.title}
-                            className="block text-[#111115] font-bold text-xl mb-0.5"
-                        />
-                        <Typography
-                            text={item.subtitle}
-                            className="block text-[#868695] text-lg font-medium uppercase tracking-wide"
-                        />
-                    </div>
-                </Button>
-            ))}
+            {visibleCategories.map(
+                (
+                    category:
+                        CatalogCategory
+                ) => {
 
-            <Button className="relative w-full h-35 md:h-62.5 bg-[#3624C7] rounded-2xl p-5 flex flex-col items-center justify-center cursor-pointer hover:bg-[#2F1FB3] hover:shadow-lg transition-all">
-                <Icon icon={LayoutGrid} size={35} className="text-white mb-3" />
+                    const CategoryIcon =
+                        getCategoryIcon(
+                            category.name
+                        );
+
+
+                    return (
+                        <Button
+                            key={
+                                category.id
+                            }
+
+                            onClick={() => {
+
+                                navigate(
+                                    `/catalog?category=${category.id}`
+                                );
+                            }}
+
+                            className="
+                                group
+                                relative
+                                flex
+                                h-35
+                                w-full
+                                cursor-pointer
+                                select-none
+                                flex-col
+                                justify-between
+                                overflow-hidden
+                                rounded-2xl
+                                border
+                                border-transparent
+                                bg-[#F4F6FC]
+                                p-5
+                                text-left
+                                transition-all
+
+                                hover:border-[#c7c4d8]
+                                hover:shadow-md
+
+                                md:h-62.5
+                            "
+                        >
+
+                            <div
+                                className="
+                                    absolute
+                                    -right-8
+                                    -top-8
+                                    h-28
+                                    w-28
+                                    rounded-full
+                                    bg-[#E6E9FA]
+                                    opacity-60
+                                    duration-300
+
+                                    group-hover:bg-[#c1c6e3]
+                                "
+                            />
+
+
+                            <div
+                                className="
+                                    relative
+                                    z-10
+                                    flex
+                                    h-20
+                                    w-20
+                                    items-center
+                                    justify-center
+                                    rounded-xl
+                                    bg-white
+                                    shadow-sm
+                                "
+                            >
+
+                                <Icon
+                                    icon={
+                                        CategoryIcon
+                                    }
+
+                                    size={
+                                        35
+                                    }
+
+                                    className="
+                                        text-[#3624C7]
+                                    "
+                                />
+
+                            </div>
+
+
+                            <div
+                                className="
+                                    relative
+                                    z-10
+                                "
+                            >
+
+                                <Typography
+                                    text={
+                                        category.name
+                                    }
+
+                                    className="
+                                        mb-0.5
+                                        block
+                                        text-xl
+                                        font-bold
+                                        text-[#111115]
+                                    "
+                                />
+
+
+                                <Typography
+                                    text="Смотреть услуги"
+
+                                    className="
+                                        block
+                                        text-sm
+                                        font-medium
+                                        uppercase
+                                        tracking-wide
+                                        text-[#868695]
+                                    "
+                                />
+
+                            </div>
+
+                        </Button>
+                    );
+                }
+            )}
+
+
+            {/* ALL CATEGORIES */}
+
+            <Button
+                onClick={() =>
+                    navigate(
+                        '/catalog'
+                    )
+                }
+
+                className="
+                    relative
+                    flex
+                    h-35
+                    w-full
+                    cursor-pointer
+                    flex-col
+                    items-center
+                    justify-center
+                    rounded-2xl
+                    bg-[#3624C7]
+                    p-5
+                    transition-all
+
+                    hover:bg-[#2F1FB3]
+                    hover:shadow-lg
+
+                    md:h-62.5
+                "
+            >
+
+                <Icon
+                    icon={
+                        LayoutGrid
+                    }
+
+                    size={
+                        35
+                    }
+
+                    className="
+                        mb-3
+                        text-white
+                    "
+                />
+
+
                 <Typography
                     text="Все категории"
-                    className="block text-white font-bold text-xl"
+
+                    className="
+                        block
+                        text-xl
+                        font-bold
+                        text-white
+                    "
                 />
+
             </Button>
+
         </div>
     );
 }

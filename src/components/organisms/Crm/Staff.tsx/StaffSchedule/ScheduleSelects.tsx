@@ -43,8 +43,11 @@ export default function ScheduleSelects({
 }: ScheduleSelectsProps) {
 
     /*
-     * Общий бизнес для всей CRM.
+     * ============================================================
+     * BUSINESS
+     * ============================================================
      */
+
     const {
         selectedBusiness,
         setSelectedBusiness
@@ -52,8 +55,11 @@ export default function ScheduleSelects({
 
 
     /*
-     * Выбранный специалист.
+     * ============================================================
+     * SPECIALIST
+     * ============================================================
      */
+
     const [
         selectedSpecialist,
         setSelectedSpecialist
@@ -63,10 +69,11 @@ export default function ScheduleSelects({
 
 
     /*
-     * Например:
-     *
-     * /crm/schedule?staff_id=4
+     * ============================================================
+     * URL
+     * ============================================================
      */
+
     const [
         searchParams
     ] = useSearchParams();
@@ -79,12 +86,16 @@ export default function ScheduleSelects({
 
 
     /*
-     * Все бизнесы пользователя.
+     * ============================================================
+     * BUSINESSES
+     * ============================================================
      */
+
     const {
         data: businesses = [],
         isPending: isBusinessesPending
     } = useQuery({
+
         queryKey: [
             'all-businesses'
         ],
@@ -92,7 +103,8 @@ export default function ScheduleSelects({
         queryFn:
             listAllBusinesses,
 
-        retry: false
+        retry:
+            false
     });
 
 
@@ -100,9 +112,12 @@ export default function ScheduleSelects({
         useMemo<SelectOption[]>(
             () =>
                 businesses.map(
-                    (business) => ({
-                        id: business.id,
-                        label: business.name
+                    business => ({
+                        id:
+                            business.id,
+
+                        label:
+                            business.name
                     })
                 ),
             [
@@ -112,62 +127,66 @@ export default function ScheduleSelects({
 
 
     /*
-     * Проверяем сохранённый бизнес.
-     *
-     * Если его больше нет в базе,
-     * выбираем первый существующий.
+     * ============================================================
+     * RESTORE BUSINESS
+     * ============================================================
      */
-    useEffect(() => {
 
-        if (
-            businessOptions.length === 0
-        ) {
-            return;
-        }
+    useEffect(
+        () => {
 
-
-        const savedBusiness =
-            selectedBusiness
-                ? businessOptions.find(
-                    (business) =>
-                        Number(
-                            business.id
-                        ) ===
-                        Number(
-                            selectedBusiness.id
-                        )
-                )
-                : null;
-
-
-        if (savedBusiness) {
-
-            /*
-             * Обновляем также label,
-             * если название бизнеса изменилось.
-             */
             if (
-                savedBusiness.label !==
-                selectedBusiness?.label
+                businessOptions.length ===
+                0
             ) {
-                setSelectedBusiness(
-                    savedBusiness
-                );
+                return;
             }
 
-            return;
-        }
+
+            const savedBusiness =
+                selectedBusiness
+                    ? businessOptions.find(
+                        business =>
+                            Number(
+                                business.id
+                            ) ===
+                            Number(
+                                selectedBusiness.id
+                            )
+                    )
+                    : null;
 
 
-        setSelectedBusiness(
-            businessOptions[0]
-        );
+            if (
+                savedBusiness
+            ) {
 
-    }, [
-        businessOptions,
-        selectedBusiness,
-        setSelectedBusiness
-    ]);
+                if (
+                    savedBusiness.label !==
+                    selectedBusiness?.label
+                ) {
+
+                    setSelectedBusiness(
+                        savedBusiness
+                    );
+                }
+
+
+                return;
+            }
+
+
+            setSelectedBusiness(
+                businessOptions[0]
+            );
+
+        },
+        [
+            businessOptions,
+            selectedBusiness,
+            setSelectedBusiness
+        ]
+    );
 
 
     const businessId =
@@ -179,13 +198,16 @@ export default function ScheduleSelects({
 
 
     /*
-     * Получаем ВСЕХ специалистов
-     * выбранного бизнеса.
+     * ============================================================
+     * MASTERS
+     * ============================================================
      */
+
     const {
         data: masters = [],
         isPending: isMastersPending
     } = useQuery({
+
         queryKey: [
             'all-masters',
             businessId
@@ -201,7 +223,8 @@ export default function ScheduleSelects({
         enabled:
             !!businessId,
 
-        retry: false
+        retry:
+            false
     });
 
 
@@ -210,7 +233,8 @@ export default function ScheduleSelects({
             () =>
                 masters.map(
                     (master: any) => ({
-                        id: master.id,
+                        id:
+                            master.id,
 
                         label:
                             `${master.first_name} (${master.position})`
@@ -223,14 +247,11 @@ export default function ScheduleSelects({
 
 
     /*
-     * Для каждого бизнеса свой
-     * сохранённый специалист.
-     *
-     * Например:
-     *
-     * kezek_selected_staff_3
-     * kezek_selected_staff_7
+     * ============================================================
+     * STORAGE KEY
+     * ============================================================
      */
+
     const staffStorageKey =
         businessId
             ? `kezek_selected_staff_${businessId}`
@@ -238,125 +259,144 @@ export default function ScheduleSelects({
 
 
     /*
-     * Восстанавливаем специалиста
-     * после загрузки списка.
+     * ============================================================
+     * RESTORE SPECIALIST
+     * ============================================================
      */
-    useEffect(() => {
 
-        if (
-            !businessId ||
-            specialistOptions.length === 0
-        ) {
-            setSelectedSpecialist(
-                null
-            );
+    useEffect(
+        () => {
 
-            return;
-        }
-
-
-        /*
-         * Если пришли со страницы сотрудника:
-         *
-         * /crm/schedule?staff_id=4
-         *
-         * staff_id имеет приоритет.
-         */
-        if (staffIdFromUrl) {
-
-            const staffFromUrl =
-                specialistOptions.find(
-                    (specialist) =>
-                        Number(
-                            specialist.id
-                        ) ===
-                        Number(
-                            staffIdFromUrl
-                        )
-                );
-
-
-            if (staffFromUrl) {
+            if (
+                !businessId ||
+                specialistOptions.length ===
+                    0
+            ) {
 
                 setSelectedSpecialist(
-                    staffFromUrl
+                    null
                 );
-
-
-                if (staffStorageKey) {
-                    localStorage.setItem(
-                        staffStorageKey,
-                        String(
-                            staffFromUrl.id
-                        )
-                    );
-                }
-
 
                 return;
             }
-        }
 
 
-        /*
-         * Если staff_id в URL нет,
-         * восстанавливаем последнего
-         * выбранного специалиста.
-         */
-        if (staffStorageKey) {
+            /*
+             * URL имеет приоритет.
+             */
 
-            const savedStaffId =
-                localStorage.getItem(
-                    staffStorageKey
-                );
+            if (
+                staffIdFromUrl
+            ) {
 
-
-            if (savedStaffId) {
-
-                const savedStaff =
+                const staffFromUrl =
                     specialistOptions.find(
-                        (specialist) =>
+                        specialist =>
                             Number(
                                 specialist.id
                             ) ===
                             Number(
-                                savedStaffId
+                                staffIdFromUrl
                             )
                     );
 
 
-                if (savedStaff) {
+                if (
+                    staffFromUrl
+                ) {
 
                     setSelectedSpecialist(
-                        savedStaff
+                        staffFromUrl
                     );
+
+
+                    if (
+                        staffStorageKey
+                    ) {
+
+                        localStorage.setItem(
+                            staffStorageKey,
+                            String(
+                                staffFromUrl.id
+                            )
+                        );
+                    }
+
 
                     return;
                 }
             }
-        }
 
 
-        /*
-         * Если ничего не сохранено —
-         * выбираем первого.
-         */
-        setSelectedSpecialist(
-            specialistOptions[0]
-        );
+            /*
+             * Восстанавливаем последнего
+             * специалиста бизнеса.
+             */
 
-    }, [
-        businessId,
-        specialistOptions,
-        staffIdFromUrl,
-        staffStorageKey
-    ]);
+            if (
+                staffStorageKey
+            ) {
+
+                const savedStaffId =
+                    localStorage.getItem(
+                        staffStorageKey
+                    );
+
+
+                if (
+                    savedStaffId
+                ) {
+
+                    const savedStaff =
+                        specialistOptions.find(
+                            specialist =>
+                                Number(
+                                    specialist.id
+                                ) ===
+                                Number(
+                                    savedStaffId
+                                )
+                        );
+
+
+                    if (
+                        savedStaff
+                    ) {
+
+                        setSelectedSpecialist(
+                            savedStaff
+                        );
+
+                        return;
+                    }
+                }
+            }
+
+
+            /*
+             * Иначе первый специалист.
+             */
+
+            setSelectedSpecialist(
+                specialistOptions[0]
+            );
+
+        },
+        [
+            businessId,
+            specialistOptions,
+            staffIdFromUrl,
+            staffStorageKey
+        ]
+    );
 
 
     /*
-     * Сохраняем специалиста
-     * при ручном выборе.
+     * ============================================================
+     * CHANGE SPECIALIST
+     * ============================================================
      */
+
     const handleSpecialistChange = (
         specialist: SelectOption
     ) => {
@@ -366,7 +406,9 @@ export default function ScheduleSelects({
         );
 
 
-        if (staffStorageKey) {
+        if (
+            staffStorageKey
+        ) {
 
             localStorage.setItem(
                 staffStorageKey,
@@ -379,9 +421,11 @@ export default function ScheduleSelects({
 
 
     /*
-     * При выборе бизнеса меняем
-     * общий BusinessContext.
+     * ============================================================
+     * CHANGE BUSINESS
+     * ============================================================
      */
+
     const handleBusinessChange = (
         business: SelectOption
     ) => {
@@ -391,13 +435,6 @@ export default function ScheduleSelects({
         );
 
 
-        /*
-         * Временно очищаем специалиста.
-         *
-         * После загрузки специалистов
-         * нового бизнеса useEffect выше
-         * восстановит его последнее значение.
-         */
         setSelectedSpecialist(
             null
         );
@@ -410,50 +447,96 @@ export default function ScheduleSelects({
 
 
     /*
-     * Сообщаем родителю выбранного
-     * специалиста.
+     * ============================================================
+     * SEND SPECIALIST TO PARENT
+     * ============================================================
      */
-    useEffect(() => {
 
-        if (
-            selectedSpecialist?.id
-        ) {
+    useEffect(
+        () => {
 
-            onStaffSelect(
-                Number(
-                    selectedSpecialist.id
-                )
-            );
+            if (
+                selectedSpecialist?.id
+            ) {
 
-        } else {
+                onStaffSelect(
+                    Number(
+                        selectedSpecialist.id
+                    )
+                );
 
-            onStaffSelect(
-                null
-            );
-        }
+            } else {
 
-    }, [
-        selectedSpecialist?.id,
-        onStaffSelect
-    ]);
+                onStaffSelect(
+                    null
+                );
+            }
 
+        },
+        [
+            selectedSpecialist?.id,
+            onStaffSelect
+        ]
+    );
+
+
+    /*
+     * ============================================================
+     * LOADING
+     * ============================================================
+     */
 
     if (
         isBusinessesPending
     ) {
+
         return (
-            <div className="text-sm text-slate-500">
+            <div
+                className="
+                    w-full
+                    rounded-2xl
+                    border
+                    border-[#c7c4d8]
+                    bg-white
+                    p-4
+                    text-sm
+                    text-slate-500
+
+                    md:w-auto
+                "
+            >
                 Загрузка бизнесов...
             </div>
         );
     }
 
 
+    /*
+     * ============================================================
+     * NO BUSINESSES
+     * ============================================================
+     */
+
     if (
-        businessOptions.length === 0
+        businessOptions.length ===
+        0
     ) {
+
         return (
-            <div className="text-sm text-slate-500">
+            <div
+                className="
+                    w-full
+                    rounded-2xl
+                    border
+                    border-[#c7c4d8]
+                    bg-white
+                    p-4
+                    text-sm
+                    text-slate-500
+
+                    md:w-auto
+                "
+            >
                 У вас нет бизнесов
             </div>
         );
@@ -463,39 +546,79 @@ export default function ScheduleSelects({
     if (
         !selectedBusiness
     ) {
+
         return (
-            <div className="text-sm text-slate-500">
+            <div
+                className="
+                    w-full
+                    text-sm
+                    text-slate-500
+
+                    md:w-auto
+                "
+            >
                 Загрузка...
             </div>
         );
     }
 
 
+    /*
+     * ============================================================
+     * RENDER
+     * ============================================================
+     */
+
     return (
         <div
             className="
                 flex
-                w-fit
-                items-end
-                gap-3
-                rounded-3xl
+                w-full
+                min-w-0
+                flex-col
+                gap-4
+                rounded-2xl
                 border
                 border-[#c7c4d8]
                 bg-white
-                p-3
+                p-4
+
+                md:ml-auto
+                md:w-fit
+                md:flex-row
+                md:items-end
+                md:gap-3
+                md:rounded-3xl
+                md:p-3
             "
         >
 
-            {/* BUSINESS */}
+            {/* =====================================================
+                BUSINESS
+            ===================================================== */}
 
-            <div className="flex-1">
+            <div
+                className="
+                    w-full
+                    min-w-0
+
+                    md:w-auto
+                    md:flex-1
+                "
+            >
 
                 <Typography
                     text="Бизнес"
                     className="
-                        mb-1
-                        px-3
-                        text-sm
+                        mb-2
+                        block
+                        text-[13px]
+                        font-medium
+                        text-[#475569]
+
+                        md:mb-1
+                        md:px-3
+                        md:text-sm
                     "
                 />
 
@@ -512,33 +635,60 @@ export default function ScheduleSelects({
                     }
                     className="
                         w-full
-                        min-w-[220px]
+                        min-w-0
+
+                        md:min-w-[220px]
                     "
                 />
 
             </div>
 
 
+            {/* =====================================================
+                DIVIDER
+            ===================================================== */}
+
             <div
                 className="
-                    mb-3
+                    hidden
                     h-8
                     w-px
+                    shrink-0
                     bg-gray-200
+
+                    md:mb-3
+                    md:block
                 "
             />
 
 
-            {/* SPECIALIST */}
+            {/* =====================================================
+                SPECIALIST
+            ===================================================== */}
 
-            <div className="relative flex-1">
+            <div
+                className="
+                    relative
+                    w-full
+                    min-w-0
+
+                    md:w-auto
+                    md:flex-1
+                "
+            >
 
                 <Typography
                     text="Специалист"
                     className="
-                        mb-1
-                        px-3
-                        text-sm
+                        mb-2
+                        block
+                        text-[13px]
+                        font-medium
+                        text-[#475569]
+
+                        md:mb-1
+                        md:px-3
+                        md:text-sm
                     "
                 />
 
@@ -550,7 +700,8 @@ export default function ScheduleSelects({
                     value={
                         selectedSpecialist ??
                         {
-                            id: 0,
+                            id:
+                                0,
 
                             label:
                                 isMastersPending
@@ -563,33 +714,22 @@ export default function ScheduleSelects({
                     }
                     className={`
                         w-full
-                        min-w-[220px]
+                        min-w-0
+
+                        md:min-w-[220px]
 
                         ${
                             isMastersPending ||
-                            specialistOptions.length === 0
-                                ? 'pointer-events-none opacity-50'
+                            specialistOptions.length ===
+                                0
+                                ? `
+                                    pointer-events-none
+                                    opacity-50
+                                `
                                 : ''
                         }
                     `}
                 />
-
-
-                {isMastersPending && (
-                    <span
-                        className="
-                            absolute
-                            left-1/2
-                            top-1/2
-                            mt-2
-                            -translate-x-1/2
-                            text-xs
-                            text-gray-500
-                        "
-                    >
-                        Загрузка...
-                    </span>
-                )}
 
             </div>
 

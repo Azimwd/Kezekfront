@@ -7,8 +7,11 @@ import {
     useQuery
 } from '@tanstack/react-query';
 
-import BusinessCard from '../../components/organisms/Crm/Businesses/BusinessCard';
-import Cards from '../../components/organisms/Crm/Businesses/Cards';
+import BusinessCard
+    from '../../components/organisms/Crm/Businesses/BusinessCard';
+
+import Cards
+    from '../../components/organisms/Crm/Businesses/Cards';
 
 import {
     listBusinesses
@@ -16,11 +19,18 @@ import {
 
 
 export default function Mybusinesses() {
+
     const [
         page,
         setPage
     ] = useState(1);
 
+
+    /*
+     * ============================================================
+     * BUSINESSES
+     * ============================================================
+     */
 
     const {
         isPending,
@@ -28,6 +38,7 @@ export default function Mybusinesses() {
         error,
         data
     } = useQuery({
+
         queryKey: [
             'businesses',
             page
@@ -38,18 +49,18 @@ export default function Mybusinesses() {
                 page
             ),
 
-        retry: false,
+        retry:
+            false,
 
         placeholderData:
-            (
-                previousData
-            ) =>
+            previousData =>
                 previousData
     });
 
 
     const businesses =
-        data?.data ?? [];
+        data?.data ??
+        [];
 
 
     const pagination =
@@ -77,96 +88,106 @@ export default function Mybusinesses() {
 
 
     /*
-     * Статистика.
-     *
-     * totalCount — общее количество из backend.
-     *
-     * active/drafts/blocked пока считаются
-     * только среди бизнесов текущей страницы.
+     * ============================================================
+     * STATISTICS
+     * ============================================================
      */
+
     const cardsData =
-        useMemo(() => {
-            const active =
-                businesses.filter(
-                    (business) =>
-                        business.status ===
-                        'active'
-                ).length;
+        useMemo(
+            () => {
+
+                const active =
+                    businesses.filter(
+                        business =>
+                            business.status ===
+                            'active'
+                    ).length;
 
 
-            const drafts =
-                businesses.filter(
-                    (business) =>
-                        business.status ===
-                        'draft'
-                ).length;
+                const drafts =
+                    businesses.filter(
+                        business =>
+                            business.status ===
+                            'draft'
+                    ).length;
 
 
-            const blocked =
-                businesses.filter(
-                    (business) =>
-                        business.status ===
-                        'blocked'
-                ).length;
+                const blocked =
+                    businesses.filter(
+                        business =>
+                            business.status ===
+                            'blocked'
+                    ).length;
 
 
-            return [
-                {
-                    id: 1,
-                    title: 'Всего бизнесов',
-                    num: totalCount,
-                    leftBorderClass: ''
-                },
+                return [
+                    {
+                        id: 1,
+                        title: 'Всего бизнесов',
+                        num: totalCount,
+                        leftBorderClass: ''
+                    },
 
-                {
-                    id: 2,
-                    title: 'Активные',
-                    num: active,
-                    leftBorderClass:
-                        'border-l-[4px] border-l-green-500'
-                },
+                    {
+                        id: 2,
+                        title: 'Активные',
+                        num: active,
+                        leftBorderClass:
+                            'border-l-[4px] border-l-green-500'
+                    },
 
-                {
-                    id: 3,
-                    title: 'Черновики',
-                    num: drafts,
-                    leftBorderClass:
-                        'border-l-[4px] border-l-slate-400'
-                },
+                    {
+                        id: 3,
+                        title: 'Черновики',
+                        num: drafts,
+                        leftBorderClass:
+                            'border-l-[4px] border-l-slate-400'
+                    },
 
-                {
-                    id: 4,
-                    title: 'Заблокированные',
-                    num: blocked,
-                    leftBorderClass:
-                        'border-l-[4px] border-l-red-500'
-                }
-            ];
+                    {
+                        id: 4,
+                        title: 'Заблокированные',
+                        num: blocked,
+                        leftBorderClass:
+                            'border-l-[4px] border-l-red-500'
+                    }
+                ];
 
-        }, [
-            businesses,
-            totalCount
-        ]);
-
-
-    const hasNoBusinesses =
-        totalCount === 0;
+            },
+            [
+                businesses,
+                totalCount
+            ]
+        );
 
 
     /*
-     * Например:
-     *
-     * страница 1 -> 1-9
-     * страница 2 -> 10-18
+     * ============================================================
+     * EMPTY
+     * ============================================================
      */
+
+    const hasNoBusinesses =
+        totalCount ===
+        0;
+
+
+    /*
+     * ============================================================
+     * PAGINATION INFO
+     * ============================================================
+     */
+
     const firstItem =
         totalCount === 0
             ? 0
             : (
-                currentPage - 1
+                currentPage -
+                1
             ) *
                 pageSize +
-              1;
+                1;
 
 
     const lastItem =
@@ -179,27 +200,137 @@ export default function Mybusinesses() {
             );
 
 
+    /*
+     * ============================================================
+     * PAGE NUMBERS
+     * ============================================================
+     */
+
     const pageNumbers =
-        Array.from(
-            {
-                length:
-                    totalPages
+        useMemo(
+            () => {
+
+                /*
+                 * До 5 страниц показываем все.
+                 */
+
+                if (
+                    totalPages <=
+                    5
+                ) {
+
+                    return Array.from(
+                        {
+                            length:
+                                totalPages
+                        },
+                        (
+                            _,
+                            index
+                        ) =>
+                            index +
+                            1
+                    );
+                }
+
+
+                /*
+                 * Если страниц много —
+                 * показываем максимум 5 рядом
+                 * с текущей страницей.
+                 */
+
+                let start =
+                    Math.max(
+                        1,
+                        currentPage -
+                            2
+                    );
+
+
+                let end =
+                    Math.min(
+                        totalPages,
+                        start +
+                            4
+                    );
+
+
+                if (
+                    end -
+                        start <
+                    4
+                ) {
+
+                    start =
+                        Math.max(
+                            1,
+                            end -
+                                4
+                        );
+                }
+
+
+                const pages:
+                    number[] = [];
+
+
+                for (
+                    let number =
+                        start;
+                    number <=
+                    end;
+                    number +=
+                        1
+                ) {
+
+                    pages.push(
+                        number
+                    );
+                }
+
+
+                return pages;
+
             },
-            (
-                _,
-                index
-            ) =>
-                index + 1
+            [
+                currentPage,
+                totalPages
+            ]
         );
 
+
+    /*
+     * ============================================================
+     * LOADING
+     * ============================================================
+     */
 
     if (
         isPending &&
         !data
     ) {
+
         return (
-            <div className="w-full flex justify-center items-center py-10">
-                <p className="text-gray-500">
+            <div
+                className="
+                    flex
+                    w-full
+                    items-center
+                    justify-center
+                    px-4
+                    py-10
+                    text-center
+                "
+            >
+                <p
+                    className="
+                        text-sm
+                        text-gray-500
+
+                        sm:text-base
+                    "
+                >
                     Загрузка бизнесов...
                 </p>
             </div>
@@ -207,141 +338,270 @@ export default function Mybusinesses() {
     }
 
 
-    if (error) {
-        return (
-            <div className="w-full flex justify-center items-center py-10">
+    /*
+     * ============================================================
+     * ERROR
+     * ============================================================
+     */
 
-                <p className="text-red-500">
+    if (
+        error
+    ) {
+
+        return (
+            <div
+                className="
+                    flex
+                    w-full
+                    items-center
+                    justify-center
+                    px-4
+                    py-10
+                    text-center
+                "
+            >
+                <p
+                    className="
+                        max-w-[420px]
+                        text-sm
+                        leading-5
+                        text-red-500
+
+                        sm:text-base
+                    "
+                >
                     Произошла ошибка при загрузке бизнесов.
                     Возможно, сессия истекла.
                 </p>
-
             </div>
         );
     }
 
 
-    return (
-        <div className="w-full flex flex-col gap-10">
+    /*
+     * ============================================================
+     * RENDER
+     * ============================================================
+     */
 
-            {/* STATISTICS */}
+    return (
+        <div
+            className="
+                flex
+                w-full
+                min-w-0
+                flex-col
+                gap-6
+
+                sm:gap-8
+
+                lg:gap-10
+            "
+        >
+
+            {/* =====================================================
+                STATISTICS
+            ===================================================== */}
 
             <div
                 className="
                     grid
+                    w-full
+                    min-w-0
                     grid-cols-1
+                    gap-3
+
                     sm:grid-cols-2
+                    sm:gap-4
+
                     lg:grid-cols-4
-                    gap-9
+                    lg:gap-6
+
+                    xl:gap-9
                 "
             >
 
                 {cardsData.map(
-                    (
-                        card
-                    ) => (
-                        <Cards
+                    card => (
+
+                        <div
                             key={
                                 card.id
                             }
-                            title={
-                                card.title
-                            }
-                            num={
-                                card.num
-                            }
-                            leftBorderClass={
-                                card.leftBorderClass
-                            }
-                        />
+                            className="
+                                min-w-0
+                            "
+                        >
+                            <Cards
+                                title={
+                                    card.title
+                                }
+                                num={
+                                    card.num
+                                }
+                                leftBorderClass={
+                                    card.leftBorderClass
+                                }
+                            />
+                        </div>
+
                     )
                 )}
 
             </div>
 
 
-            {/* BUSINESSES */}
+            {/* =====================================================
+                BUSINESSES
+            ===================================================== */}
 
             {hasNoBusinesses ? (
 
-                <div className="py-4">
+                <div
+                    className="
+                        rounded-2xl
+                        border
+                        border-dashed
+                        border-[#c7c4d8]
+                        bg-white
+                        px-4
+                        py-10
+                        text-center
 
-                    <p className="text-gray-500">
+                        sm:py-14
+                    "
+                >
+                    <p
+                        className="
+                            text-sm
+                            text-gray-500
+
+                            sm:text-base
+                        "
+                    >
                         У вас пока нет ни одного бизнеса
                     </p>
-
                 </div>
 
             ) : (
 
                 <>
+
+                    {/* =============================================
+                        BUSINESS CARDS
+                    ============================================= */}
+
                     <div
                         className={`
                             grid
+                            w-full
+                            min-w-0
                             grid-cols-1
+                            gap-4
+
                             md:grid-cols-2
+                            md:gap-5
+
                             xl:grid-cols-3
-                            gap-6
+                            xl:gap-6
+
+                            transition-opacity
 
                             ${
                                 isFetching
                                     ? 'opacity-60'
-                                    : ''
+                                    : 'opacity-100'
                             }
                         `}
                     >
 
                         {businesses.map(
-                            (
-                                business
-                            ) => (
-                                <BusinessCard
+                            business => (
+
+                                <div
                                     key={
                                         business.id
                                     }
-                                    business={
-                                        business
-                                    }
-                                />
+                                    className="
+                                        min-w-0
+                                    "
+                                >
+                                    <BusinessCard
+                                        business={
+                                            business
+                                        }
+                                    />
+                                </div>
+
                             )
                         )}
 
                     </div>
 
 
-                    {/* PAGINATION */}
+                    {/* =============================================
+                        PAGINATION
+                    ============================================= */}
 
                     <div
                         className="
                             flex
+                            w-full
+                            min-w-0
                             flex-col
-                            sm:flex-row
-                            items-center
-                            justify-between
                             gap-4
                             border-t
                             border-[#e2e4f0]
                             pt-5
+
+                            sm:flex-row
+                            sm:items-center
+                            sm:justify-between
                         "
                     >
 
-                        {/* LEFT TEXT */}
+                        {/* =========================================
+                            INFO
+                        ========================================= */}
 
-                        <div className="text-sm text-slate-500">
+                        <div
+                            className="
+                                text-center
+                                text-xs
+                                leading-5
+                                text-slate-500
 
-                            {totalCount === 0
-                                ? 'Бизнесов нет'
-                                : `Показано ${firstItem}-${lastItem} из ${totalCount} бизнесов`
+                                sm:text-left
+                                sm:text-sm
+                            "
+                        >
+                            {
+                                totalCount ===
+                                0
+                                    ? 'Бизнесов нет'
+                                    : `Показано ${firstItem}-${lastItem} из ${totalCount} бизнесов`
                             }
-
                         </div>
 
 
-                        {/* BUTTONS */}
+                        {/* =========================================
+                            MOBILE PAGINATION
+                        ========================================= */}
 
-                        {totalPages > 1 && (
+                        {totalPages >
+                            1 && (
 
-                            <div className="flex items-center gap-1">
+                            <div
+                                className="
+                                    flex
+                                    w-full
+                                    items-center
+                                    justify-between
+                                    gap-2
+
+                                    sm:hidden
+                                "
+                            >
 
                                 {/* PREVIOUS */}
 
@@ -354,9 +614,7 @@ export default function Mybusinesses() {
                                     }
                                     onClick={() =>
                                         setPage(
-                                            (
-                                                previousPage
-                                            ) =>
+                                            previousPage =>
                                                 Math.max(
                                                     1,
                                                     previousPage -
@@ -365,13 +623,18 @@ export default function Mybusinesses() {
                                         )
                                     }
                                     className="
-                                        h-9
-                                        px-4
+                                        flex
+                                        h-10
+                                        min-w-[82px]
+                                        cursor-pointer
+                                        items-center
+                                        justify-center
                                         rounded-lg
                                         border
                                         border-[#c7c4d8]
                                         bg-white
-                                        text-sm
+                                        px-3
+                                        text-xs
                                         font-medium
                                         text-slate-600
                                         transition
@@ -384,12 +647,137 @@ export default function Mybusinesses() {
                                 </button>
 
 
+                                {/* CURRENT */}
+
+                                <div
+                                    className="
+                                        flex
+                                        min-w-0
+                                        flex-1
+                                        items-center
+                                        justify-center
+                                        text-xs
+                                        font-semibold
+                                        text-slate-600
+                                    "
+                                >
+                                    {currentPage} / {totalPages}
+                                </div>
+
+
+                                {/* NEXT */}
+
+                                <button
+                                    type="button"
+                                    disabled={
+                                        currentPage >=
+                                            totalPages ||
+                                        isFetching
+                                    }
+                                    onClick={() =>
+                                        setPage(
+                                            previousPage =>
+                                                Math.min(
+                                                    totalPages,
+                                                    previousPage +
+                                                        1
+                                                )
+                                        )
+                                    }
+                                    className="
+                                        flex
+                                        h-10
+                                        min-w-[82px]
+                                        cursor-pointer
+                                        items-center
+                                        justify-center
+                                        rounded-lg
+                                        border
+                                        border-[#c7c4d8]
+                                        bg-white
+                                        px-3
+                                        text-xs
+                                        font-medium
+                                        text-slate-600
+                                        transition
+                                        hover:bg-slate-50
+                                        disabled:cursor-not-allowed
+                                        disabled:opacity-40
+                                    "
+                                >
+                                    След.
+                                </button>
+
+                            </div>
+
+                        )}
+
+
+                        {/* =========================================
+                            TABLET / DESKTOP PAGINATION
+                        ========================================= */}
+
+                        {totalPages >
+                            1 && (
+
+                            <div
+                                className="
+                                    hidden
+                                    min-w-0
+                                    items-center
+                                    gap-1
+
+                                    sm:flex
+                                "
+                            >
+
+                                {/* PREVIOUS */}
+
+                                <button
+                                    type="button"
+                                    disabled={
+                                        currentPage <=
+                                            1 ||
+                                        isFetching
+                                    }
+                                    onClick={() =>
+                                        setPage(
+                                            previousPage =>
+                                                Math.max(
+                                                    1,
+                                                    previousPage -
+                                                        1
+                                                )
+                                        )
+                                    }
+                                    className="
+                                        h-9
+                                        cursor-pointer
+                                        rounded-lg
+                                        border
+                                        border-[#c7c4d8]
+                                        bg-white
+                                        px-3
+                                        text-sm
+                                        font-medium
+                                        text-slate-600
+                                        transition
+                                        hover:bg-slate-50
+                                        disabled:cursor-not-allowed
+                                        disabled:opacity-40
+
+                                        lg:px-4
+                                    "
+                                >
+                                    Пред.
+                                </button>
+
+
                                 {/* PAGE NUMBERS */}
 
                                 {pageNumbers.map(
-                                    (
-                                        pageNumber
-                                    ) => (
+                                    pageNumber => (
+
                                         <button
                                             key={
                                                 pageNumber
@@ -406,9 +794,10 @@ export default function Mybusinesses() {
                                             className={`
                                                 h-9
                                                 min-w-9
-                                                px-3
+                                                cursor-pointer
                                                 rounded-lg
                                                 border
+                                                px-2
                                                 text-sm
                                                 font-medium
                                                 transition
@@ -416,15 +805,30 @@ export default function Mybusinesses() {
                                                 ${
                                                     currentPage ===
                                                     pageNumber
-                                                        ? 'border-[#4031d0] bg-[#4031d0] text-white'
-                                                        : 'border-[#c7c4d8] bg-white text-slate-600 hover:bg-slate-50'
+                                                        ? `
+                                                            border-[#4031d0]
+                                                            bg-[#4031d0]
+                                                            text-white
+                                                        `
+                                                        : `
+                                                            border-[#c7c4d8]
+                                                            bg-white
+                                                            text-slate-600
+                                                            hover:bg-slate-50
+                                                        `
                                                 }
+
+                                                disabled:cursor-not-allowed
+                                                disabled:opacity-60
+
+                                                lg:px-3
                                             `}
                                         >
                                             {
                                                 pageNumber
                                             }
                                         </button>
+
                                     )
                                 )}
 
@@ -440,9 +844,7 @@ export default function Mybusinesses() {
                                     }
                                     onClick={() =>
                                         setPage(
-                                            (
-                                                previousPage
-                                            ) =>
+                                            previousPage =>
                                                 Math.min(
                                                     totalPages,
                                                     previousPage +
@@ -452,11 +854,12 @@ export default function Mybusinesses() {
                                     }
                                     className="
                                         h-9
-                                        px-4
+                                        cursor-pointer
                                         rounded-lg
                                         border
                                         border-[#c7c4d8]
                                         bg-white
+                                        px-3
                                         text-sm
                                         font-medium
                                         text-slate-600
@@ -464,16 +867,21 @@ export default function Mybusinesses() {
                                         hover:bg-slate-50
                                         disabled:cursor-not-allowed
                                         disabled:opacity-40
+
+                                        lg:px-4
                                     "
                                 >
                                     След.
                                 </button>
 
                             </div>
+
                         )}
 
                     </div>
+
                 </>
+
             )}
 
         </div>

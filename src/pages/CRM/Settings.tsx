@@ -12,9 +12,14 @@ import {
     UserCheck
 } from 'lucide-react';
 
-import RecordingRules from '../../components/organisms/Crm/Settings/RecordingRules';
-import ConfirmationOfRecords from '../../components/organisms/Crm/Settings/ConfirmationOfRecords';
-import CancellationOfClientRecords from '../../components/organisms/Crm/Settings/CancellationOfClientRecords';
+import RecordingRules
+    from '../../components/organisms/Crm/Settings/RecordingRules';
+
+import ConfirmationOfRecords
+    from '../../components/organisms/Crm/Settings/ConfirmationOfRecords';
+
+import CancellationOfClientRecords
+    from '../../components/organisms/Crm/Settings/CancellationOfClientRecords';
 
 import {
     getSettings,
@@ -74,46 +79,206 @@ export default function Settings() {
     const [
         error,
         setError
-    ] = useState<string | null>(null);
+    ] = useState<string | null>(
+        null
+    );
 
 
-    /*
-     * ID выбранного бизнеса.
-     *
-     * SelectOption.id имеет тип string | number,
-     * поэтому приводим его к number.
-     */
     const businessId =
         selectedBusiness
-            ? Number(selectedBusiness.id)
+            ? Number(
+                  selectedBusiness.id
+              )
             : null;
 
 
     /*
-     * Загружаем настройки при:
-     *
-     * 1. первом открытии страницы;
-     * 2. смене выбранного бизнеса.
+     * ============================================================
+     * LOAD
+     * ============================================================
      */
+
     useEffect(() => {
         if (!businessId) {
             return;
         }
 
 
-        const loadSettings = async () => {
-            try {
-                setIsLoading(true);
-                setError(null);
+        const loadSettings =
+            async () => {
+                try {
+                    setIsLoading(true);
+                    setError(null);
 
 
-                const response =
-                    await getSettings(
-                        businessId
+                    const response =
+                        await getSettings(
+                            businessId
+                        );
+
+
+                    const loadedSettings:
+                        BookingSettings = {
+
+                        slot_step_minutes:
+                            response.data.slot_step_minutes,
+
+                        min_booking_notice_hours:
+                            response.data.min_booking_notice_hours,
+
+                        max_booking_days_ahead:
+                            response.data.max_booking_days_ahead,
+
+                        auto_confirm_bookings:
+                            response.data.auto_confirm_bookings,
+
+                        allow_client_cancel:
+                            response.data.allow_client_cancel,
+
+                        cancel_before_hours:
+                            response.data.cancel_before_hours
+                    };
+
+
+                    setSettings(
+                        loadedSettings
                     );
 
 
-                const loadedSettings: BookingSettings = {
+                    setSavedSettings(
+                        loadedSettings
+                    );
+
+                } catch (error) {
+
+                    console.error(
+                        'Ошибка загрузки настроек:',
+                        error
+                    );
+
+
+                    setError(
+                        'Не удалось загрузить настройки бизнеса.'
+                    );
+
+                } finally {
+
+                    setIsLoading(
+                        false
+                    );
+                }
+            };
+
+
+        loadSettings();
+
+    }, [
+        businessId
+    ]);
+
+
+    /*
+     * ============================================================
+     * UPDATE FIELD
+     * ============================================================
+     */
+
+    const updateField = <
+        K extends keyof BookingSettings
+    >(
+        field: K,
+        value: BookingSettings[K]
+    ) => {
+
+        setSettings(
+            prev => ({
+                ...prev,
+                [field]: value
+            })
+        );
+    };
+
+
+    /*
+     * ============================================================
+     * CHANGES
+     * ============================================================
+     */
+
+    const hasChanges =
+        useMemo(
+            () =>
+                JSON.stringify(
+                    settings
+                ) !==
+                JSON.stringify(
+                    savedSettings
+                ),
+            [
+                settings,
+                savedSettings
+            ]
+        );
+
+
+    /*
+     * ============================================================
+     * CANCEL
+     * ============================================================
+     */
+
+    const handleCancel =
+        () => {
+
+            setSettings({
+                ...savedSettings
+            });
+
+
+            setError(
+                null
+            );
+        };
+
+
+    /*
+     * ============================================================
+     * SAVE
+     * ============================================================
+     */
+
+    const handleSave =
+        async () => {
+
+            if (
+                !businessId
+            ) {
+                return;
+            }
+
+
+            try {
+
+                setIsSaving(
+                    true
+                );
+
+
+                setError(
+                    null
+                );
+
+
+                const response =
+                    await patchSettings(
+                        businessId,
+                        settings
+                    );
+
+
+                const updatedSettings:
+                    BookingSettings = {
+
                     slot_step_minutes:
                         response.data.slot_step_minutes,
 
@@ -135,150 +300,68 @@ export default function Settings() {
 
 
                 setSettings(
-                    loadedSettings
+                    updatedSettings
                 );
 
 
                 setSavedSettings(
-                    loadedSettings
+                    updatedSettings
                 );
+
             } catch (error) {
+
                 console.error(
-                    'Ошибка загрузки настроек:',
+                    'Ошибка сохранения настроек:',
                     error
                 );
 
+
                 setError(
-                    'Не удалось загрузить настройки бизнеса.'
+                    'Не удалось сохранить настройки.'
                 );
+
             } finally {
-                setIsLoading(false);
+
+                setIsSaving(
+                    false
+                );
             }
         };
 
 
-        loadSettings();
-
-    }, [businessId]);
-
-
     /*
-     * Универсальное изменение любого поля.
+     * ============================================================
+     * NO BUSINESS
+     * ============================================================
      */
-    const updateField = <
-        K extends keyof BookingSettings
-    >(
-        field: K,
-        value: BookingSettings[K]
-    ) => {
-        setSettings((prev) => ({
-            ...prev,
-            [field]: value
-        }));
-    };
 
+    if (
+        !businessId
+    ) {
 
-    /*
-     * Проверяем, менял ли пользователь форму.
-     */
-    const hasChanges =
-        useMemo(() => {
-            return (
-                JSON.stringify(settings) !==
-                JSON.stringify(savedSettings)
-            );
-        }, [
-            settings,
-            savedSettings
-        ]);
-
-
-    /*
-     * Отмена изменений.
-     *
-     * Backend не вызываем.
-     */
-    const handleCancel = () => {
-        setSettings({
-            ...savedSettings
-        });
-    };
-
-
-    /*
-     * Сохранение через PATCH.
-     */
-    const handleSave = async () => {
-        if (!businessId) {
-            return;
-        }
-
-
-        try {
-            setIsSaving(true);
-            setError(null);
-
-
-            const response =
-                await patchSettings(
-                    businessId,
-                    settings
-                );
-
-
-            const updatedSettings: BookingSettings = {
-                slot_step_minutes:
-                    response.data.slot_step_minutes,
-
-                min_booking_notice_hours:
-                    response.data.min_booking_notice_hours,
-
-                max_booking_days_ahead:
-                    response.data.max_booking_days_ahead,
-
-                auto_confirm_bookings:
-                    response.data.auto_confirm_bookings,
-
-                allow_client_cancel:
-                    response.data.allow_client_cancel,
-
-                cancel_before_hours:
-                    response.data.cancel_before_hours
-            };
-
-
-            setSettings(
-                updatedSettings
-            );
-
-
-            setSavedSettings(
-                updatedSettings
-            );
-
-        } catch (error) {
-            console.error(
-                'Ошибка сохранения настроек:',
-                error
-            );
-
-            setError(
-                'Не удалось сохранить настройки.'
-            );
-
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-
-    /*
-     * Бизнес ещё не выбран.
-     */
-    if (!businessId) {
         return (
-            <div className="flex min-h-full items-center justify-center p-10">
-                <p className="text-base text-slate-500">
+            <div
+                className="
+                    flex
+                    min-h-[300px]
+                    items-center
+                    justify-center
+                    px-4
+                    py-8
+                    text-center
+
+                    sm:px-6
+                "
+            >
+                <p
+                    className="
+                        text-sm
+                        leading-6
+                        text-slate-500
+
+                        sm:text-base
+                    "
+                >
                     Выберите бизнес, чтобы изменить настройки записи.
                 </p>
             </div>
@@ -287,12 +370,36 @@ export default function Settings() {
 
 
     /*
-     * Загрузка.
+     * ============================================================
+     * LOADING
+     * ============================================================
      */
-    if (isLoading) {
+
+    if (
+        isLoading
+    ) {
+
         return (
-            <div className="flex min-h-full items-center justify-center p-10">
-                <p className="text-base text-slate-500">
+            <div
+                className="
+                    flex
+                    min-h-[300px]
+                    items-center
+                    justify-center
+                    px-4
+                    py-8
+                    text-center
+                "
+            >
+                <p
+                    className="
+                        animate-pulse
+                        text-sm
+                        text-slate-500
+
+                        sm:text-base
+                    "
+                >
                     Загружаем настройки...
                 </p>
             </div>
@@ -300,91 +407,158 @@ export default function Settings() {
     }
 
 
+    /*
+     * ============================================================
+     * RENDER
+     * ============================================================
+     */
+
     return (
         <div
             className="
                 flex
                 min-h-full
+                w-full
+                min-w-0
                 flex-col
                 bg-[#f8f9ff]
             "
         >
+            {/* =====================================================
+                CONTENT
+            ===================================================== */}
 
-            {/* CONTENT */}
+            <main
+                className="
+                    w-full
+                    min-w-0
+                    flex-1
+                    px-4
+                    py-5
 
-            <main className="flex-1 px-10 py-8">
+                    sm:px-6
+                    sm:py-6
 
+                    md:px-8
+                    md:py-8
+
+                    lg:px-10
+                "
+            >
                 <div
                     className="
+                        mx-auto
                         grid
                         w-full
                         max-w-[1160px]
+                        min-w-0
                         grid-cols-1
                         items-start
-                        gap-6
-                        xl:grid-cols-[730px_340px]
+                        gap-5
+
+                        sm:gap-6
+
+                        xl:grid-cols-[minmax(0,730px)_minmax(0,340px)]
                     "
                 >
-
                     {/* LEFT */}
 
-                    <div className="flex flex-col gap-5">
+                    <div
+                        className="
+                            flex
+                            min-w-0
+                            flex-col
+                            gap-4
 
+                            sm:gap-5
+                        "
+                    >
                         <RecordingRules
-                            settings={settings}
-                            updateField={updateField}
+                            settings={
+                                settings
+                            }
+                            updateField={
+                                updateField
+                            }
                         />
 
 
                         <ConfirmationOfRecords
-                            settings={settings}
-                            updateField={updateField}
+                            settings={
+                                settings
+                            }
+                            updateField={
+                                updateField
+                            }
                         />
 
 
                         <CancellationOfClientRecords
-                            settings={settings}
-                            updateField={updateField}
+                            settings={
+                                settings
+                            }
+                            updateField={
+                                updateField
+                            }
                         />
-
                     </div>
 
 
                     {/* RIGHT */}
 
-                    <aside className="flex flex-col gap-4">
-
+                    <aside
+                        className="
+                            flex
+                            min-w-0
+                            flex-col
+                            gap-4
+                        "
+                    >
                         {/* HOW IT WORKS */}
 
                         <section
                             className="
+                                min-w-0
                                 rounded-2xl
                                 border
                                 border-[#d0cee3]
                                 bg-white
-                                p-6
+                                p-4
+
+                                sm:p-5
+                                md:p-6
                             "
                         >
-
-                            <div className="flex items-center gap-3">
-
+                            <div
+                                className="
+                                    flex
+                                    items-center
+                                    gap-3
+                                "
+                            >
                                 <div
                                     className="
                                         flex
-                                        h-10
-                                        w-10
+                                        h-9
+                                        w-9
                                         shrink-0
                                         items-center
                                         justify-center
                                         rounded-full
                                         bg-[#f1efff]
+
+                                        sm:h-10
+                                        sm:w-10
                                     "
                                 >
                                     <Lightbulb
                                         className="
-                                            h-5
-                                            w-5
+                                            h-4
+                                            w-4
                                             text-[#4031d0]
+
+                                            sm:h-5
+                                            sm:w-5
                                         "
                                     />
                                 </div>
@@ -399,14 +573,27 @@ export default function Settings() {
                                 >
                                     Как это работает
                                 </h3>
-
                             </div>
 
 
-                            <div className="mt-6 flex flex-col gap-5">
+                            <div
+                                className="
+                                    mt-5
+                                    flex
+                                    flex-col
+                                    gap-4
 
+                                    sm:mt-6
+                                    sm:gap-5
+                                "
+                            >
                                 <InfoItem>
-                                    <strong className="font-semibold text-slate-800">
+                                    <strong
+                                        className="
+                                            font-semibold
+                                            text-slate-800
+                                        "
+                                    >
                                         Шаг слотов
                                     </strong>{' '}
                                     определяет интервалы времени,
@@ -415,7 +602,12 @@ export default function Settings() {
 
 
                                 <InfoItem>
-                                    <strong className="font-semibold text-slate-800">
+                                    <strong
+                                        className="
+                                            font-semibold
+                                            text-slate-800
+                                        "
+                                    >
                                         Минимальное время
                                     </strong>{' '}
                                     защищает от слишком поздней
@@ -424,15 +616,18 @@ export default function Settings() {
 
 
                                 <InfoItem>
-                                    <strong className="font-semibold text-slate-800">
+                                    <strong
+                                        className="
+                                            font-semibold
+                                            text-slate-800
+                                        "
+                                    >
                                         Лимит отмены
                                     </strong>{' '}
                                     помогает избежать простоев
                                     при поздней отмене.
                                 </InfoItem>
-
                             </div>
-
                         </section>
 
 
@@ -440,31 +635,55 @@ export default function Settings() {
 
                         <section
                             className="
+                                min-w-0
                                 rounded-2xl
                                 bg-[#4031d0]
-                                p-6
+                                p-4
                                 text-white
                                 shadow-lg
                                 shadow-[#4031d0]/15
+
+                                sm:p-5
+                                md:p-6
                             "
                         >
-
-                            <h3 className="text-base font-semibold">
+                            <h3
+                                className="
+                                    text-base
+                                    font-semibold
+                                "
+                            >
                                 Итоговый результат:
                             </h3>
 
 
-                            <div className="mt-6 flex flex-col gap-5">
+                            <div
+                                className="
+                                    mt-5
+                                    flex
+                                    flex-col
+                                    gap-4
 
+                                    sm:mt-6
+                                    sm:gap-5
+                                "
+                            >
                                 <ResultItem
                                     icon={
-                                        <Calendar className="h-5 w-5" />
+                                        <Calendar
+                                            className="
+                                                h-5
+                                                w-5
+                                            "
+                                        />
                                     }
                                 >
                                     Клиент видит слоты каждые{' '}
 
                                     <strong>
-                                        {settings.slot_step_minutes} минут
+                                        {
+                                            settings.slot_step_minutes
+                                        } минут
                                     </strong>
                                     .
                                 </ResultItem>
@@ -472,7 +691,12 @@ export default function Settings() {
 
                                 <ResultItem
                                     icon={
-                                        <UserCheck className="h-5 w-5" />
+                                        <UserCheck
+                                            className="
+                                                h-5
+                                                w-5
+                                            "
+                                        />
                                     }
                                 >
                                     Записи подтверждаются{' '}
@@ -490,15 +714,19 @@ export default function Settings() {
 
                                 <ResultItem
                                     icon={
-                                        <CalendarX className="h-5 w-5" />
+                                        <CalendarX
+                                            className="
+                                                h-5
+                                                w-5
+                                            "
+                                        />
                                     }
                                 >
                                     {
                                         settings.allow_client_cancel
                                             ? (
                                                 <>
-                                                    Клиент может отменить
-                                                    запись за{' '}
+                                                    Клиент может отменить запись за{' '}
 
                                                     <strong>
                                                         {
@@ -511,20 +739,15 @@ export default function Settings() {
                                             )
                                             : (
                                                 <>
-                                                    Клиент не может
-                                                    самостоятельно
+                                                    Клиент не может самостоятельно
                                                     отменять запись.
                                                 </>
                                             )
                                     }
                                 </ResultItem>
-
                             </div>
-
                         </section>
-
                     </aside>
-
                 </div>
 
 
@@ -533,7 +756,9 @@ export default function Settings() {
                 {error && (
                     <div
                         className="
+                            mx-auto
                             mt-5
+                            w-full
                             max-w-[1160px]
                             rounded-xl
                             border
@@ -548,11 +773,12 @@ export default function Settings() {
                         {error}
                     </div>
                 )}
-
             </main>
 
 
-            {/* ACTION BAR */}
+            {/* =====================================================
+                ACTION BAR
+            ===================================================== */}
 
             <footer
                 className="
@@ -561,24 +787,44 @@ export default function Settings() {
                     border-t
                     border-[#c7c4d8]
                     bg-white
-                    px-10
+                    px-4
                     py-4
+
+                    sm:px-6
+
+                    md:px-8
+
+                    lg:px-10
                 "
             >
+                <div
+                    className="
+                        mx-auto
+                        flex
+                        w-full
+                        max-w-[1160px]
+                        flex-col-reverse
+                        gap-3
 
-                <div className="flex items-center justify-end gap-3">
-
+                        sm:flex-row
+                        sm:items-center
+                        sm:justify-end
+                    "
+                >
                     <button
                         type="button"
-                        onClick={handleCancel}
+                        onClick={
+                            handleCancel
+                        }
                         disabled={
                             !hasChanges ||
                             isSaving
                         }
                         className="
                             h-11
-                            min-w-[110px]
-                            rounded-lg
+                            w-full
+                            cursor-pointer
+                            rounded-xl
                             border
                             border-[#c7c5d9]
                             bg-white
@@ -590,6 +836,9 @@ export default function Settings() {
                             hover:bg-slate-50
                             disabled:cursor-not-allowed
                             disabled:opacity-40
+
+                            sm:w-auto
+                            sm:min-w-[110px]
                         "
                     >
                         Отмена
@@ -598,15 +847,18 @@ export default function Settings() {
 
                     <button
                         type="button"
-                        onClick={handleSave}
+                        onClick={
+                            handleSave
+                        }
                         disabled={
                             !hasChanges ||
                             isSaving
                         }
                         className="
                             h-11
-                            min-w-[205px]
-                            rounded-lg
+                            w-full
+                            cursor-pointer
+                            rounded-xl
                             bg-[#4a38e8]
                             px-6
                             text-sm
@@ -616,6 +868,9 @@ export default function Settings() {
                             hover:bg-[#3d2fc9]
                             disabled:cursor-not-allowed
                             disabled:bg-slate-400
+
+                            sm:w-auto
+                            sm:min-w-[205px]
                         "
                     >
                         {
@@ -624,15 +879,18 @@ export default function Settings() {
                                 : 'Сохранить настройки'
                         }
                     </button>
-
                 </div>
-
             </footer>
-
         </div>
     );
 }
 
+
+/*
+ * ============================================================
+ * INFO ITEM
+ * ============================================================
+ */
 
 function InfoItem({
     children
@@ -640,8 +898,13 @@ function InfoItem({
     children: ReactNode;
 }) {
     return (
-        <div className="flex gap-3">
-
+        <div
+            className="
+                flex
+                min-w-0
+                gap-3
+            "
+        >
             <span
                 className="
                     mt-[8px]
@@ -654,14 +917,28 @@ function InfoItem({
             />
 
 
-            <p className="text-[13px] leading-relaxed text-slate-600">
+            <p
+                className="
+                    min-w-0
+                    text-[12px]
+                    leading-5
+                    text-slate-600
+
+                    sm:text-[13px]
+                "
+            >
                 {children}
             </p>
-
         </div>
     );
 }
 
+
+/*
+ * ============================================================
+ * RESULT ITEM
+ * ============================================================
+ */
 
 function ResultItem({
     icon,
@@ -671,8 +948,14 @@ function ResultItem({
     children: ReactNode;
 }) {
     return (
-        <div className="flex items-start gap-3">
-
+        <div
+            className="
+                flex
+                min-w-0
+                items-start
+                gap-3
+            "
+        >
             <div
                 className="
                     flex
@@ -689,10 +972,18 @@ function ResultItem({
             </div>
 
 
-            <div className="pt-1.5 text-[13px] leading-relaxed">
+            <div
+                className="
+                    min-w-0
+                    pt-1.5
+                    text-[12px]
+                    leading-5
+
+                    sm:text-[13px]
+                "
+            >
                 {children}
             </div>
-
         </div>
     );
 }

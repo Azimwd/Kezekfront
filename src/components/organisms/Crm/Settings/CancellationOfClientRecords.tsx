@@ -26,33 +26,51 @@ export default function CancellationOfClientRecords({
     return (
         <section
             className="
+                w-full
+                min-w-0
                 rounded-2xl
                 border
                 border-[#cbc9df]
                 bg-white
-                p-6
+                p-4
+
+                sm:p-5
+                md:p-6
             "
         >
+            {/* HEADER */}
 
-            <div className="flex items-center gap-3">
-
+            <div
+                className="
+                    flex
+                    min-w-0
+                    items-center
+                    gap-3
+                "
+            >
                 <div
                     className="
                         flex
-                        h-10
-                        w-10
+                        h-9
+                        w-9
                         shrink-0
                         items-center
                         justify-center
                         rounded-full
                         bg-[#f1efff]
+
+                        sm:h-10
+                        sm:w-10
                     "
                 >
                     <CircleX
                         className="
-                            h-5
-                            w-5
+                            h-4
+                            w-4
                             text-[#4031d0]
+
+                            sm:h-5
+                            sm:w-5
                         "
                     />
                 </div>
@@ -60,34 +78,51 @@ export default function CancellationOfClientRecords({
 
                 <h2
                     className="
-                        text-xl
+                        min-w-0
+                        text-lg
                         font-semibold
+                        leading-6
                         text-slate-900
+
+                        sm:text-xl
                     "
                 >
                     Отмена записи клиентом
                 </h2>
-
             </div>
 
 
+            {/* TOGGLE */}
+
             <div
                 className="
-                    mt-7
+                    mt-5
                     flex
-                    items-center
-                    justify-between
-                    gap-6
+                    min-w-0
+                    flex-col
+                    gap-4
+
+                    sm:mt-7
+                    sm:flex-row
+                    sm:items-center
+                    sm:justify-between
+                    sm:gap-6
                 "
             >
-
-                <div>
-
+                <div
+                    className="
+                        min-w-0
+                        flex-1
+                    "
+                >
                     <div
                         className="
-                            text-sm
+                            text-[13px]
                             font-semibold
+                            leading-5
                             text-slate-700
+
+                            sm:text-sm
                         "
                     >
                         Разрешить клиенту отмену
@@ -98,33 +133,44 @@ export default function CancellationOfClientRecords({
                         className="
                             mt-1.5
                             max-w-[530px]
-                            text-[13px]
-                            leading-relaxed
+                            text-[12px]
+                            leading-5
                             text-slate-500
+
+                            sm:text-[13px]
                         "
                     >
                         Если включено, клиент сможет самостоятельно
                         отменить свою запись через портал.
                     </p>
-
-
                 </div>
 
 
-                <Toggle
-                    checked={
-                        settings.allow_client_cancel
-                    }
-                    onChange={() =>
-                        updateField(
-                            'allow_client_cancel',
-                            !settings.allow_client_cancel
-                        )
-                    }
-                />
+                <div
+                    className="
+                        flex
+                        w-full
+                        justify-end
 
+                        sm:w-auto
+                    "
+                >
+                    <Toggle
+                        checked={
+                            settings.allow_client_cancel
+                        }
+                        onChange={() =>
+                            updateField(
+                                'allow_client_cancel',
+                                !settings.allow_client_cancel
+                            )
+                        }
+                    />
+                </div>
             </div>
 
+
+            {/* CANCEL HOURS */}
 
             {settings.allow_client_cancel && (
                 <div
@@ -135,13 +181,15 @@ export default function CancellationOfClientRecords({
                         pt-5
                     "
                 >
-
                     <div
                         className="
                             mb-2
-                            text-sm
+                            text-[13px]
                             font-semibold
+                            leading-5
                             text-slate-700
+
+                            sm:text-sm
                         "
                     >
                         За сколько часов можно отменить
@@ -151,15 +199,21 @@ export default function CancellationOfClientRecords({
                     <div
                         className="
                             grid
+                            min-w-0
                             grid-cols-1
-                            gap-4
-                            sm:grid-cols-[210px_1fr]
+                            gap-2.5
+
+                            sm:grid-cols-[210px_minmax(0,1fr)]
                             sm:items-center
+                            sm:gap-4
                         "
                     >
-
-                        <div>
-
+                        <div
+                            className="
+                                min-w-0
+                                w-full
+                            "
+                        >
                             <input
                                 type="number"
                                 min={0}
@@ -179,7 +233,8 @@ export default function CancellationOfClientRecords({
                                 className="
                                     h-11
                                     w-full
-                                    rounded-lg
+                                    min-w-0
+                                    rounded-xl
                                     border
                                     border-[#c7c5d9]
                                     bg-white
@@ -194,27 +249,26 @@ export default function CancellationOfClientRecords({
                                     focus:ring-[#4031d0]/10
                                 "
                             />
-
                         </div>
 
 
                         <p
                             className="
-                                text-[13px]
-                                leading-relaxed
+                                min-w-0
+                                text-[12px]
+                                leading-5
                                 text-slate-500
+
+                                sm:text-[13px]
                             "
                         >
                             Клиент сможет отменить запись
                             не позднее указанного времени
                             до начала услуги.
                         </p>
-
                     </div>
-
                 </div>
             )}
-
         </section>
     );
 }
@@ -238,9 +292,11 @@ function Toggle({
                 h-7
                 w-12
                 shrink-0
+                cursor-pointer
                 rounded-full
                 transition-colors
                 duration-200
+
                 ${
                     checked
                         ? 'bg-[#4a38e8]'
@@ -260,6 +316,7 @@ function Toggle({
                     shadow-sm
                     transition-transform
                     duration-200
+
                     ${
                         checked
                             ? 'translate-x-5'

@@ -455,28 +455,6 @@ export default function ReviewsControl() {
                 "
             >
 
-                <div>
-                    <h1
-                        className="
-                            text-3xl
-                            font-bold
-                            text-slate-950
-                        "
-                    >
-                        Отзывы
-                    </h1>
-
-                    <p
-                        className="
-                            mt-2
-                            text-sm
-                            text-slate-500
-                        "
-                    >
-                        Управляйте отзывами клиентов и репутацией бизнеса.
-                    </p>
-                </div>
-
 
                 <ReviewStats
                     averageRating={

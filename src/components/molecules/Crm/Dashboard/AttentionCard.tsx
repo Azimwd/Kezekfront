@@ -16,7 +16,6 @@ interface AttentionCardProps {
 export default function AttentionCard({
     pendingCount
 }: AttentionCardProps) {
-
     const navigate =
         useNavigate();
 
@@ -24,6 +23,8 @@ export default function AttentionCard({
     return (
         <div
             className="
+                w-full
+                min-w-0
                 overflow-hidden
                 rounded-2xl
                 border
@@ -32,33 +33,37 @@ export default function AttentionCard({
                 shadow-sm
             "
         >
-
-            {/* HEADER */}
-
             <div
                 className="
                     flex
+                    min-w-0
                     items-center
                     gap-2
                     bg-[#FFF4DA]
-                    px-4
+                    px-3.5
                     py-3
                     text-[13px]
                     font-semibold
                     text-[#F79009]
+
+                    sm:px-4
                 "
             >
-
                 <AlertCircle
                     size={17}
+                    className="shrink-0"
                 />
 
-                Требуют внимания
-
+                <span
+                    className="
+                        min-w-0
+                        break-words
+                    "
+                >
+                    Требуют внимания
+                </span>
             </div>
 
-
-            {/* PENDING APPOINTMENTS */}
 
             <button
                 type="button"
@@ -69,38 +74,45 @@ export default function AttentionCard({
                 }
                 className="
                     flex
+                    min-h-[72px]
                     w-full
+                    min-w-0
+                    cursor-pointer
                     items-center
                     gap-3
                     border-b
                     border-[#EAECF0]
-                    px-4
+                    px-3.5
                     py-4
                     text-left
                     transition
                     hover:bg-[#F9FAFB]
+
+                    sm:px-4
                 "
             >
-
                 <div
                     className="
                         min-w-0
                         flex-1
                     "
                 >
-
                     <div
                         className="
                             flex
+                            min-w-0
+                            flex-wrap
                             items-center
                             gap-2
                         "
                     >
-
                         <span
                             className="
+                                min-w-0
+                                break-words
                                 text-[13px]
                                 font-medium
+                                leading-5
                                 text-[#344054]
                             "
                         >
@@ -109,11 +121,11 @@ export default function AttentionCard({
 
 
                         {pendingCount > 0 && (
-
                             <span
                                 className="
                                     flex
                                     min-w-[22px]
+                                    shrink-0
                                     items-center
                                     justify-center
                                     rounded-full
@@ -127,41 +139,37 @@ export default function AttentionCard({
                             >
                                 {pendingCount}
                             </span>
-
                         )}
-
                     </div>
 
 
                     <div
                         className="
                             mt-1
+                            break-words
                             text-[11px]
                             leading-4
                             text-[#98A2B3]
                         "
                     >
-                        {pendingCount > 0
-                            ? 'Записи ожидают подтверждения'
-                            : 'Все записи обработаны'
+                        {
+                            pendingCount > 0
+                                ? 'Записи ожидают подтверждения'
+                                : 'Все записи обработаны'
                         }
                     </div>
-
                 </div>
 
 
                 <ChevronRight
-                    size={17}
+                    size={18}
                     className="
                         shrink-0
                         text-[#98A2B3]
                     "
                 />
-
             </button>
 
-
-            {/* SCHEDULE */}
 
             <button
                 type="button"
@@ -172,28 +180,33 @@ export default function AttentionCard({
                 }
                 className="
                     flex
+                    min-h-[72px]
                     w-full
+                    min-w-0
+                    cursor-pointer
                     items-center
                     gap-3
-                    px-4
+                    px-3.5
                     py-4
                     text-left
                     transition
                     hover:bg-[#F9FAFB]
+
+                    sm:px-4
                 "
             >
-
                 <div
                     className="
                         min-w-0
                         flex-1
                     "
                 >
-
                     <div
                         className="
+                            break-words
                             text-[13px]
                             font-medium
+                            leading-5
                             text-[#344054]
                         "
                     >
@@ -204,6 +217,7 @@ export default function AttentionCard({
                     <div
                         className="
                             mt-1
+                            break-words
                             text-[11px]
                             leading-4
                             text-[#98A2B3]
@@ -211,20 +225,17 @@ export default function AttentionCard({
                     >
                         Проверьте рабочий график сотрудников
                     </div>
-
                 </div>
 
 
                 <ChevronRight
-                    size={17}
+                    size={18}
                     className="
                         shrink-0
                         text-[#98A2B3]
                     "
                 />
-
             </button>
-
         </div>
     );
 }

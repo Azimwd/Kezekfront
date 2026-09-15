@@ -30,58 +30,88 @@ export default function RecordingRules({
     return (
         <section
             className="
+                w-full
+                min-w-0
                 rounded-2xl
                 border
                 border-[#cbc9df]
                 bg-white
-                p-6
+                p-4
+
+                sm:p-5
+                md:p-6
             "
         >
+            {/* HEADER */}
 
-            <div className="flex items-center gap-3">
-
+            <div
+                className="
+                    flex
+                    min-w-0
+                    items-center
+                    gap-3
+                "
+            >
                 <div
                     className="
                         flex
-                        h-10
-                        w-10
+                        h-9
+                        w-9
                         shrink-0
                         items-center
                         justify-center
                         rounded-full
                         bg-[#f1efff]
+
+                        sm:h-10
+                        sm:w-10
                     "
                 >
                     <Clock3
                         className="
-                            h-5
-                            w-5
+                            h-4
+                            w-4
                             text-[#4031d0]
+
+                            sm:h-5
+                            sm:w-5
                         "
                     />
                 </div>
 
-
                 <h2
                     className="
-                        text-xl
+                        min-w-0
+                        text-lg
                         font-semibold
+                        leading-6
                         text-slate-900
+
+                        sm:text-xl
                     "
                 >
                     Правила записи
                 </h2>
-
             </div>
 
 
-            <div className="mt-7 flex flex-col gap-7">
+            {/* SETTINGS */}
 
+            <div
+                className="
+                    mt-5
+                    flex
+                    flex-col
+                    gap-6
+
+                    sm:mt-7
+                    sm:gap-7
+                "
+            >
                 <SettingRow
                     title="Шаг слотов"
                     description="Определяет, с каким интервалом клиент будет видеть свободное время."
                 >
-
                     <select
                         value={
                             settings.slot_step_minutes
@@ -118,7 +148,6 @@ export default function RecordingRules({
                             60 минут
                         </option>
                     </select>
-
                 </SettingRow>
 
 
@@ -126,7 +155,6 @@ export default function RecordingRules({
                     title="Минимальное время до записи (в часах)"
                     description="Клиент не сможет записаться раньше указанного количества часов от текущего времени."
                 >
-
                     <input
                         type="number"
                         min={0}
@@ -145,7 +173,6 @@ export default function RecordingRules({
                         }
                         className={inputClass}
                     />
-
                 </SettingRow>
 
 
@@ -153,7 +180,6 @@ export default function RecordingRules({
                     title="Запись на сколько дней вперёд"
                     description="Ограничивает, насколько далеко вперёд клиент может выбрать дату записи."
                 >
-
                     <input
                         type="number"
                         min={1}
@@ -172,11 +198,8 @@ export default function RecordingRules({
                         }
                         className={inputClass}
                     />
-
                 </SettingRow>
-
             </div>
-
         </section>
     );
 }
@@ -185,7 +208,8 @@ export default function RecordingRules({
 const inputClass = `
     h-11
     w-full
-    rounded-lg
+    min-w-0
+    rounded-xl
     border
     border-[#c7c5d9]
     bg-white
@@ -211,14 +235,20 @@ function SettingRow({
     children: ReactNode;
 }) {
     return (
-        <div>
-
+        <div
+            className="
+                min-w-0
+            "
+        >
             <div
                 className="
                     mb-2
-                    text-sm
+                    text-[13px]
                     font-semibold
+                    leading-5
                     text-slate-700
+
+                    sm:text-sm
                 "
             >
                 {title}
@@ -228,30 +258,38 @@ function SettingRow({
             <div
                 className="
                     grid
+                    min-w-0
                     grid-cols-1
-                    gap-4
-                    sm:grid-cols-[210px_1fr]
+                    gap-2.5
+
+                    sm:grid-cols-[210px_minmax(0,1fr)]
                     sm:items-center
+                    sm:gap-4
                 "
             >
-
-                <div>
+                <div
+                    className="
+                        min-w-0
+                        w-full
+                    "
+                >
                     {children}
                 </div>
 
 
                 <p
                     className="
-                        text-[13px]
-                        leading-relaxed
-                        text-slate-600
+                        min-w-0
+                        text-[12px]
+                        leading-5
+                        text-slate-500
+
+                        sm:text-[13px]
                     "
                 >
                     {description}
                 </p>
-
             </div>
-
         </div>
     );
 }

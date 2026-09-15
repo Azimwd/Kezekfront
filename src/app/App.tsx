@@ -9,6 +9,7 @@ import MainAppLayout from '../pages/MainAppLayout';
 import Catalog from '../pages/Catalog';
 import Favorites from '../pages/Favorites';
 import Mybookings from '../pages/Mybookings';
+import Booking from '../pages/Booking';
 
 import Dashboard from '../pages/CRM/Dashboard';
 import Mybusinesses from '../pages/CRM/Mybusinesses';
@@ -64,6 +65,10 @@ function App() {
                         <Route
                             path="my-bookings"
                             element={<Mybookings />}
+                        />
+                        <Route
+                            path="booking/:businessId"
+                            element={<Booking />}
                         />
 
                         {/* Авторизация теперь внутри MainAppLayout */}

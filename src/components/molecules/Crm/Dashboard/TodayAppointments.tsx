@@ -24,95 +24,60 @@ import {
 
 interface TodayAppointmentsProps {
     appointments: DashboardAppointment[];
-
     totalCount: number;
-
     isLoading: boolean;
-
     actionLoadingId: number | null;
-
     onConfirm: (
         appointmentId: number
     ) => void;
-
     onComplete: (
         appointmentId: number
     ) => void;
-
     onCancel: (
         appointmentId: number
     ) => void;
 }
 
 
-/*
- * ============================================================
- * STATUS
- * ============================================================
- */
-
 const getStatusConfig = (
     status: string
 ) => {
-
     switch (
         status
     ) {
-
         case 'pending':
-
             return {
-                label:
-                    'Ожидает',
-
+                label: 'Ожидает',
                 className:
                     'bg-[#FFF7ED] text-[#F79009]'
             };
 
-
         case 'confirmed':
-
             return {
-                label:
-                    'Подтверждена',
-
+                label: 'Подтверждена',
                 className:
                     'bg-[#EFF8FF] text-[#2E90FA]'
             };
 
-
         case 'completed':
-
             return {
-                label:
-                    'Завершена',
-
+                label: 'Завершена',
                 className:
                     'bg-[#ECFDF3] text-[#16A34A]'
             };
 
-
         case 'cancelled':
-
         case 'cancelled_by_client':
-
         case 'cancelled_by_business':
-
             return {
-                label:
-                    'Отменена',
-
+                label: 'Отменена',
                 className:
                     'bg-[#FEF3F2] text-[#F04438]'
             };
 
-
         default:
-
             return {
-                label:
-                    status,
-
+                label: status,
                 className:
                     'bg-[#F2F4F7] text-[#667085]'
             };
@@ -120,16 +85,9 @@ const getStatusConfig = (
 };
 
 
-/*
- * ============================================================
- * CLIENT INITIALS
- * ============================================================
- */
-
 const getClientInitials = (
     appointment: DashboardAppointment
 ) => {
-
     const firstName =
         appointment.client_first_name ??
         '';
@@ -149,22 +107,9 @@ const getClientInitials = (
             .toUpperCase();
 
 
-    if (
-        initials
-    ) {
-        return initials;
-    }
-
-
-    return 'К';
+    return initials || 'К';
 };
 
-
-/*
- * ============================================================
- * COMPONENT
- * ============================================================
- */
 
 export default function TodayAppointments({
     appointments,
@@ -175,16 +120,9 @@ export default function TodayAppointments({
     onComplete,
     onCancel
 }: TodayAppointmentsProps) {
-
     const navigate =
         useNavigate();
 
-
-    /*
-     * ========================================================
-     * COMPLETED TODAY
-     * ========================================================
-     */
 
     const completedCount =
         appointments.filter(
@@ -193,12 +131,6 @@ export default function TodayAppointments({
                 'completed'
         ).length;
 
-
-    /*
-     * ========================================================
-     * SORT
-     * ========================================================
-     */
 
     const visibleAppointments =
         appointments
@@ -221,15 +153,11 @@ export default function TodayAppointments({
             );
 
 
-    /*
-     * ========================================================
-     * RENDER
-     * ========================================================
-     */
-
     return (
         <div
             className="
+                w-full
+                min-w-0
                 overflow-hidden
                 rounded-2xl
                 border
@@ -238,31 +166,38 @@ export default function TodayAppointments({
                 shadow-sm
             "
         >
-
-            {/* =================================================
-                HEADER
-            ================================================= */}
+            {/* HEADER */}
 
             <div
                 className="
                     flex
+                    min-w-0
                     flex-col
-                    gap-4
-                    px-6
-                    py-5
+                    gap-3
+                    px-4
+                    py-4
+
                     sm:flex-row
                     sm:items-center
                     sm:justify-between
+                    sm:gap-4
+                    sm:px-6
+                    sm:py-5
                 "
             >
-
-                <div>
-
+                <div
+                    className="
+                        min-w-0
+                    "
+                >
                     <h2
                         className="
-                            text-[20px]
+                            text-[18px]
                             font-bold
+                            leading-6
                             text-[#101828]
+
+                            sm:text-[20px]
                         "
                     >
                         Записи на сегодня
@@ -272,15 +207,15 @@ export default function TodayAppointments({
                     <p
                         className="
                             mt-1
-                            text-[13px]
+                            text-[12px]
+                            leading-5
                             text-[#98A2B3]
+
+                            sm:text-[13px]
                         "
                     >
-                        {totalCount} записей,
-                        {' '}
-                        {completedCount} завершено
+                        {totalCount} записей, {completedCount} завершено
                     </p>
-
                 </div>
 
 
@@ -294,6 +229,8 @@ export default function TodayAppointments({
                     className="
                         inline-flex
                         h-[44px]
+                        w-full
+                        cursor-pointer
                         items-center
                         justify-center
                         gap-2
@@ -305,62 +242,66 @@ export default function TodayAppointments({
                         text-white
                         transition
                         hover:bg-[#4338CA]
+
+                        sm:w-auto
+                        sm:shrink-0
                     "
                 >
-
                     <Plus
                         size={17}
                     />
 
                     Новая запись
-
                 </button>
-
             </div>
 
 
-            {/* =================================================
-                CONTENT
-            ================================================= */}
+            {/* CONTENT */}
 
             {isLoading ? (
-
                 <div
                     className="
                         flex
-                        min-h-[240px]
+                        min-h-[180px]
                         items-center
                         justify-center
                         border-t
                         border-[#EAECF0]
-                        text-[14px]
+                        px-4
+                        text-center
+                        text-[13px]
                         text-[#98A2B3]
+
+                        sm:min-h-[240px]
+                        sm:text-[14px]
                     "
                 >
                     Загрузка записей...
                 </div>
-
             ) : visibleAppointments.length === 0 ? (
-
                 <div
                     className="
                         flex
-                        min-h-[240px]
+                        min-h-[180px]
                         flex-col
                         items-center
                         justify-center
                         border-t
                         border-[#EAECF0]
-                        px-6
+                        px-4
                         text-center
+
+                        sm:min-h-[240px]
+                        sm:px-6
                     "
                 >
-
                     <div
                         className="
-                            text-[15px]
+                            text-[14px]
                             font-medium
                             text-[#344054]
+
+                            sm:text-[15px]
                         "
                     >
                         На сегодня записей нет
@@ -370,631 +311,724 @@ export default function TodayAppointments({
                     <div
                         className="
                             mt-1.5
-                            text-[13px]
+                            text-[12px]
+                            leading-5
                             text-[#98A2B3]
+
+                            sm:text-[13px]
                         "
                     >
                         Новые записи появятся здесь автоматически.
                     </div>
-
                 </div>
-
             ) : (
+                <>
+                    {/* MOBILE CARDS */}
 
-                <div
-                    className="
-                        overflow-x-auto
-                    "
-                >
-
-                    <table
+                    <div
                         className="
-                            w-full
-                            min-w-[900px]
-                            border-collapse
+                            divide-y
+                            divide-[#EAECF0]
+                            border-t
+                            border-[#EAECF0]
+
+                            md:hidden
                         "
                     >
+                        {visibleAppointments.map(
+                            appointment => {
+                                const status =
+                                    getStatusConfig(
+                                        appointment.status
+                                    );
 
-                        {/* =========================================
-                            TABLE HEADER
-                        ========================================= */}
+                                const loading =
+                                    actionLoadingId ===
+                                    appointment.id;
 
-                        <thead>
+                                const clientName =
+                                    getAppointmentClientName(
+                                        appointment
+                                    );
 
-                            <tr
-                                className="
-                                    border-y
-                                    border-[#EAECF0]
-                                    bg-[#FCFCFD]
-                                "
-                            >
+                                const phone =
+                                    getAppointmentPhone(
+                                        appointment
+                                    );
 
-                                <th
-                                    className="
-                                        px-5
-                                        py-3.5
-                                        text-left
-                                        text-[12px]
-                                        font-medium
-                                        text-[#667085]
-                                    "
-                                >
-                                    Время
-                                </th>
+                                const staffName =
+                                    getAppointmentStaffName(
+                                        appointment
+                                    );
 
+                                const price =
+                                    getAppointmentPrice(
+                                        appointment
+                                    );
 
-                                <th
-                                    className="
-                                        px-5
-                                        py-3.5
-                                        text-left
-                                        text-[12px]
-                                        font-medium
-                                        text-[#667085]
-                                    "
-                                >
-                                    Клиент
-                                </th>
+                                const serviceName =
+                                    appointment.service_name ??
+                                    `Услуга #${appointment.service}`;
 
 
-                                <th
-                                    className="
-                                        px-5
-                                        py-3.5
-                                        text-left
-                                        text-[12px]
-                                        font-medium
-                                        text-[#667085]
-                                    "
-                                >
-                                    Услуга
-                                </th>
-
-
-                                <th
-                                    className="
-                                        px-5
-                                        py-3.5
-                                        text-left
-                                        text-[12px]
-                                        font-medium
-                                        text-[#667085]
-                                    "
-                                >
-                                    Мастер
-                                </th>
-
-
-                                <th
-                                    className="
-                                        px-5
-                                        py-3.5
-                                        text-left
-                                        text-[12px]
-                                        font-medium
-                                        text-[#667085]
-                                    "
-                                >
-                                    Статус
-                                </th>
-
-
-                                <th
-                                    className="
-                                        px-5
-                                        py-3.5
-                                        text-left
-                                        text-[12px]
-                                        font-medium
-                                        text-[#667085]
-                                    "
-                                >
-                                    Сумма
-                                </th>
-
-
-                                <th
-                                    className="
-                                        px-5
-                                        py-3.5
-                                        text-right
-                                        text-[12px]
-                                        font-medium
-                                        text-[#667085]
-                                    "
-                                >
-                                    Действия
-                                </th>
-
-                            </tr>
-
-                        </thead>
-
-
-                        {/* =========================================
-                            BODY
-                        ========================================= */}
-
-                        <tbody>
-
-                            {visibleAppointments.map(
-                                appointment => {
-
-                                    const status =
-                                        getStatusConfig(
-                                            appointment.status
-                                        );
-
-
-                                    const loading =
-                                        actionLoadingId ===
-                                        appointment.id;
-
-
-                                    const clientName =
-                                        getAppointmentClientName(
-                                            appointment
-                                        );
-
-
-                                    const phone =
-                                        getAppointmentPhone(
-                                            appointment
-                                        );
-
-
-                                    const staffName =
-                                        getAppointmentStaffName(
-                                            appointment
-                                        );
-
-
-                                    const price =
-                                        getAppointmentPrice(
-                                            appointment
-                                        );
-
-
-                                    return (
-                                        <tr
-                                            key={
-                                                appointment.id
-                                            }
+                                return (
+                                    <div
+                                        key={appointment.id}
+                                        className="
+                                            flex
+                                            min-w-0
+                                            flex-col
+                                            gap-4
+                                            p-4
+                                        "
+                                    >
+                                        <div
                                             className="
-                                                border-b
-                                                border-[#EAECF0]
-                                                last:border-b-0
-                                                transition
-                                                hover:bg-[#FCFCFD]
+                                                flex
+                                                min-w-0
+                                                items-start
+                                                justify-between
+                                                gap-3
                                             "
                                         >
-
-                                            {/* TIME */}
-
-                                            <td
+                                            <div
                                                 className="
-                                                    px-5
-                                                    py-4
-                                                    align-middle
+                                                    min-w-0
+                                                    flex-1
                                                 "
                                             >
-
-                                                <div
-                                                    className="
-                                                        text-[14px]
-                                                        font-semibold
-                                                        text-[#344054]
-                                                    "
-                                                >
-                                                    {
-                                                        format(
-                                                            new Date(
-                                                                appointment.start_at
-                                                            ),
-                                                            'HH:mm'
-                                                        )
-                                                    }
-                                                </div>
-
-                                            </td>
-
-
-                                            {/* CLIENT */}
-
-                                            <td
-                                                className="
-                                                    px-5
-                                                    py-4
-                                                    align-middle
-                                                "
-                                            >
-
                                                 <div
                                                     className="
                                                         flex
+                                                        flex-wrap
                                                         items-center
-                                                        gap-3
+                                                        gap-2
                                                     "
                                                 >
-
-                                                    <div
+                                                    <span
                                                         className="
-                                                            flex
-                                                            h-9
-                                                            w-9
-                                                            shrink-0
-                                                            items-center
-                                                            justify-center
-                                                            rounded-full
-                                                            bg-[#EEF2FF]
-                                                            text-[12px]
-                                                            font-semibold
-                                                            text-[#4F46E5]
+                                                            text-[17px]
+                                                            font-bold
+                                                            text-[#101828]
                                                         "
                                                     >
                                                         {
-                                                            getClientInitials(
-                                                                appointment
+                                                            format(
+                                                                new Date(
+                                                                    appointment.start_at
+                                                                ),
+                                                                'HH:mm'
                                                             )
                                                         }
-                                                    </div>
+                                                    </span>
 
-
-                                                    <div
-                                                        className="
-                                                            min-w-0
-                                                        "
-                                                    >
-
-                                                        <div
-                                                            className="
-                                                                max-w-[180px]
-                                                                truncate
-                                                                text-[13px]
-                                                                font-semibold
-                                                                text-[#101828]
-                                                            "
-                                                        >
-                                                            {clientName}
-                                                        </div>
-
-
-                                                        <div
-                                                            className="
-                                                                mt-0.5
-                                                                text-[11px]
-                                                                text-[#98A2B3]
-                                                            "
-                                                        >
-                                                            {
-                                                                phone ||
-                                                                'Телефон не указан'
-                                                            }
-                                                        </div>
-
-                                                    </div>
-
-                                                </div>
-
-                                            </td>
-
-
-                                            {/* SERVICE */}
-
-                                            <td
-                                                className="
-                                                    px-5
-                                                    py-4
-                                                    align-middle
-                                                "
-                                            >
-
-                                                <div
-                                                    className="
-                                                        max-w-[180px]
-                                                        text-[13px]
-                                                        font-medium
-                                                        text-[#344054]
-                                                    "
-                                                >
-                                                    {
-                                                        appointment.service_name ??
-                                                        `Услуга #${appointment.service}`
-                                                    }
-                                                </div>
-
-                                            </td>
-
-
-                                            {/* STAFF */}
-
-                                            <td
-                                                className="
-                                                    px-5
-                                                    py-4
-                                                    align-middle
-                                                "
-                                            >
-
-                                                <div
-                                                    className="
-                                                        flex
-                                                        items-center
-                                                        gap-2
-                                                        text-[13px]
-                                                        text-[#344054]
-                                                    "
-                                                >
 
                                                     <span
-                                                        className="
-                                                            h-2
-                                                            w-2
-                                                            shrink-0
-                                                            rounded-full
-                                                            bg-[#A855F7]
-                                                        "
-                                                    />
-
-                                                    {staffName}
-
+                                                        className={`
+                                                            inline-flex
+                                                            whitespace-nowrap
+                                                            rounded-md
+                                                            px-2.5
+                                                            py-1
+                                                            text-[10px]
+                                                            font-medium
+                                                            ${status.className}
+                                                        `}
+                                                    >
+                                                        {status.label}
+                                                    </span>
                                                 </div>
 
-                                            </td>
+
+                                                <div
+                                                    className="
+                                                        mt-2
+                                                        break-words
+                                                        text-[13px]
+                                                        font-semibold
+                                                        text-[#101828]
+                                                    "
+                                                >
+                                                    {clientName}
+                                                </div>
 
 
-                                            {/* STATUS */}
+                                                <div
+                                                    className="
+                                                        mt-0.5
+                                                        break-all
+                                                        text-[11px]
+                                                        text-[#98A2B3]
+                                                    "
+                                                >
+                                                    {phone || 'Телефон не указан'}
+                                                </div>
+                                            </div>
 
-                                            <td
+
+                                            <div
                                                 className="
-                                                    px-5
-                                                    py-4
-                                                    align-middle
+                                                    flex
+                                                    h-10
+                                                    w-10
+                                                    shrink-0
+                                                    items-center
+                                                    justify-center
+                                                    rounded-full
+                                                    bg-[#EEF2FF]
+                                                    text-[12px]
+                                                    font-semibold
+                                                    text-[#4F46E5]
                                                 "
                                             >
-
-                                                <span
-                                                    className={`
-                                                        inline-flex
-                                                        whitespace-nowrap
-                                                        rounded-md
-                                                        px-2.5
-                                                        py-1.5
-                                                        text-[11px]
-                                                        font-medium
-
-                                                        ${status.className}
-                                                    `}
-                                                >
-                                                    {status.label}
-                                                </span>
-
-                                            </td>
+                                                {
+                                                    getClientInitials(
+                                                        appointment
+                                                    )
+                                                }
+                                            </div>
+                                        </div>
 
 
-                                            {/* PRICE */}
+                                        <div
+                                            className="
+                                                grid
+                                                min-w-0
+                                                grid-cols-1
+                                                gap-3
 
-                                            <td
+                                                min-[360px]:grid-cols-2
+                                            "
+                                        >
+                                            <div
                                                 className="
-                                                    whitespace-nowrap
-                                                    px-5
-                                                    py-4
-                                                    align-middle
-                                                    text-[14px]
-                                                    font-semibold
+                                                    min-w-0
+                                                    rounded-xl
+                                                    bg-[#F8F9FF]
+                                                    p-3
+                                                "
+                                            >
+                                                <div
+                                                    className="
+                                                        text-[10px]
+                                                        font-semibold
+                                                        uppercase
+                                                        tracking-wide
+                                                        text-[#98A2B3]
+                                                    "
+                                                >
+                                                    Услуга
+                                                </div>
+
+
+                                                <div
+                                                    className="
+                                                        mt-1
+                                                        break-words
+                                                        text-[12px]
+                                                        font-medium
+                                                        text-[#344054]
+                                                    "
+                                                >
+                                                    {serviceName}
+                                                </div>
+                                            </div>
+
+
+                                            <div
+                                                className="
+                                                    min-w-0
+                                                    rounded-xl
+                                                    bg-[#F8F9FF]
+                                                    p-3
+                                                "
+                                            >
+                                                <div
+                                                    className="
+                                                        text-[10px]
+                                                        font-semibold
+                                                        uppercase
+                                                        tracking-wide
+                                                        text-[#98A2B3]
+                                                    "
+                                                >
+                                                    Мастер
+                                                </div>
+
+
+                                                <div
+                                                    className="
+                                                        mt-1
+                                                        break-words
+                                                        text-[12px]
+                                                        font-medium
+                                                        text-[#344054]
+                                                    "
+                                                >
+                                                    {staffName}
+                                                </div>
+                                            </div>
+                                        </div>
+
+
+                                        <div
+                                            className="
+                                                flex
+                                                flex-col
+                                                gap-3
+                                                border-t
+                                                border-[#EAECF0]
+                                                pt-3
+
+                                                min-[390px]:flex-row
+                                                min-[390px]:items-center
+                                                min-[390px]:justify-between
+                                            "
+                                        >
+                                            <div
+                                                className="
+                                                    text-[15px]
+                                                    font-bold
                                                     text-[#101828]
                                                 "
                                             >
                                                 {
-                                                    price
-                                                        .toLocaleString(
-                                                            'ru-RU'
-                                                        )
+                                                    price.toLocaleString(
+                                                        'ru-RU'
+                                                    )
                                                 } ₸
-                                            </td>
+                                            </div>
 
 
-                                            {/* ACTIONS */}
-
-                                            <td
+                                            <div
                                                 className="
-                                                    px-5
-                                                    py-4
-                                                    align-middle
+                                                    flex
+                                                    flex-wrap
+                                                    items-center
+                                                    gap-2
                                                 "
                                             >
-
-                                                <div
-                                                    className="
-                                                        flex
-                                                        items-center
-                                                        justify-end
-                                                        gap-2
-                                                    "
-                                                >
-
-                                                    {/* PENDING */}
-
-                                                    {appointment.status ===
-                                                        'pending' && (
-
-                                                        <>
-                                                            <button
-                                                                type="button"
-                                                                disabled={
-                                                                    loading
-                                                                }
-                                                                onClick={() =>
-                                                                    onConfirm(
-                                                                        appointment.id
-                                                                    )
-                                                                }
-                                                                title="Подтвердить"
-                                                                className="
-                                                                    flex
-                                                                    h-8
-                                                                    w-8
-                                                                    items-center
-                                                                    justify-center
-                                                                    rounded-lg
-                                                                    bg-[#ECFDF3]
-                                                                    text-[#16A34A]
-                                                                    transition
-                                                                    hover:bg-[#D1FADF]
-                                                                    disabled:cursor-not-allowed
-                                                                    disabled:opacity-50
-                                                                "
-                                                            >
-                                                                <Check
-                                                                    size={15}
-                                                                />
-                                                            </button>
-
-
-                                                            <button
-                                                                type="button"
-                                                                disabled={
-                                                                    loading
-                                                                }
-                                                                onClick={() =>
-                                                                    onCancel(
-                                                                        appointment.id
-                                                                    )
-                                                                }
-                                                                title="Отменить"
-                                                                className="
-                                                                    flex
-                                                                    h-8
-                                                                    w-8
-                                                                    items-center
-                                                                    justify-center
-                                                                    rounded-lg
-                                                                    bg-[#FEF3F2]
-                                                                    text-[#F04438]
-                                                                    transition
-                                                                    hover:bg-[#FEE4E2]
-                                                                    disabled:cursor-not-allowed
-                                                                    disabled:opacity-50
-                                                                "
-                                                            >
-                                                                <X
-                                                                    size={15}
-                                                                />
-                                                            </button>
-                                                        </>
-
-                                                    )}
-
-
-                                                    {/* CONFIRMED */}
-
-                                                    {appointment.status ===
-                                                        'confirmed' && (
-
+                                                {appointment.status ===
+                                                    'pending' && (
+                                                    <>
                                                         <button
                                                             type="button"
-                                                            disabled={
-                                                                loading
-                                                            }
+                                                            disabled={loading}
                                                             onClick={() =>
-                                                                onComplete(
+                                                                onConfirm(
                                                                     appointment.id
                                                                 )
                                                             }
                                                             className="
+                                                                inline-flex
+                                                                h-9
+                                                                cursor-pointer
+                                                                items-center
+                                                                justify-center
+                                                                gap-1.5
                                                                 rounded-lg
-                                                                bg-[#EEF2FF]
+                                                                bg-[#ECFDF3]
                                                                 px-3
-                                                                py-2
                                                                 text-[11px]
                                                                 font-medium
-                                                                text-[#4F46E5]
+                                                                text-[#16A34A]
                                                                 transition
-                                                                hover:bg-[#E0E7FF]
+                                                                hover:bg-[#D1FADF]
                                                                 disabled:cursor-not-allowed
                                                                 disabled:opacity-50
                                                             "
                                                         >
-                                                            Завершить
+                                                            <Check
+                                                                size={14}
+                                                            />
+                                                            Подтвердить
                                                         </button>
 
-                                                    )}
+
+                                                        <button
+                                                            type="button"
+                                                            disabled={loading}
+                                                            onClick={() =>
+                                                                onCancel(
+                                                                    appointment.id
+                                                                )
+                                                            }
+                                                            className="
+                                                                inline-flex
+                                                                h-9
+                                                                cursor-pointer
+                                                                items-center
+                                                                justify-center
+                                                                gap-1.5
+                                                                rounded-lg
+                                                                bg-[#FEF3F2]
+                                                                px-3
+                                                                text-[11px]
+                                                                font-medium
+                                                                text-[#F04438]
+                                                                transition
+                                                                hover:bg-[#FEE4E2]
+                                                                disabled:cursor-not-allowed
+                                                                disabled:opacity-50
+                                                            "
+                                                        >
+                                                            <X
+                                                                size={14}
+                                                            />
+                                                            Отменить
+                                                        </button>
+                                                    </>
+                                                )}
 
 
-                                                    {/* OPEN */}
-
+                                                {appointment.status ===
+                                                    'confirmed' && (
                                                     <button
                                                         type="button"
+                                                        disabled={loading}
                                                         onClick={() =>
-                                                            navigate(
-                                                                `/crm/appointments/${appointment.id}`
+                                                            onComplete(
+                                                                appointment.id
                                                             )
                                                         }
-                                                        title="Открыть запись"
                                                         className="
-                                                            flex
-                                                            h-8
-                                                            w-8
-                                                            items-center
-                                                            justify-center
+                                                            h-9
+                                                            cursor-pointer
                                                             rounded-lg
-                                                            text-[#98A2B3]
+                                                            bg-[#EEF2FF]
+                                                            px-3
+                                                            text-[11px]
+                                                            font-medium
+                                                            text-[#4F46E5]
                                                             transition
-                                                            hover:bg-[#F2F4F7]
-                                                            hover:text-[#4F46E5]
+                                                            hover:bg-[#E0E7FF]
+                                                            disabled:cursor-not-allowed
+                                                            disabled:opacity-50
                                                         "
                                                     >
-                                                        <ExternalLink
-                                                            size={15}
-                                                        />
+                                                        Завершить
                                                     </button>
+                                                )}
 
-                                                </div>
 
-                                            </td>
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        navigate(
+                                                            `/crm/appointments/${appointment.id}`
+                                                        )
+                                                    }
+                                                    className="
+                                                        inline-flex
+                                                        h-9
+                                                        cursor-pointer
+                                                        items-center
+                                                        justify-center
+                                                        gap-1.5
+                                                        rounded-lg
+                                                        border
+                                                        border-[#EAECF0]
+                                                        bg-white
+                                                        px-3
+                                                        text-[11px]
+                                                        font-medium
+                                                        text-[#667085]
+                                                        transition
+                                                        hover:bg-[#F9FAFB]
+                                                        hover:text-[#4F46E5]
+                                                    "
+                                                >
+                                                    <ExternalLink
+                                                        size={14}
+                                                    />
+                                                    Открыть
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            }
+                        )}
+                    </div>
 
-                                        </tr>
-                                    );
-                                }
-                            )}
 
-                        </tbody>
+                    {/* DESKTOP TABLE */}
 
-                    </table>
+                    <div
+                        className="
+                            hidden
+                            overflow-x-auto
 
-                </div>
+                            md:block
+                        "
+                    >
+                        <table
+                            className="
+                                w-full
+                                min-w-[900px]
+                                border-collapse
+                            "
+                        >
+                            <thead>
+                                <tr
+                                    className="
+                                        border-y
+                                        border-[#EAECF0]
+                                        bg-[#FCFCFD]
+                                    "
+                                >
+                                    <th className="px-5 py-3.5 text-left text-[12px] font-medium text-[#667085]">
+                                        Время
+                                    </th>
+                                    <th className="px-5 py-3.5 text-left text-[12px] font-medium text-[#667085]">
+                                        Клиент
+                                    </th>
+                                    <th className="px-5 py-3.5 text-left text-[12px] font-medium text-[#667085]">
+                                        Услуга
+                                    </th>
+                                    <th className="px-5 py-3.5 text-left text-[12px] font-medium text-[#667085]">
+                                        Мастер
+                                    </th>
+                                    <th className="px-5 py-3.5 text-left text-[12px] font-medium text-[#667085]">
+                                        Статус
+                                    </th>
+                                    <th className="px-5 py-3.5 text-left text-[12px] font-medium text-[#667085]">
+                                        Сумма
+                                    </th>
+                                    <th className="px-5 py-3.5 text-right text-[12px] font-medium text-[#667085]">
+                                        Действия
+                                    </th>
+                                </tr>
+                            </thead>
 
+
+                            <tbody>
+                                {visibleAppointments.map(
+                                    appointment => {
+                                        const status =
+                                            getStatusConfig(
+                                                appointment.status
+                                            );
+
+                                        const loading =
+                                            actionLoadingId ===
+                                            appointment.id;
+
+                                        const clientName =
+                                            getAppointmentClientName(
+                                                appointment
+                                            );
+
+                                        const phone =
+                                            getAppointmentPhone(
+                                                appointment
+                                            );
+
+                                        const staffName =
+                                            getAppointmentStaffName(
+                                                appointment
+                                            );
+
+                                        const price =
+                                            getAppointmentPrice(
+                                                appointment
+                                            );
+
+
+                                        return (
+                                            <tr
+                                                key={appointment.id}
+                                                className="
+                                                    border-b
+                                                    border-[#EAECF0]
+                                                    last:border-b-0
+                                                    transition
+                                                    hover:bg-[#FCFCFD]
+                                                "
+                                            >
+                                                <td className="px-5 py-4 align-middle">
+                                                    <div className="text-[14px] font-semibold text-[#344054]">
+                                                        {
+                                                            format(
+                                                                new Date(
+                                                                    appointment.start_at
+                                                                ),
+                                                                'HH:mm'
+                                                            )
+                                                        }
+                                                    </div>
+                                                </td>
+
+
+                                                <td className="px-5 py-4 align-middle">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#EEF2FF] text-[12px] font-semibold text-[#4F46E5]">
+                                                            {
+                                                                getClientInitials(
+                                                                    appointment
+                                                                )
+                                                            }
+                                                        </div>
+
+                                                        <div className="min-w-0">
+                                                            <div className="max-w-[180px] truncate text-[13px] font-semibold text-[#101828]">
+                                                                {clientName}
+                                                            </div>
+
+                                                            <div className="mt-0.5 text-[11px] text-[#98A2B3]">
+                                                                {phone || 'Телефон не указан'}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+
+
+                                                <td className="px-5 py-4 align-middle">
+                                                    <div className="max-w-[180px] text-[13px] font-medium text-[#344054]">
+                                                        {
+                                                            appointment.service_name ??
+                                                            `Услуга #${appointment.service}`
+                                                        }
+                                                    </div>
+                                                </td>
+
+
+                                                <td className="px-5 py-4 align-middle">
+                                                    <div className="flex items-center gap-2 text-[13px] text-[#344054]">
+                                                        <span className="h-2 w-2 shrink-0 rounded-full bg-[#A855F7]" />
+                                                        {staffName}
+                                                    </div>
+                                                </td>
+
+
+                                                <td className="px-5 py-4 align-middle">
+                                                    <span
+                                                        className={`
+                                                            inline-flex
+                                                            whitespace-nowrap
+                                                            rounded-md
+                                                            px-2.5
+                                                            py-1.5
+                                                            text-[11px]
+                                                            font-medium
+                                                            ${status.className}
+                                                        `}
+                                                    >
+                                                        {status.label}
+                                                    </span>
+                                                </td>
+
+
+                                                <td className="whitespace-nowrap px-5 py-4 align-middle text-[14px] font-semibold text-[#101828]">
+                                                    {
+                                                        price.toLocaleString(
+                                                            'ru-RU'
+                                                        )
+                                                    } ₸
+                                                </td>
+
+
+                                                <td className="px-5 py-4 align-middle">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        {appointment.status ===
+                                                            'pending' && (
+                                                            <>
+                                                                <button
+                                                                    type="button"
+                                                                    disabled={loading}
+                                                                    onClick={() =>
+                                                                        onConfirm(
+                                                                            appointment.id
+                                                                        )
+                                                                    }
+                                                                    title="Подтвердить"
+                                                                    className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg bg-[#ECFDF3] text-[#16A34A] transition hover:bg-[#D1FADF] disabled:cursor-not-allowed disabled:opacity-50"
+                                                                >
+                                                                    <Check size={15} />
+                                                                </button>
+
+                                                                <button
+                                                                    type="button"
+                                                                    disabled={loading}
+                                                                    onClick={() =>
+                                                                        onCancel(
+                                                                            appointment.id
+                                                                        )
+                                                                    }
+                                                                    title="Отменить"
+                                                                    className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg bg-[#FEF3F2] text-[#F04438] transition hover:bg-[#FEE4E2] disabled:cursor-not-allowed disabled:opacity-50"
+                                                                >
+                                                                    <X size={15} />
+                                                                </button>
+                                                            </>
+                                                        )}
+
+
+                                                        {appointment.status ===
+                                                            'confirmed' && (
+                                                            <button
+                                                                type="button"
+                                                                disabled={loading}
+                                                                onClick={() =>
+                                                                    onComplete(
+                                                                        appointment.id
+                                                                    )
+                                                                }
+                                                                className="cursor-pointer rounded-lg bg-[#EEF2FF] px-3 py-2 text-[11px] font-medium text-[#4F46E5] transition hover:bg-[#E0E7FF] disabled:cursor-not-allowed disabled:opacity-50"
+                                                            >
+                                                                Завершить
+                                                            </button>
+                                                        )}
+
+
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                navigate(
+                                                                    `/crm/appointments/${appointment.id}`
+                                                                )
+                                                            }
+                                                            title="Открыть запись"
+                                                            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-[#98A2B3] transition hover:bg-[#F2F4F7] hover:text-[#4F46E5]"
+                                                        >
+                                                            <ExternalLink size={15} />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    }
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </>
             )}
 
 
-            {/* =================================================
-                FOOTER
-            ================================================= */}
-
-            <button
-                type="button"
-                onClick={() =>
-                    navigate(
-                        '/crm/appointments'
-                    )
-                }
-                className="
-                    w-full
-                    border-t
-                    border-[#EAECF0]
-                    py-3.5
-                    text-[12px]
-                    font-medium
-                    text-[#4F46E5]
-                    transition
-                    hover:bg-[#F9FAFB]
-                "
-            >
-                Показать все записи на сегодня
-                {' '}
-                ({totalCount})
-            </button>
-
+        <button
+            type="button"
+            onClick={() =>
+                navigate(
+                    '/crm/appointments?date_filter=today'
+                )
+            }
+            className="
+                w-full
+                cursor-pointer
+                border-t
+                border-[#EAECF0]
+                px-4
+                py-3.5
+                text-[12px]
+                font-medium
+                text-[#4F46E5]
+                transition
+                hover:bg-[#F9FAFB]
+            "
+        >
+            Показать все записи на сегодня ({totalCount})
+        </button>
         </div>
     );
 }

@@ -19,7 +19,7 @@ const description = [
     {
         id: 3,
         desc: 'Контролируйте расписание, записи клиентов и предстоящие встречи',
-        name: 'Назначения'
+        name: 'Записи'
     },
     {
         id: 4,
@@ -68,13 +68,6 @@ export default function Header({ label, rightElement }: HeaderProps) {
             <div className="flex gap-4 lg:gap-5 items-center justify-between w-full lg:w-auto shrink-0">
                 <div className="flex-1 lg:flex-none">
                     {rightElement && rightElement}
-                </div>
-                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full overflow-hidden border border-gray-200 cursor-pointer shrink-0">
-                    <img
-                        src="https://i.pinimg.com/736x/8e/10/1f/8e101f5200df69299f93e7f12566a113.jpg"
-                        alt="User Avatar"
-                        className="w-full h-full object-cover"
-                    />
                 </div>
             </div>
         </div>

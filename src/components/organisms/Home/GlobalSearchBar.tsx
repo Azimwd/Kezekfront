@@ -1,30 +1,239 @@
-import { ArrowRight } from 'lucide-react';
+import {
+    useState
+} from 'react';
+
+import {
+    useNavigate
+} from 'react-router-dom';
+
+import {
+    ArrowRight
+} from 'lucide-react';
+
 import Button from '../../atoms/Button';
 import Icon from '../../atoms/Icon';
 import Typography from '../../atoms/Typography';
+
 import Searchbar from '../../molecules/Home/Searchbar';
 import LocationSelect from '../../molecules/Home/LocationSelect';
 
+
 export default function GlobalSearchBar() {
+
+    const navigate =
+        useNavigate();
+
+
+    const [
+        search,
+        setSearch
+    ] =
+        useState<string>(
+            ''
+        );
+
+
+    const [
+        selectedCityId,
+        setSelectedCityId
+    ] =
+        useState<
+            number | null
+        >(
+            null
+        );
+
+
+    /*
+     * ============================================================
+     * FIND
+     * ============================================================
+     */
+
+    const handleFind =
+        () => {
+
+            const params =
+                new URLSearchParams();
+
+
+            const preparedSearch =
+                search.trim();
+
+
+            if (
+                preparedSearch
+            ) {
+
+                params.set(
+                    'search',
+                    preparedSearch
+                );
+            }
+
+
+            if (
+                selectedCityId !==
+                null
+            ) {
+
+                params.set(
+                    'city',
+                    String(
+                        selectedCityId
+                    )
+                );
+            }
+
+
+            const query =
+                params.toString();
+
+
+            navigate(
+                query
+                    ? `/catalog?${query}`
+                    : '/catalog'
+            );
+        };
+
+
     return (
-        <div className="w-full max-w-5xl flex flex-col md:flex-row gap-3 md:gap-5 items-center p-3 border border-[#c7c4d8] rounded-2xl shadow-xl bg-transparent">
-            <div className="flex-1 w-full">
+        <div
+            className="
+                flex
+                w-full
+                max-w-5xl
+                flex-col
+                items-center
+                gap-3
+                rounded-2xl
+                border
+                border-[#c7c4d8]
+                bg-transparent
+                p-3
+                shadow-xl
+
+                md:flex-row
+                md:gap-5
+            "
+        >
+
+            {/* SEARCH */}
+
+            <div
+                className="
+                    w-full
+                    flex-1
+                "
+            >
+
                 <Searchbar
-                    placeholder="Услуга, специалист или салон"
-                    className="flex p-3 w-full gap-3 rounded-xl bg-[#fff] md:bg-[#fff]"
+                    placeholder="Например: Мужская стрижка"
+
+                    value={
+                        search
+                    }
+
+                    onChange={
+                        setSearch
+                    }
+
+                    onSearch={
+                        handleFind
+                    }
+
+                    className="
+                        w-full
+                    "
                 />
+
             </div>
 
-            <div className="flex gap-3 w-full md:w-auto md:shrink-0">
-                <div className="flex-1 md:flex-none flex items-center">
-                    <LocationSelect />
+
+            {/* CITY + BUTTON */}
+
+            <div
+                className="
+                    flex
+                    w-full
+                    gap-3
+
+                    md:w-auto
+                    md:shrink-0
+                "
+            >
+
+                <div
+                    className="
+                        flex
+                        flex-1
+                        items-center
+
+                        md:flex-none
+                    "
+                >
+
+                    <LocationSelect
+                        value={
+                            selectedCityId
+                        }
+
+                        onChange={
+                            setSelectedCityId
+                        }
+                    />
+
                 </div>
 
-                <Button className="bg-[#4F46E5] flex-1 md:flex-none justify-center items-center flex gap-2 rounded-xl px-4 md:px-10 cursor-pointer hover:bg-[#3731aa]">
-                    <Typography text={'Найти'} className="text-white text-md" />
-                    <Icon icon={ArrowRight} className="text-white" />
+
+                <Button
+                    onClick={
+                        handleFind
+                    }
+
+                    className="
+                        flex
+                        flex-1
+                        cursor-pointer
+                        items-center
+                        justify-center
+                        gap-2
+                        rounded-xl
+                        bg-[#4F46E5]
+                        px-4
+
+                        hover:bg-[#3731aa]
+
+                        md:flex-none
+                        md:px-10
+                    "
+                >
+
+                    <Typography
+                        text="Найти"
+
+                        className="
+                            text-md
+                            text-white
+                        "
+                    />
+
+
+                    <Icon
+                        icon={
+                            ArrowRight
+                        }
+
+                        className="
+                            text-white
+                        "
+                    />
+
                 </Button>
+
             </div>
+
         </div>
     );
 }

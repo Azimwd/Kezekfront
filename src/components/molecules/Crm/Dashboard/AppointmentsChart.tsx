@@ -18,9 +18,7 @@ import type {
 
 
 interface AppointmentsChartProps {
-    appointments:
-        DashboardAppointment[];
-
+    appointments: DashboardAppointment[];
     revenue: number;
 }
 
@@ -29,11 +27,9 @@ export default function AppointmentsChart({
     appointments,
     revenue
 }: AppointmentsChartProps) {
-
     const chartData =
         useMemo(
             () => {
-
                 const startDate =
                     subDays(
                         new Date(),
@@ -49,7 +45,6 @@ export default function AppointmentsChart({
                         _,
                         index
                     ) => {
-
                         const date =
                             addDays(
                                 startDate,
@@ -67,7 +62,6 @@ export default function AppointmentsChart({
                         const value =
                             appointments.filter(
                                 appointment => {
-
                                     const appointmentDate =
                                         format(
                                             new Date(
@@ -81,30 +75,23 @@ export default function AppointmentsChart({
                                         appointmentDate ===
                                         dateKey
                                     );
-
                                 }
                             ).length;
 
 
                         return {
-
-                            key:
-                                dateKey,
-
-                            day:
-                                format(
-                                    date,
-                                    'EE',
-                                    {
-                                        locale: ru
-                                    }
-                                ),
-
+                            key: dateKey,
+                            day: format(
+                                date,
+                                'EE',
+                                {
+                                    locale: ru
+                                }
+                            ),
                             value
                         };
                     }
                 );
-
             },
             [
                 appointments
@@ -115,8 +102,7 @@ export default function AppointmentsChart({
     const maxValue =
         Math.max(
             ...chartData.map(
-                item =>
-                    item.value
+                item => item.value
             ),
             1
         );
@@ -125,32 +111,46 @@ export default function AppointmentsChart({
     return (
         <div
             className="
-                min-h-[220px]
+                w-full
+                min-w-0
+                min-h-[210px]
+                overflow-hidden
                 rounded-2xl
                 border
                 border-[#D9DDEC]
                 bg-white
-                p-5
+                p-4
                 shadow-sm
+
+                sm:min-h-[220px]
+                sm:p-5
             "
         >
-
             <div
                 className="
                     flex
-                    items-start
-                    justify-between
-                    gap-4
+                    min-w-0
+                    flex-col
+                    gap-3
+
+                    min-[390px]:flex-row
+                    min-[390px]:items-start
+                    min-[390px]:justify-between
+                    min-[390px]:gap-4
                 "
             >
-
-                <div>
-
+                <div
+                    className="
+                        min-w-0
+                    "
+                >
                     <div
                         className="
-                            text-[17px]
+                            text-[16px]
                             font-semibold
                             text-[#101828]
+
+                            sm:text-[17px]
                         "
                     >
                         Динамика записей
@@ -166,16 +166,17 @@ export default function AppointmentsChart({
                     >
                         Последние 7 дней
                     </div>
-
                 </div>
 
 
                 <div
                     className="
-                        text-right
+                        min-w-0
+                        text-left
+
+                        min-[390px]:text-right
                     "
                 >
-
                     <div
                         className="
                             text-[10px]
@@ -189,10 +190,12 @@ export default function AppointmentsChart({
                     <div
                         className="
                             mt-1
-                            whitespace-nowrap
-                            text-[18px]
+                            break-words
+                            text-[17px]
                             font-bold
                             text-[#4F46E5]
+
+                            sm:text-[18px]
                         "
                     >
                         {
@@ -201,9 +204,7 @@ export default function AppointmentsChart({
                             )
                         } ₸
                     </div>
-
                 </div>
-
             </div>
 
 
@@ -211,21 +212,23 @@ export default function AppointmentsChart({
                 className="
                     mt-5
                     flex
-                    h-[130px]
+                    h-[120px]
+                    min-w-0
                     items-end
-                    gap-3
+                    gap-1.5
                     border-b
                     border-dashed
                     border-[#E5E7EB]
+
+                    sm:h-[130px]
+                    sm:gap-3
                 "
             >
-
                 {chartData.map(
                     (
                         item,
                         index
                     ) => {
-
                         const height =
                             item.value === 0
                                 ? 6
@@ -240,18 +243,16 @@ export default function AppointmentsChart({
 
                         return (
                             <div
-                                key={
-                                    item.key
-                                }
+                                key={item.key}
                                 className="
                                     flex
+                                    min-w-0
                                     flex-1
                                     flex-col
                                     items-center
                                     justify-end
                                 "
                             >
-
                                 <div
                                     style={{
                                         height:
@@ -280,21 +281,21 @@ export default function AppointmentsChart({
                                 <span
                                     className="
                                         mt-2
-                                        text-[11px]
+                                        truncate
+                                        text-[10px]
                                         capitalize
                                         text-[#98A2B3]
+
+                                        sm:text-[11px]
                                     "
                                 >
                                     {item.day}
                                 </span>
-
                             </div>
                         );
                     }
                 )}
-
             </div>
-
         </div>
     );
 }

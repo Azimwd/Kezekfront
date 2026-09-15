@@ -1,54 +1,145 @@
-import { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
-import Typography from '../../atoms/Typography';
-import Button from '../../atoms/Button';
-import Icon from '../../atoms/Icon';
-import type { ReactNode } from 'react';
+import {
+    useState,
+    type ReactNode
+} from 'react';
 
-type DropDownQueryProps = {
+import {
+    ChevronDown
+} from 'lucide-react';
+
+import Typography from '../../atoms/Typography';
+import Icon from '../../atoms/Icon';
+
+
+interface DropDownQueryProps {
     title: string;
+
     children: ReactNode;
-    className?: string;
-    titleClassName?: string;
-    contentClassName?: string;
-    gapclassName?: string;
-};
+
+    defaultOpen?: boolean;
+}
+
 
 export default function DropDownQuery({
     title,
     children,
-    className = '',
-    titleClassName = '',
-    contentClassName = '',
-    gapclassName = ''
+    defaultOpen = true
 }: DropDownQueryProps) {
-    const [isOpen, setIsOpen] = useState(false);
 
-    const toggleOpen = () => setIsOpen(!isOpen);
+    const [
+        isOpen,
+        setIsOpen
+    ] = useState<boolean>(
+        defaultOpen
+    );
+
+
+    const handleToggle =
+        () => {
+
+            setIsOpen(
+                previous =>
+                    !previous
+            );
+        };
+
 
     return (
-        <div className={className}>
-            <div className="w-40 md:w-full rounded-3xl py-2 flex flex-col gap-5 bg-white">
-                <div
-                    className={
-                        gapclassName || 'flex justify-between items-center '
+        <div
+            className="
+                w-full
+                min-w-0
+            "
+        >
+
+            {/* HEADER */}
+
+            <button
+                type="button"
+
+                onClick={
+                    handleToggle
+                }
+
+                aria-expanded={
+                    isOpen
+                }
+
+                className="
+                    flex
+                    w-full
+                    cursor-pointer
+                    items-center
+                    justify-between
+                    gap-3
+                    py-3
+                    text-left
+                    transition-colors
+                "
+            >
+
+                <Typography
+                    text={
+                        title
                     }
+
+                    className="
+                        text-base
+                        font-semibold
+                        text-[#222222]
+                    "
+                />
+
+
+                <div
+                    className={`
+                        shrink-0
+                        transition-transform
+                        duration-200
+
+                        ${
+                            isOpen
+                                ? 'rotate-180'
+                                : 'rotate-0'
+                        }
+                    `}
                 >
-                    <Typography
-                        text={title}
-                        className={titleClassName || 'text-lg'}
+
+                    <Icon
+                        icon={
+                            ChevronDown
+                        }
+
+                        size={
+                            20
+                        }
+
+                        className="
+                            text-[#6B7280]
+                        "
                     />
-                    <Button onClick={toggleOpen}>
-                        <Icon
-                            icon={ChevronDown}
-                            className={`text-[#8c8c8c] transition-transform duration-200 cursor-pointer ${
-                                !isOpen ? 'rotate-180' : ''
-                            }`}
-                        />
-                    </Button>
+
                 </div>
-                {!isOpen && <div className={contentClassName}>{children}</div>}
-            </div>
+
+            </button>
+
+
+            {/* CONTENT */}
+
+            {isOpen && (
+
+                <div
+                    className="
+                        w-full
+                        min-w-0
+                        pb-3
+                    "
+                >
+                    {children}
+                </div>
+
+            )}
+
         </div>
     );
 }

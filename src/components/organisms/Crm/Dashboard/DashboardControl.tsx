@@ -881,9 +881,12 @@ export default function DashboardControl() {
         <div
             className="
                 min-h-full
+                min-w-0
                 bg-[#F7F8FD]
-                px-4
-                py-5
+                px-3
+                py-4
+                sm:px-4
+                sm:py-5
                 md:px-5
                 xl:px-6
                 xl:py-6
@@ -894,6 +897,7 @@ export default function DashboardControl() {
                 className="
                     mx-auto
                     w-full
+                    min-w-0
                     max-w-[1600px]
                 "
             >
@@ -904,10 +908,12 @@ export default function DashboardControl() {
 
                 <div
                     className="
-                        mb-6
+                        mb-4
                         flex
                         w-full
+                        min-w-0
                         justify-end
+                        sm:mb-6
                     "
                 >
 
@@ -934,10 +940,13 @@ export default function DashboardControl() {
                             }
                             className={`
                                 flex
-                                min-h-[58px]
+                                min-h-[54px]
                                 w-full
+                                min-w-0
                                 items-center
-                                gap-3
+                                gap-2.5
+                                sm:min-h-[58px]
+                                sm:gap-3
                                 rounded-2xl
                                 border
                                 bg-white
@@ -966,9 +975,11 @@ export default function DashboardControl() {
                             <div
                                 className="
                                     flex
-                                    h-10
-                                    w-10
+                                    h-9
+                                    w-9
                                     shrink-0
+                                    sm:h-10
+                                    sm:w-10
                                     items-center
                                     justify-center
                                     rounded-xl
@@ -1359,8 +1370,10 @@ export default function DashboardControl() {
                     <div
                         className="
                             grid
+                            min-w-0
                             grid-cols-1
-                            gap-5
+                            gap-4
+                            sm:gap-5
                             xl:grid-cols-[minmax(0,2.1fr)_minmax(320px,0.9fr)]
                         "
                     >
@@ -1381,9 +1394,11 @@ export default function DashboardControl() {
                             <div
                                 className="
                                     grid
+                                    min-w-0
                                     grid-cols-1
-                                    gap-4
-                                    sm:grid-cols-2
+                                    gap-3
+                                    min-[430px]:grid-cols-2
+                                    sm:gap-4
                                     lg:grid-cols-4
                                 "
                             >
@@ -1452,8 +1467,10 @@ export default function DashboardControl() {
                             <div
                                 className="
                                     grid
+                                    min-w-0
                                     grid-cols-1
-                                    gap-4
+                                    gap-3
+                                    sm:gap-4
                                     lg:grid-cols-[230px_minmax(0,1fr)]
                                 "
                             >
@@ -1461,9 +1478,11 @@ export default function DashboardControl() {
                                 <div
                                     className="
                                         grid
+                                        min-w-0
                                         grid-cols-1
-                                        gap-4
-                                        sm:grid-cols-2
+                                        gap-3
+                                        min-[430px]:grid-cols-2
+                                        sm:gap-4
                                         lg:grid-cols-1
                                     "
                                 >
@@ -1501,9 +1520,10 @@ export default function DashboardControl() {
                                         <div
                                             className="
                                                 mt-3
-                                                whitespace-nowrap
-                                                text-[26px]
+                                                break-words
+                                                text-[22px]
                                                 font-bold
+                                                sm:text-[26px]
                                                 leading-none
                                                 text-[#101828]
                                             "
@@ -1550,9 +1570,10 @@ export default function DashboardControl() {
                                         <div
                                             className="
                                                 mt-3
-                                                whitespace-nowrap
-                                                text-[24px]
+                                                break-words
+                                                text-[22px]
                                                 font-bold
+                                                sm:text-[24px]
                                                 leading-none
                                                 text-[#101828]
                                             "
@@ -1637,8 +1658,11 @@ export default function DashboardControl() {
                             <div
                                 className="
                                     grid
-                                    grid-cols-2
-                                    gap-4
+                                    min-w-0
+                                    grid-cols-1
+                                    gap-3
+                                    min-[360px]:grid-cols-2
+                                    sm:gap-4
                                 "
                             >
 
