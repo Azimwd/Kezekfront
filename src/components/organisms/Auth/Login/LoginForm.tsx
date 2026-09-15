@@ -89,13 +89,13 @@ export default function LoginForm() {
         >
             <form onSubmit={handleSubmit}>
 
-                {/* Email или телефон */}
+                {/* Email */}
                 <div>
                     <label
                         htmlFor="email"
                         className="mb-2 block text-[14px] font-medium text-[#172033]"
                     >
-                        Email или телефон
+                        Email
                     </label>
 
                     <div className="relative">

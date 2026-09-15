@@ -89,19 +89,23 @@ export const completeAppointment = async (
 };
 
 
-export const cancelAppointment = async (
-    appointmentId: number
-) => {
-    const response = await api.patch(
-        `/api/appointments/${appointmentId}/cancel/`,
-        {},
-        {
-            withCredentials: true
-        }
-    );
+export const cancelAppointment =
+    async (
+        appointmentId: number
+    ) => {
 
-    return response.data;
-};
+        const response =
+            await api.patch(
+                `/api/appointments/${appointmentId}/business-cancel/`,
+                {},
+                {
+                    withCredentials: true
+                }
+            );
+
+
+        return response.data;
+    };
 
 
 export const rescheduleAppointment = async (

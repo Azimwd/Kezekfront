@@ -1,20 +1,27 @@
 import {
     useEffect,
     useMemo,
+    useRef,
     useState
 } from 'react';
 
 import {
-    useQuery
+    useMutation,
+    useQuery,
+    useQueryClient
 } from '@tanstack/react-query';
 
 import {
     CalendarDays,
+    Check,
+    CheckCircle2,
+    ChevronDown,
     Clock3,
     Pencil,
     Search,
     Scissors,
-    UserRound
+    UserRound,
+    X
 } from 'lucide-react';
 
 import {
@@ -32,6 +39,9 @@ import Icon from '../../../atoms/Icon';
 import Button from '../../../atoms/Button';
 
 import {
+    cancelAppointment,
+    completeAppointment,
+    confirmAppointment,
     filterAppointments
 } from '../../../../api/appointments';
 
@@ -217,6 +227,519 @@ const formatAppointmentDate = (
 
 /*
  * ============================================================
+ * QUICK STATUS
+ * ============================================================
+ */
+
+type StatusAction =
+    | 'confirm'
+    | 'complete'
+    | 'cancel';
+
+
+interface QuickStatusProps {
+    appointmentId: number;
+
+    status: string;
+
+    isLoading: boolean;
+
+    onAction: (
+        appointmentId: number,
+        action: StatusAction
+    ) => void;
+}
+
+
+function QuickStatus({
+    appointmentId,
+    status,
+    isLoading,
+    onAction
+}: QuickStatusProps) {
+
+    const [
+        isOpen,
+        setIsOpen
+    ] =
+        useState(
+            false
+        );
+
+
+    const containerRef =
+        useRef<
+            HTMLDivElement | null
+        >(
+            null
+        );
+
+
+    /*
+     * ========================================================
+     * CLICK OUTSIDE
+     * ========================================================
+     */
+
+    useEffect(
+        () => {
+
+            if (
+                !isOpen
+            ) {
+                return;
+            }
+
+
+            const handleClickOutside =
+                (
+                    event:
+                        MouseEvent
+                ) => {
+
+                    if (
+                        containerRef.current &&
+                        !containerRef.current.contains(
+                            event.target as Node
+                        )
+                    ) {
+
+                        setIsOpen(
+                            false
+                        );
+                    }
+                };
+
+
+            document.addEventListener(
+                'mousedown',
+                handleClickOutside
+            );
+
+
+            return () => {
+
+                document.removeEventListener(
+                    'mousedown',
+                    handleClickOutside
+                );
+            };
+
+        },
+        [
+            isOpen
+        ]
+    );
+
+
+    /*
+     * ========================================================
+     * STATUS CONFIG
+     * ========================================================
+     */
+
+    const config =
+        useMemo(
+            () => {
+
+                switch (
+                    status
+                ) {
+
+                    case 'pending':
+
+                        return {
+                            label:
+                                'Ожидает',
+
+                            className:
+                                'bg-[#fffbe2] text-[#d97706]',
+
+                            editable:
+                                true
+                        };
+
+
+                    case 'confirmed':
+
+                        return {
+                            label:
+                                'Подтверждена',
+
+                            className:
+                                'bg-[#eef4ff] text-[#4031d0]',
+
+                            editable:
+                                true
+                        };
+
+
+                    case 'completed':
+
+                        return {
+                            label:
+                                'Завершена',
+
+                            className:
+                                'bg-[#ecfdf5] text-[#15803d]',
+
+                            editable:
+                                false
+                        };
+
+
+                    case 'cancelled_by_client':
+
+                        return {
+                            label:
+                                'Отменена клиентом',
+
+                            className:
+                                'bg-[#fef2f2] text-[#e7000a]',
+
+                            editable:
+                                false
+                        };
+
+
+                    case 'cancelled_by_business':
+
+                        return {
+                            label:
+                                'Отменена бизнесом',
+
+                            className:
+                                'bg-[#fef2f2] text-[#e7000a]',
+
+                            editable:
+                                false
+                        };
+
+
+                    case 'cancelled':
+
+                    case 'canceled':
+
+                        return {
+                            label:
+                                'Отменена',
+
+                            className:
+                                'bg-[#fef2f2] text-[#b91c1c]',
+
+                            editable:
+                                false
+                        };
+
+
+                    default:
+
+                        return {
+                            label:
+                                status,
+
+                            className:
+                                'bg-slate-100 text-slate-600',
+
+                            editable:
+                                false
+                        };
+                }
+
+            },
+            [
+                status
+            ]
+        );
+
+
+    /*
+     * ========================================================
+     * ACTION
+     * ========================================================
+     */
+
+    const handleAction =
+        (
+            action:
+                StatusAction
+        ) => {
+
+            setIsOpen(
+                false
+            );
+
+
+            onAction(
+                appointmentId,
+                action
+            );
+        };
+
+
+    return (
+        <div
+            ref={
+                containerRef
+            }
+            className="
+                relative
+                inline-flex
+            "
+        >
+
+            <button
+                type="button"
+
+                disabled={
+                    !config.editable ||
+                    isLoading
+                }
+
+                onClick={() => {
+
+                    if (
+                        config.editable
+                    ) {
+
+                        setIsOpen(
+                            previous =>
+                                !previous
+                        );
+                    }
+                }}
+
+                className={`
+                    inline-flex
+                    items-center
+                    gap-1.5
+                    whitespace-nowrap
+                    rounded-full
+                    px-3
+                    py-1
+                    text-xs
+                    font-semibold
+                    transition
+
+                    ${config.className}
+
+                    ${
+                        config.editable
+                            ? `
+                                cursor-pointer
+                                hover:ring-2
+                                hover:ring-[#4F46E5]/10
+                            `
+                            : `
+                                cursor-default
+                            `
+                    }
+
+                    ${
+                        isLoading
+                            ? `
+                                cursor-wait
+                                opacity-60
+                            `
+                            : ''
+                    }
+                `}
+            >
+
+                {isLoading
+                    ? 'Изменение...'
+                    : config.label}
+
+
+                {config.editable &&
+                    !isLoading && (
+
+                    <ChevronDown
+                        size={
+                            13
+                        }
+
+                        className={`
+                            transition-transform
+
+                            ${
+                                isOpen
+                                    ? 'rotate-180'
+                                    : ''
+                            }
+                        `}
+                    />
+
+                )}
+
+            </button>
+
+
+            {isOpen &&
+                config.editable &&
+                !isLoading && (
+
+                <div
+                    className="
+                        absolute
+                        left-0
+                        top-[calc(100%+6px)]
+                        z-[100]
+                        min-w-[180px]
+                        overflow-hidden
+                        rounded-xl
+                        border
+                        border-[#D9DDEC]
+                        bg-white
+                        p-1.5
+                        shadow-xl
+                    "
+                >
+
+                    {status ===
+                        'pending' && (
+
+                        <button
+                            type="button"
+
+                            onClick={() =>
+                                handleAction(
+                                    'confirm'
+                                )
+                            }
+
+                            className="
+                                flex
+                                w-full
+                                cursor-pointer
+                                items-center
+                                gap-2
+                                rounded-lg
+                                px-3
+                                py-2.5
+                                text-left
+                                text-sm
+                                font-medium
+                                text-[#4031d0]
+                                transition
+
+                                hover:bg-[#EEF2FF]
+                            "
+                        >
+
+                            <Check
+                                size={
+                                    16
+                                }
+                            />
+
+                            Подтвердить
+
+                        </button>
+
+                    )}
+
+
+                    {status ===
+                        'confirmed' && (
+
+                        <button
+                            type="button"
+
+                            onClick={() =>
+                                handleAction(
+                                    'complete'
+                                )
+                            }
+
+                            className="
+                                flex
+                                w-full
+                                cursor-pointer
+                                items-center
+                                gap-2
+                                rounded-lg
+                                px-3
+                                py-2.5
+                                text-left
+                                text-sm
+                                font-medium
+                                text-green-700
+                                transition
+
+                                hover:bg-green-50
+                            "
+                        >
+
+                            <CheckCircle2
+                                size={
+                                    16
+                                }
+                            />
+
+                            Завершить
+
+                        </button>
+
+                    )}
+
+
+                    {(status ===
+                        'pending' ||
+                        status ===
+                        'confirmed') && (
+
+                        <button
+                            type="button"
+
+                            onClick={() =>
+                                handleAction(
+                                    'cancel'
+                                )
+                            }
+
+                            className="
+                                flex
+                                w-full
+                                cursor-pointer
+                                items-center
+                                gap-2
+                                rounded-lg
+                                px-3
+                                py-2.5
+                                text-left
+                                text-sm
+                                font-medium
+                                text-red-600
+                                transition
+
+                                hover:bg-red-50
+                            "
+                        >
+
+                            <X
+                                size={
+                                    16
+                                }
+                            />
+
+                            Отменить
+
+                        </button>
+
+                    )}
+
+                </div>
+
+            )}
+
+        </div>
+    );
+}
+
+
+/*
+ * ============================================================
  * COMPONENT
  * ============================================================
  */
@@ -225,6 +748,36 @@ export default function StatsGrid() {
 
     const navigate =
         useNavigate();
+
+
+    const queryClient =
+        useQueryClient();
+
+
+    /*
+     * ============================================================
+     * QUICK STATUS STATE
+     * ============================================================
+     */
+
+    const [
+        actionLoadingId,
+        setActionLoadingId
+    ] =
+        useState<
+            number | null
+        >(
+            null
+        );
+
+
+    const [
+        statusError,
+        setStatusError
+    ] =
+        useState(
+            ''
+        );
 
 
     const [
@@ -636,6 +1189,155 @@ export default function StatsGrid() {
 
     /*
      * ============================================================
+     * QUICK STATUS MUTATION
+     * ============================================================
+     */
+
+    const statusMutation =
+        useMutation({
+
+            mutationFn:
+                async ({
+                    appointmentId,
+                    action
+                }: {
+                    appointmentId:
+                        number;
+
+                    action:
+                        StatusAction;
+                }) => {
+
+                    if (
+                        action ===
+                        'confirm'
+                    ) {
+
+                        return confirmAppointment(
+                            appointmentId
+                        );
+                    }
+
+
+                    if (
+                        action ===
+                        'complete'
+                    ) {
+
+                        return completeAppointment(
+                            appointmentId
+                        );
+                    }
+
+
+                    return cancelAppointment(
+                        appointmentId
+                    );
+                },
+
+
+            onMutate:
+                ({
+                    appointmentId
+                }) => {
+
+                    setActionLoadingId(
+                        appointmentId
+                    );
+
+
+                    setStatusError(
+                        ''
+                    );
+                },
+
+
+            onSuccess:
+                async () => {
+
+                    await Promise.all([
+
+                        queryClient
+                            .invalidateQueries({
+                                queryKey: [
+                                    'appointments'
+                                ]
+                            }),
+
+                        queryClient
+                            .invalidateQueries({
+                                queryKey: [
+                                    'dashboard-data'
+                                ]
+                            }),
+
+                        queryClient
+                            .invalidateQueries({
+                                queryKey: [
+                                    'dashboard'
+                                ]
+                            })
+                    ]);
+                },
+
+
+            onError:
+                (
+                    error:
+                        any
+                ) => {
+
+                    const message =
+                        error
+                            ?.response
+                            ?.data
+                            ?.message;
+
+
+                    setStatusError(
+                        typeof message ===
+                            'string'
+                            ? message
+                            : 'Не удалось изменить статус записи.'
+                    );
+                },
+
+
+            onSettled:
+                () => {
+
+                    setActionLoadingId(
+                        null
+                    );
+                }
+        });
+
+
+    const handleStatusAction =
+        (
+            appointmentId:
+                number,
+
+            action:
+                StatusAction
+        ) => {
+
+            if (
+                statusMutation.isPending
+            ) {
+                return;
+            }
+
+
+            statusMutation.mutate({
+                appointmentId,
+                action
+            });
+        };
+
+
+    /*
+     * ============================================================
      * RESPONSE
      * ============================================================
      */
@@ -690,136 +1392,6 @@ export default function StatsGrid() {
                     pageSize,
                 totalCount
             );
-
-
-    /*
-     * ============================================================
-     * STATUS
-     * ============================================================
-     */
-
-    const getStatusBadge =
-        (
-            status:
-                string
-        ) => {
-
-            switch (
-                status
-            ) {
-
-                case 'pending':
-
-                    return (
-                        <span
-                            className="
-                                inline-flex
-                                whitespace-nowrap
-                                rounded-full
-                                bg-[#fffbe2]
-                                px-3
-                                py-1
-                                text-xs
-                                font-semibold
-                                text-[#d97706]
-                            "
-                        >
-                            Ожидает
-                        </span>
-                    );
-
-
-                case 'confirmed':
-
-                    return (
-                        <span
-                            className="
-                                inline-flex
-                                whitespace-nowrap
-                                rounded-full
-                                bg-[#eef4ff]
-                                px-3
-                                py-1
-                                text-xs
-                                font-semibold
-                                text-[#4031d0]
-                            "
-                        >
-                            Подтверждена
-                        </span>
-                    );
-
-
-                case 'completed':
-
-                    return (
-                        <span
-                            className="
-                                inline-flex
-                                whitespace-nowrap
-                                rounded-full
-                                bg-[#ecfdf5]
-                                px-3
-                                py-1
-                                text-xs
-                                font-semibold
-                                text-[#15803d]
-                            "
-                        >
-                            Завершена
-                        </span>
-                    );
-
-
-                case 'cancelled_by_business':
-
-                    return (
-                        <span
-                            className="
-                                inline-flex
-                                whitespace-nowrap
-                                rounded-full
-                                bg-[#fef2f2]
-                                px-3
-                                py-1
-                                text-xs
-                                font-semibold
-                                text-[#e7000a]
-                            "
-                        >
-                            Отменена бизнесом
-                        </span>
-                    );
-
-
-                case 'canceled':
-
-                case 'cancelled':
-
-                    return (
-                        <span
-                            className="
-                                inline-flex
-                                whitespace-nowrap
-                                rounded-full
-                                bg-[#fef2f2]
-                                px-3
-                                py-1
-                                text-xs
-                                font-semibold
-                                text-[#b91c1c]
-                            "
-                        >
-                            Отменена
-                        </span>
-                    );
-
-
-                default:
-
-                    return null;
-            }
-        };
 
 
     /*
@@ -1160,6 +1732,67 @@ export default function StatsGrid() {
             </div>
 
 
+            {statusError && (
+
+                <div
+                    className="
+                        flex
+                        items-center
+                        justify-between
+                        gap-3
+                        border-b
+                        border-red-200
+                        bg-red-50
+                        px-4
+                        py-3
+                        text-sm
+                        font-medium
+                        text-red-600
+
+                        sm:px-5
+                    "
+                >
+
+                    <span>
+                        {statusError}
+                    </span>
+
+
+                    <button
+                        type="button"
+
+                        onClick={() =>
+                            setStatusError(
+                                ''
+                            )
+                        }
+
+                        className="
+                            flex
+                            h-7
+                            w-7
+                            shrink-0
+                            cursor-pointer
+                            items-center
+                            justify-center
+                            rounded-lg
+                            transition
+
+                            hover:bg-red-100
+                        "
+                    >
+                        <X
+                            size={
+                                16
+                            }
+                        />
+                    </button>
+
+                </div>
+
+            )}
+
+
             {/* =====================================================
                 MOBILE
             ===================================================== */}
@@ -1217,6 +1850,8 @@ export default function StatsGrid() {
                                     'canceled' ||
                                 row.status ===
                                     'cancelled' ||
+                                row.status ===
+                                    'cancelled_by_client' ||
                                 row.status ===
                                     'cancelled_by_business';
 
@@ -1294,11 +1929,24 @@ export default function StatsGrid() {
                                                     mt-2
                                                 "
                                             >
-                                                {
-                                                    getStatusBadge(
+                                                <QuickStatus
+                                                    appointmentId={
+                                                        row.id
+                                                    }
+
+                                                    status={
                                                         row.status
-                                                    )
-                                                }
+                                                    }
+
+                                                    isLoading={
+                                                        actionLoadingId ===
+                                                        row.id
+                                                    }
+
+                                                    onAction={
+                                                        handleStatusAction
+                                                    }
+                                                />
                                             </div>
 
                                         </div>
@@ -1958,11 +2606,24 @@ export default function StatsGrid() {
                                                     align-middle
                                                 "
                                             >
-                                                {
-                                                    getStatusBadge(
+                                                <QuickStatus
+                                                    appointmentId={
+                                                        row.id
+                                                    }
+
+                                                    status={
                                                         row.status
-                                                    )
-                                                }
+                                                    }
+
+                                                    isLoading={
+                                                        actionLoadingId ===
+                                                        row.id
+                                                    }
+
+                                                    onAction={
+                                                        handleStatusAction
+                                                    }
+                                                />
                                             </td>
 
 

@@ -43,6 +43,14 @@ import CancelBookingModal
     from '../components/organisms/Mybookings/CancelBookingModal';
 
 
+import ReviewBookingModal
+    from '../components/organisms/Mybookings/ReviewBookingModal';
+
+import {
+    createReview
+} from '../api/reviews';
+
+
 /*
  * ============================================================
  * TYPES
@@ -475,6 +483,32 @@ export default function Mybookings() {
 
     /*
      * ========================================================
+     * REVIEW
+     * ========================================================
+     */
+
+    const [
+        reviewBooking,
+        setReviewBooking
+    ] =
+        useState<
+            MyBooking | null
+        >(
+            null
+        );
+
+
+    const [
+        reviewError,
+        setReviewError
+    ] =
+        useState(
+            ''
+        );
+
+
+    /*
+     * ========================================================
      * LOCK PAGE SCROLL WHEN MODAL IS OPEN
      * ========================================================
      */
@@ -485,7 +519,8 @@ export default function Mybookings() {
             const hasOpenModal =
                 Boolean(
                     rescheduleBooking ||
-                    cancelBooking
+                    cancelBooking ||
+                    reviewBooking
                 );
 
 
@@ -534,7 +569,8 @@ export default function Mybookings() {
         },
         [
             rescheduleBooking,
-            cancelBooking
+            cancelBooking,
+            reviewBooking
         ]
     );
 
@@ -600,12 +636,14 @@ export default function Mybookings() {
 
             queryKey: [
                 'my-bookings',
+                tab,
                 page
             ],
 
             queryFn: () =>
                 getMyBookings(
-                    page
+                    page,
+                    tab
                 ),
 
             placeholderData:
@@ -801,45 +839,8 @@ export default function Mybookings() {
             });
         };
 
-
-    /*
-     * ========================================================
-     * FILTER
-     * ========================================================
-     */
-
     const visibleBookings =
-        useMemo(
-            () => {
-
-                if (
-                    tab ===
-                    'upcoming'
-                ) {
-
-                    return bookings.filter(
-                        booking =>
-                            !isFinished(
-                                booking
-                            )
-                    );
-                }
-
-
-                return bookings.filter(
-                    booking =>
-                        isFinished(
-                            booking
-                        )
-                );
-
-            },
-            [
-                bookings,
-                tab
-            ]
-        );
-
+        bookings;
 
     /*
      * ========================================================
@@ -1055,6 +1056,211 @@ export default function Mybookings() {
                 );
             }
         });
+
+
+    /*
+     * ========================================================
+     * CREATE REVIEW
+     * ========================================================
+     */
+
+    const reviewMutation =
+        useMutation({
+
+            mutationFn:
+                ({
+                    appointment,
+                    rating,
+                    text
+                }: {
+                    appointment:
+                        number;
+
+                    rating:
+                        number;
+
+                    text:
+                        string;
+                }) =>
+                    createReview({
+                        appointment,
+                        rating,
+                        text
+                    }),
+
+            onMutate: () => {
+
+                setReviewError(
+                    ''
+                );
+            },
+
+            onSuccess:
+                async () => {
+
+                    await Promise.all([
+
+                        queryClient
+                            .invalidateQueries({
+                                queryKey: [
+                                    'my-bookings'
+                                ]
+                            }),
+
+                        queryClient
+                            .invalidateQueries({
+                                queryKey: [
+                                    'reviews'
+                                ]
+                            }),
+
+                        queryClient
+                            .invalidateQueries({
+                                queryKey: [
+                                    'public-catalog'
+                                ]
+                            }),
+
+                        queryClient
+                            .invalidateQueries({
+                                queryKey: [
+                                    'favorite-businesses'
+                                ]
+                            })
+                    ]);
+
+
+                    setReviewBooking(
+                        null
+                    );
+
+
+                    setReviewError(
+                        ''
+                    );
+
+
+                    setSuccessMessage(
+                        'Спасибо! Отзыв успешно опубликован.'
+                    );
+                },
+
+            onError:
+                (
+                    error
+                ) => {
+
+                    if (
+                        axios.isAxiosError(
+                            error
+                        )
+                    ) {
+
+                        const data =
+                            error.response
+                                ?.data as {
+                                    message?:
+                                        string;
+
+                                    detail?:
+                                        string;
+
+                                    rating?:
+                                        string[] |
+                                        string;
+
+                                    appointment?:
+                                        string[] |
+                                        string;
+
+                                    text?:
+                                        string[] |
+                                        string;
+                                } | undefined;
+
+
+                        const getFieldError =
+                            (
+                                value:
+                                    string[] |
+                                    string |
+                                    undefined
+                            ) => {
+
+                                if (
+                                    Array.isArray(
+                                        value
+                                    )
+                                ) {
+                                    return (
+                                        value[0] ??
+                                        ''
+                                    );
+                                }
+
+
+                                return (
+                                    value ??
+                                    ''
+                                );
+                            };
+
+
+                        const fieldMessage =
+                            getFieldError(
+                                data?.rating
+                            ) ||
+                            getFieldError(
+                                data?.appointment
+                            ) ||
+                            getFieldError(
+                                data?.text
+                            );
+
+
+                        setReviewError(
+                            data?.message ||
+                            data?.detail ||
+                            fieldMessage ||
+                            'Не удалось отправить отзыв.'
+                        );
+
+
+                        return;
+                    }
+
+
+                    setReviewError(
+                        'Не удалось отправить отзыв.'
+                    );
+                }
+        });
+
+
+    const handleOpenReview =
+        (
+            booking:
+                MyBooking
+        ) => {
+
+            if (
+                booking.status !==
+                'completed' ||
+                booking.has_review
+            ) {
+                return;
+            }
+
+
+            setReviewError(
+                ''
+            );
+
+
+            setReviewBooking(
+                booking
+            );
+        };
 
 
     /*
@@ -1912,6 +2118,69 @@ export default function Mybookings() {
                                                     "
                                                 >
 
+                                                    {booking.status ===
+                                                        'completed' && (
+
+                                                        booking.has_review ? (
+
+                                                            <div
+                                                                className="
+                                                                    flex
+                                                                    items-center
+                                                                    gap-2
+                                                                    rounded-xl
+                                                                    border
+                                                                    border-green-200
+                                                                    bg-green-50
+                                                                    px-4
+                                                                    py-2.5
+                                                                    text-sm
+                                                                    font-semibold
+                                                                    text-green-700
+                                                                "
+                                                            >
+
+                                                                <CheckCircle2
+                                                                    size={
+                                                                        16
+                                                                    }
+                                                                />
+
+                                                                Отзыв оставлен
+
+                                                            </div>
+
+                                                        ) : (
+
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    handleOpenReview(
+                                                                        booking
+                                                                    )
+                                                                }
+                                                                className="
+                                                                    cursor-pointer
+                                                                    rounded-xl
+                                                                    bg-[#4F46E5]
+                                                                    px-4
+                                                                    py-2.5
+                                                                    text-sm
+                                                                    font-semibold
+                                                                    text-white
+                                                                    transition
+
+                                                                    hover:bg-[#4338CA]
+                                                                "
+                                                            >
+                                                                Оставить отзыв
+                                                            </button>
+
+                                                        )
+
+                                                    )}
+
+
                                                     {canReschedule(
                                                         booking
                                                     ) && (
@@ -2376,6 +2645,61 @@ export default function Mybookings() {
                         });
                     }}
 
+                />
+
+            )}
+
+
+            {reviewBooking && (
+
+                <ReviewBookingModal
+                    booking={
+                        reviewBooking
+                    }
+
+                    isPending={
+                        reviewMutation
+                            .isPending
+                    }
+
+                    errorMessage={
+                        reviewError
+                    }
+
+                    onClose={() => {
+
+                        if (
+                            reviewMutation
+                                .isPending
+                        ) {
+                            return;
+                        }
+
+
+                        setReviewBooking(
+                            null
+                        );
+
+
+                        setReviewError(
+                            ''
+                        );
+                    }}
+
+                    onSubmit={(
+                        rating,
+                        text
+                    ) => {
+
+                        reviewMutation.mutate({
+                            appointment:
+                                reviewBooking.id,
+
+                            rating,
+
+                            text
+                        });
+                    }}
                 />
 
             )}

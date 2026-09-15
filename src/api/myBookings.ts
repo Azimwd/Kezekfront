@@ -36,22 +36,28 @@ export interface MyBooking {
 
     comment?: string | null;
 
+    /*
+     * Backend должен отдавать эти два поля
+     * через AppointmentSerializer.
+     */
+    has_review?: boolean;
+    review_id?: number | null;
+
     created_at?: string;
 }
 
-
+export type MyBookingsTab =
+    | 'upcoming'
+    | 'history';
+    
 export interface MyBookingsPagination {
-    count: number;
-
-    total_pages: number;
-
     current_page: number;
+    total_pages: number;
+    count: number;
+    page_size?: number;
 
-    page_size: number;
-
-    next: number | null;
-
-    previous: number | null;
+    next?: number | null;
+    previous?: number | null;
 }
 
 
@@ -93,7 +99,8 @@ export interface RescheduleMyBookingResponse {
 
 export const getMyBookings =
     async (
-        page: number = 1
+        page: number = 1,
+        tab: MyBookingsTab = 'upcoming'
     ): Promise<
         MyBookingsResponse
     > => {
@@ -105,7 +112,8 @@ export const getMyBookings =
                 '/api/appointments/my/',
                 {
                     params: {
-                        page
+                        page,
+                        tab
                     },
 
                     withCredentials:

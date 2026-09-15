@@ -1,7 +1,15 @@
-import { api } from './api';
+import {
+    api
+} from './api';
 
 
-export interface ReviewItem {
+/*
+ * ============================================================
+ * TYPES
+ * ============================================================
+ */
+
+export interface Review {
     id: number;
 
     client: number;
@@ -13,7 +21,7 @@ export interface ReviewItem {
     staff_name: string | null;
 
     appointment: number;
-    service_name: string | null;
+    service_name: string;
 
     rating: number;
     text: string;
@@ -39,81 +47,182 @@ export interface ReviewPagination {
     total_pages: number;
     current_page: number;
     page_size: number;
+
     next: string | null;
     previous: string | null;
 }
 
 
-export interface ReviewsResponse {
+export interface BusinessReviewsResponse {
     message: string;
 
-    summary: ReviewSummary;
+    summary:
+        ReviewSummary;
 
-    pagination: ReviewPagination;
+    pagination:
+        ReviewPagination;
 
-    data: ReviewItem[];
+    data:
+        Review[];
 }
 
 
-export interface ReviewFilters {
+export interface GetBusinessReviewsFilters {
     page?: number;
+    page_size?: number;
 
     rating?: number;
-
     staff_id?: number;
 
     reply_status?:
         | 'all'
         | 'replied'
         | 'unreplied';
+
+    [key: string]:
+        unknown;
 }
 
 
-export interface ReplyReviewPayload {
+/*
+ * ============================================================
+ * CREATE REVIEW
+ * ============================================================
+ */
+
+export interface CreateReviewData {
+    appointment: number;
+    rating: number;
+    text: string;
+}
+
+
+export interface CreateReviewResponse {
+    message: string;
+    data: Review;
+}
+
+
+/*
+ * ============================================================
+ * REPLY
+ * ============================================================
+ */
+
+export interface ReplyToReviewData {
     reviewId: number;
     reply_text: string;
 }
 
 
-export interface ReplyReviewResponse {
+export interface ReplyToReviewResponse {
     message: string;
-    data: ReviewItem;
+    data: Review;
 }
 
 
-export const getBusinessReviews = async (
-    businessId: number,
-    filters: ReviewFilters = {}
-): Promise<ReviewsResponse> => {
+/*
+ * ============================================================
+ * GET BUSINESS REVIEWS
+ * ============================================================
+ */
 
-    const response =
-        await api.get<ReviewsResponse>(
-            `/api/reviews/businesses/${businessId}/`,
-            {
-                withCredentials: true,
-                params: filters
-            }
-        );
+export const getBusinessReviews =
+    async (
+        businessId: number,
+        filters:
+            GetBusinessReviewsFilters = {}
+    ): Promise<
+        BusinessReviewsResponse
+    > => {
 
-    return response.data;
-};
+        const response =
+            await api.get<
+                BusinessReviewsResponse
+            >(
+                `/api/reviews/businesses/${businessId}/`,
+                {
+                    params:
+                        filters,
+
+                    withCredentials:
+                        true
+                }
+            );
 
 
-export const replyToReview = async ({
-    reviewId,
-    reply_text
-}: ReplyReviewPayload): Promise<ReplyReviewResponse> => {
+        return response.data;
+    };
 
-    const response =
-        await api.patch<ReplyReviewResponse>(
-            `/api/reviews/${reviewId}/reply/`,
-            {
-                reply_text
-            },
-            {
-                withCredentials: true
-            }
-        );
 
-    return response.data;
-};
+/*
+ * ============================================================
+ * CREATE REVIEW
+ * ============================================================
+ *
+ * Backend сам определяет:
+ *
+ * - клиента
+ * - бизнес
+ * - мастера
+ *
+ * по appointment.
+ * ============================================================
+ */
+
+export const createReview =
+    async (
+        data:
+            CreateReviewData
+    ): Promise<
+        CreateReviewResponse
+    > => {
+
+        const response =
+            await api.post<
+                CreateReviewResponse
+            >(
+                '/api/reviews/',
+                data,
+                {
+                    withCredentials:
+                        true
+                }
+            );
+
+
+        return response.data;
+    };
+
+
+/*
+ * ============================================================
+ * REPLY TO REVIEW
+ * ============================================================
+ */
+
+export const replyToReview =
+    async ({
+        reviewId,
+        reply_text
+    }: ReplyToReviewData): Promise<
+        ReplyToReviewResponse
+    > => {
+
+        const response =
+            await api.patch<
+                ReplyToReviewResponse
+            >(
+                `/api/reviews/${reviewId}/reply/`,
+                {
+                    reply_text
+                },
+                {
+                    withCredentials:
+                        true
+                }
+            );
+
+
+        return response.data;
+    };
