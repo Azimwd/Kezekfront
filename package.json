@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "start": "serve --single --listen $PORT dist",
     "lint": "oxlint",
     "preview": "vite preview"
   },
@@ -22,6 +23,7 @@
     "react-dom": "^19.2.7",
     "react-easy-crop": "^6.2.3",
     "react-router-dom": "^7.18.1",
+    "serve": "^14.2.6",
     "tailwindcss": "^4.3.2"
   },
   "devDependencies": {
