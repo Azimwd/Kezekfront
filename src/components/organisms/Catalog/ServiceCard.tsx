@@ -718,16 +718,17 @@ export default function ServiceCard({
                     p-6
                 "
             >
-
                 <div
                     className="
+                        flex
+                        flex-col
+                        items-center
+                        gap-2
                         text-center
                     "
                 >
-
                     <Typography
                         text="Ничего не найдено"
-
                         className="
                             text-lg
                             font-semibold
@@ -735,19 +736,14 @@ export default function ServiceCard({
                         "
                     />
 
-
                     <Typography
                         text="Попробуйте изменить параметры поиска или фильтры."
-
                         className="
-                            mt-2
                             text-sm
                             text-[#858585]
                         "
                     />
-
                 </div>
-
             </div>
         );
     }

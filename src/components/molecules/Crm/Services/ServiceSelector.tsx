@@ -1,119 +1,284 @@
-import { useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import {
+    useEffect,
+    useMemo
+} from 'react';
 
-import { listAllBusinesses } from '../../../../api/businesses';
+import {
+    useQuery
+} from '@tanstack/react-query';
 
-import Select from '../../../atoms/Select';
+import Select, {
+    type SelectOption
+} from '../../../atoms/Select';
 
-import { useBusiness } from '../../../../context/BusinessContext';
+import {
+    listAllBusinesses
+} from '../../../../api/businesses';
+
+import {
+    useBusiness
+} from '../../../../context/BusinessContext';
 
 
-export default function ServiceSelector() {
+export default function BusinessSelect() {
+
     const {
         selectedBusiness,
         setSelectedBusiness
-    } = useBusiness();
+    } =
+        useBusiness();
 
+
+    /*
+     * ============================================================
+     * BUSINESSES
+     * ============================================================
+     */
 
     const {
-        data: businessOptions = [],
+        data:
+            businesses = [],
+
         isLoading
-    } = useQuery({
-        queryKey: ['all-businesses'],
-        queryFn: listAllBusinesses,
-        retry: false,
+    } =
+        useQuery({
 
-        select: (businesses) =>
-            businesses.map((business) => ({
-                id: business.id,
-                label: business.name
-            }))
-    });
+            queryKey: [
+                'all-businesses'
+            ],
+
+            queryFn:
+                listAllBusinesses,
+
+            retry:
+                false
+        });
 
 
-    useEffect(() => {
-        if (businessOptions.length === 0) {
-            return;
-        }
+    /*
+     * ============================================================
+     * OPTIONS
+     * ============================================================
+     */
 
-        const selectedExists = selectedBusiness
-            ? businessOptions.some(
-                  (business) =>
-                      String(business.id) ===
-                      String(selectedBusiness.id)
-              )
-            : false;
+    const options =
+        useMemo<
+            SelectOption[]
+        >(
+            () => {
 
-        if (!selectedExists) {
+                return businesses.map(
+                    business => ({
+                        id:
+                            business.id,
+
+                        label:
+                            business.name
+                    })
+                );
+
+            },
+            [
+                businesses
+            ]
+        );
+
+
+    /*
+     * ============================================================
+     * AUTO SELECT FIRST BUSINESS
+     * ============================================================
+     */
+
+    useEffect(
+        () => {
+
+            if (
+                options.length ===
+                0
+            ) {
+                return;
+            }
+
+
+            /*
+             * Если бизнес уже выбран,
+             * оставляем его.
+             */
+
+            const selectedExists =
+                selectedBusiness
+                    ? options.some(
+                        option =>
+                            String(
+                                option.id
+                            ) ===
+                            String(
+                                selectedBusiness.id
+                            )
+                    )
+                    : false;
+
+
+            if (
+                selectedExists
+            ) {
+                return;
+            }
+
+
+            /*
+             * Иначе автоматически
+             * выбираем первый бизнес.
+             */
+
             setSelectedBusiness(
-                businessOptions[0]
+                options[0]
             );
-        }
-    }, [
-        businessOptions,
-        selectedBusiness,
-        setSelectedBusiness
-    ]);
 
+        },
+        [
+            options,
+            selectedBusiness,
+            setSelectedBusiness
+        ]
+    );
+
+
+    /*
+     * ============================================================
+     * CURRENT VALUE
+     * ============================================================
+     */
+
+    const value =
+        useMemo(
+            () => {
+
+                if (
+                    !selectedBusiness
+                ) {
+                    return (
+                        options[0] ??
+                        null
+                    );
+                }
+
+
+                return (
+                    options.find(
+                        option =>
+                            String(
+                                option.id
+                            ) ===
+                            String(
+                                selectedBusiness.id
+                            )
+                    ) ??
+                    options[0] ??
+                    null
+                );
+
+            },
+            [
+                options,
+                selectedBusiness
+            ]
+        );
+
+
+    /*
+     * ============================================================
+     * LOADING
+     * ============================================================
+     */
 
     if (
-        isLoading ||
-        !selectedBusiness
+        isLoading
     ) {
+
         return (
             <div
                 className="
-                    flex
-                    h-[46px]
+                    h-11
                     w-full
-                    items-center
-                    rounded-2xl
+                    rounded-xl
                     border
-                    border-[#c7c4d8]
-                    bg-[#eff4ff]
+                    border-[#D9DDEC]
+                    bg-[#F7F8FD]
+                "
+            />
+        );
+    }
+
+
+    /*
+     * ============================================================
+     * EMPTY
+     * ============================================================
+     */
+
+    if (
+        options.length ===
+        0
+    ) {
+
+        return (
+            <div
+                className="
+                    rounded-xl
+                    border
+                    border-[#D9DDEC]
+                    bg-white
                     px-4
+                    py-3
                     text-sm
                     text-slate-500
-
-                    sm:w-[200px]
                 "
             >
-                Загрузка...
+                Бизнесов нет
             </div>
         );
     }
 
 
+    /*
+     * ============================================================
+     * SELECT
+     * ============================================================
+     */
+
     return (
-        <div
+        <Select
+            options={
+                options
+            }
+
+            value={
+                value!
+            }
+
+            onChange={
+                option => {
+
+                    setSelectedBusiness({
+                        id:
+                            option.id,
+
+                        label:
+                            option.label
+                    });
+                }
+            }
+
             className="
                 w-full
-                min-w-0
-                overflow-hidden
-                rounded-2xl
+                min-w-[220px]
+                cursor-pointer
+                rounded-xl
                 border
-                border-[#c7c4d8]
-                bg-[#eff4ff]
-
-                transition-colors
-
-                focus-within:border-[#4F46E5]
-                focus-within:ring-1
-                focus-within:ring-[#4F46E5]/20
-
-                sm:w-[200px]
-                sm:shrink-0
+                border-[#D9DDEC]
             "
-        >
-            <Select
-                options={businessOptions}
-                value={selectedBusiness}
-                onChange={setSelectedBusiness}
-                className="
-                    w-full
-                    min-w-0
-                "
-            />
-        </div>
+        />
     );
 }
