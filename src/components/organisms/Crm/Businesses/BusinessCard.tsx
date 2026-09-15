@@ -10,7 +10,7 @@ interface BusinessCardProps {
     business: Business;
 }
 
-const BACKEND_URL = 'http://localhost:8000';
+const BACKEND_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
 
 const getImageUrl = (path: string | null | undefined): string | null => {
     if (!path) return null;
