@@ -10,93 +10,9 @@ import axios, {
  * ============================================================
  */
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
-
-
-/*
- * ============================================================
- * COOKIE
- * ============================================================
- */
-
-const getCookie = (
-    name:
-        string
-): string | null => {
-
-    const value =
-        `; ${document.cookie}`;
-
-
-    const parts =
-        value.split(
-            `; ${name}=`
-        );
-
-
-    if (
-        parts.length ===
-        2
-    ) {
-
-        return (
-            parts
-                .pop()
-                ?.split(';')
-                .shift() ??
-            null
-        );
-    }
-
-
-    return null;
-};
-
-
-const setCookie = (
-    name:
-        string,
-
-    value:
-        string,
-
-    days =
-        1
-) => {
-
-    const date =
-        new Date();
-
-
-    date.setTime(
-        date.getTime() +
-        days *
-            24 *
-            60 *
-            60 *
-            1000
-    );
-
-
-    document.cookie =
-        `${name}=${value}; ` +
-        `expires=${date.toUTCString()}; ` +
-        `path=/; ` +
-        `SameSite=Lax`;
-};
-
-
-const deleteCookie = (
-    name:
-        string
-) => {
-
-    document.cookie =
-        `${name}=; ` +
-        `expires=Thu, 01 Jan 1970 00:00:00 GMT; ` +
-        `path=/; ` +
-        `SameSite=Lax`;
-};
+const BASE_URL =
+    import.meta.env.VITE_API_URL ??
+    'http://localhost:8000';
 
 
 /*
@@ -126,14 +42,13 @@ export const api =
 
 /*
  * ============================================================
- * REFRESH CLIENT
+ * REFRESH API
  * ============================================================
  *
- * ВАЖНО:
+ * Отдельный axios instance без interceptor.
  *
- * У него нет response interceptor.
- * Иначе refresh сам может попасть
- * в бесконечный refresh-цикл.
+ * Это необходимо, чтобы refresh-запрос
+ * сам не попал в бесконечный цикл refresh.
  * ============================================================
  */
 
@@ -172,72 +87,18 @@ interface RetryRequestConfig
 
 /*
  * ============================================================
- * REFRESH RESPONSE
- * ============================================================
- */
-
-interface RefreshResponse {
-    token?: string;
-
-    access?: string;
-
-    access_token?: string;
-}
-
-
-/*
- * ============================================================
  * REFRESH PROMISE
  * ============================================================
  *
- * Вместо ручной очереди failedQueue
- * проще использовать один общий Promise.
- *
- * Если 5 запросов одновременно получили 401,
- * refresh будет только один.
- * Остальные будут ждать его.
+ * Если несколько запросов одновременно
+ * получают 401, выполняется только
+ * один refresh.
  * ============================================================
  */
 
 let refreshPromise:
-    Promise<string> | null =
+    Promise<void> | null =
     null;
-
-
-/*
- * ============================================================
- * REQUEST INTERCEPTOR
- * ============================================================
- */
-
-api.interceptors.request.use(
-
-    config => {
-
-        const token =
-            getCookie(
-                'token'
-            );
-
-
-        if (
-            token
-        ) {
-
-            config.headers.Authorization =
-                `Bearer ${token}`;
-        }
-
-
-        return config;
-    },
-
-
-    error =>
-        Promise.reject(
-            error
-        )
-);
 
 
 /*
@@ -247,10 +108,11 @@ api.interceptors.request.use(
  */
 
 const refreshAccessToken =
-    async (): Promise<string> => {
+    async (): Promise<void> => {
 
         /*
          * Refresh уже выполняется.
+         * Остальные запросы ждут его.
          */
 
         if (
@@ -263,51 +125,20 @@ const refreshAccessToken =
 
         refreshPromise =
             refreshApi
-                .post<
-                    RefreshResponse
-                >(
+                .post(
                     '/api/users/refresh/',
                     {}
                 )
                 .then(
-                    response => {
+                    () => {
 
                         /*
-                         * Поддерживаем несколько
-                         * распространённых названий.
+                         * Ничего с токеном
+                         * на frontend делать не нужно.
                          *
-                         * Оставь затем только то,
-                         * которое реально возвращает backend.
+                         * Backend сам устанавливает
+                         * новый HttpOnly access_token.
                          */
-
-                        const newToken =
-                            response.data.token ??
-                            response.data.access ??
-                            response.data.access_token;
-
-
-                        if (
-                            !newToken
-                        ) {
-
-                            throw new Error(
-                                'Backend не вернул новый access token.'
-                            );
-                        }
-
-
-                        /*
-                         * Сохраняем новый access.
-                         */
-
-                        setCookie(
-                            'token',
-                            newToken,
-                            1
-                        );
-
-
-                        return newToken;
                     }
                 )
                 .finally(
@@ -347,7 +178,7 @@ api.interceptors.response.use(
 
 
         /*
-         * Нет информации об исходном запросе.
+         * Нет исходного запроса.
          */
 
         if (
@@ -360,14 +191,9 @@ api.interceptors.response.use(
         }
 
 
-        const status =
+        const responseStatus =
             error.response
                 ?.status;
-
-
-        const url =
-            originalRequest.url ??
-            '';
 
 
         /*
@@ -377,7 +203,7 @@ api.interceptors.response.use(
          */
 
         if (
-            status !==
+            responseStatus !==
             401
         ) {
 
@@ -387,13 +213,18 @@ api.interceptors.response.use(
         }
 
 
+        const url =
+            originalRequest.url ??
+            '';
+
+
         /*
          * ========================================================
          * AUTH ENDPOINTS
          * ========================================================
          *
-         * login/register/refresh/logout
-         * повторно refresh-ить не нужно.
+         * На login/register/refresh
+         * refresh повторно не запускаем.
          * ========================================================
          */
 
@@ -401,14 +232,13 @@ api.interceptors.response.use(
             url.includes(
                 '/api/users/login/'
             ) ||
+
             url.includes(
                 '/api/users/register/'
             ) ||
+
             url.includes(
                 '/api/users/refresh/'
-            ) ||
-            url.includes(
-                '/api/users/logout/'
             );
 
 
@@ -426,22 +256,21 @@ api.interceptors.response.use(
          * ========================================================
          * RETRY PROTECTION
          * ========================================================
+         *
+         * Если после успешного refresh
+         * повторный запрос снова вернул 401,
+         * сессия больше невалидна.
+         * ========================================================
          */
 
         if (
             originalRequest._retry
         ) {
 
-            /*
-             * Даже после refresh
-             * исходный endpoint вернул 401.
-             *
-             * Значит сессия действительно
-             * больше невалидна.
-             */
-
-            deleteCookie(
-                'token'
+            window.dispatchEvent(
+                new Event(
+                    'auth:expired'
+                )
             );
 
 
@@ -463,55 +292,40 @@ api.interceptors.response.use(
              * ====================================================
              */
 
-            const newToken =
-                await refreshAccessToken();
+            await refreshAccessToken();
 
 
             /*
-             * Обновляем Authorization
-             * непосредственно у исходного запроса.
+             * Backend уже поставил новую
+             * HttpOnly access cookie.
+             *
+             * Просто повторяем исходный запрос.
              */
 
-            originalRequest
-                .headers
-                .Authorization =
-                `Bearer ${newToken}`;
-
-
-            /*
-             * ====================================================
-             * RETRY ORIGINAL REQUEST
-             * ====================================================
-             */
-
-            return api(
+            return api.request(
                 originalRequest
             );
 
-        } catch (
+        }
+
+        catch (
             refreshError
         ) {
 
             /*
-             * Refresh token тоже невалиден
-             * или истёк.
+             * Refresh token тоже истёк
+             * или был удалён.
+             *
+             * Только теперь считаем,
+             * что сессия действительно закончилась.
              */
 
-            deleteCookie(
-                'token'
+            window.dispatchEvent(
+                new Event(
+                    'auth:expired'
+                )
             );
 
-
-            /*
-             * ВАЖНО:
-             *
-             * Здесь специально НЕ делаем:
-             *
-             * window.location.href = '/auth/login'
-             *
-             * Решение о редиректе должен принимать
-             * AuthProvider / ProtectedRoute.
-             */
 
             return Promise.reject(
                 refreshError
