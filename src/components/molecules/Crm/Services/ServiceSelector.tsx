@@ -39,7 +39,9 @@ export default function BusinessSelect() {
         data:
             businesses = [],
 
-        isLoading
+        isLoading,
+
+        isError
     } =
         useQuery({
 
@@ -51,7 +53,10 @@ export default function BusinessSelect() {
                 listAllBusinesses,
 
             retry:
-                false
+                false,
+
+            refetchOnMount:
+                'always'
         });
 
 
@@ -86,24 +91,52 @@ export default function BusinessSelect() {
 
     /*
      * ============================================================
-     * AUTO SELECT FIRST BUSINESS
+     * SYNC SELECTED BUSINESS
      * ============================================================
      */
 
     useEffect(
         () => {
 
+            /*
+             * Пока список загружается —
+             * ничего не меняем.
+             */
+
             if (
-                options.length ===
-                0
+                isLoading
             ) {
                 return;
             }
 
 
             /*
-             * Если бизнес уже выбран,
-             * оставляем его.
+             * Если бизнесов больше нет,
+             * обязательно очищаем
+             * выбранный бизнес.
+             */
+
+            if (
+                options.length === 0
+            ) {
+
+                if (
+                    selectedBusiness
+                ) {
+
+                    setSelectedBusiness(
+                        null
+                    );
+                }
+
+                return;
+            }
+
+
+            /*
+             * Проверяем, существует ли
+             * выбранный бизнес в актуальном
+             * списке бизнесов.
              */
 
             const selectedExists =
@@ -120,27 +153,27 @@ export default function BusinessSelect() {
                     : false;
 
 
-            if (
-                selectedExists
-            ) {
-                return;
-            }
-
-
             /*
-             * Иначе автоматически
-             * выбираем первый бизнес.
+             * Если выбранного бизнеса
+             * больше нет — выбираем первый
+             * существующий бизнес.
              */
 
-            setSelectedBusiness(
-                options[0]
-            );
+            if (
+                !selectedExists
+            ) {
+
+                setSelectedBusiness(
+                    options[0]
+                );
+            }
 
         },
         [
             options,
             selectedBusiness,
-            setSelectedBusiness
+            setSelectedBusiness,
+            isLoading
         ]
     );
 
@@ -156,8 +189,16 @@ export default function BusinessSelect() {
             () => {
 
                 if (
+                    options.length === 0
+                ) {
+                    return null;
+                }
+
+
+                if (
                     !selectedBusiness
                 ) {
+
                     return (
                         options[0] ??
                         null
@@ -214,13 +255,41 @@ export default function BusinessSelect() {
 
     /*
      * ============================================================
+     * ERROR
+     * ============================================================
+     */
+
+    if (
+        isError
+    ) {
+
+        return (
+            <div
+                className="
+                    rounded-xl
+                    border
+                    border-red-200
+                    bg-white
+                    px-4
+                    py-3
+                    text-sm
+                    text-red-500
+                "
+            >
+                Не удалось загрузить бизнесы
+            </div>
+        );
+    }
+
+
+    /*
+     * ============================================================
      * EMPTY
      * ============================================================
      */
 
     if (
-        options.length ===
-        0
+        options.length === 0
     ) {
 
         return (
