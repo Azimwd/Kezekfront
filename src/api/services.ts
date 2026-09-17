@@ -75,6 +75,13 @@ export interface ServiceItem {
 
     addons: ServiceAddonItem[];
 
+    /*
+     * Некоторые ответы API могут содержать список привязанных мастеров.
+     * Поле необязательное, потому что EditService всё равно получает
+     * актуальные привязки отдельным запросом.
+     */
+    staff_ids?: number[];
+
     created_at?: string;
     updated_at?: string;
 }

@@ -11,7 +11,9 @@ import {
 
 import {
     CircleAlert,
-    Pencil
+    Pencil,
+    Plus,
+    Trash2
 } from 'lucide-react';
 
 import Button from '../../../atoms/Button';
@@ -24,7 +26,14 @@ import SidePage from '../../../organisms/SidePage';
 import {
     editService,
     putStaffToService,
-    getAssignedStaffForService
+    getAssignedStaffForService,
+    listServiceAddons,
+    createServiceAddon,
+    editServiceAddon,
+    deleteServiceAddon,
+    type ServiceAddonItem,
+    type ServiceAddonPayload,
+    type ServiceItem
 } from '../../../../api/services';
 
 import {
@@ -39,9 +48,85 @@ import {
 } from '../../../../utils/getApiErrorMessage';
 
 
+/*
+ * ============================================================
+ * TYPES
+ * ============================================================
+ */
+
 interface EditServiceProps {
-    service: any;
+    service: ServiceItem;
 }
+
+
+interface AddonDraft {
+    id?: number;
+
+    tempId: string;
+
+    name: string;
+    description: string;
+
+    price: string;
+    duration_minutes: number;
+
+    is_active: boolean;
+}
+
+
+/*
+ * ============================================================
+ * ADDON HELPERS
+ * ============================================================
+ */
+
+const createEmptyAddon =
+    (): AddonDraft => ({
+
+        tempId:
+            `${Date.now()}-${Math.random()}`,
+
+        name: '',
+
+        description: '',
+
+        price: '',
+
+        duration_minutes: 0,
+
+        is_active: true
+    });
+
+
+const serviceAddonToDraft = (
+    addon: ServiceAddonItem
+): AddonDraft => ({
+
+    id:
+        addon.id,
+
+    tempId:
+        `existing-${addon.id}`,
+
+    name:
+        addon.name ?? '',
+
+    description:
+        addon.description ?? '',
+
+    price:
+        String(
+            addon.price ?? ''
+        ),
+
+    duration_minutes:
+        Number(
+            addon.duration_minutes ?? 0
+        ),
+
+    is_active:
+        addon.is_active ?? true
+});
 
 
 export default function EditService({
@@ -68,17 +153,158 @@ export default function EditService({
         selectedBusiness
     } = useBusiness();
 
+
+    /*
+     * ============================================================
+     * FORM
+     * ============================================================
+     */
+
+    const [
+        name,
+        setName
+    ] = useState(
+        service.name || ''
+    );
+
+
+    const [
+        description,
+        setDescription
+    ] = useState(
+        service.description || ''
+    );
+
+
+    const [
+        price,
+        setPrice
+    ] = useState<string>(
+        String(
+            service.price ?? ''
+        )
+    );
+
+
+    const [
+        duration,
+        setDuration
+    ] = useState(
+        service.duration_minutes ?? 0
+    );
+
+
+    const [
+        bufferBefore,
+        setBufferBefore
+    ] = useState(
+        service.buffer_before_minutes ?? 0
+    );
+
+
+    const [
+        bufferAfter,
+        setBufferAfter
+    ] = useState(
+        service.buffer_after_minutes ?? 0
+    );
+
+
+    const [
+        isActive,
+        setIsActive
+    ] = useState(
+        service.is_active ?? true
+    );
+
+
+    /*
+     * ============================================================
+     * CATEGORY
+     * ============================================================
+     */
+
+    const [
+        selectedCategoryId,
+        setSelectedCategoryId
+    ] = useState<number | null>(
+        service.category ?? null
+    );
+
+
+    /*
+     * ============================================================
+     * STAFF
+     * ============================================================
+     */
+
+    const [
+        selectedStaffIds,
+        setSelectedStaffIds
+    ] = useState<number[]>(
+        service.staff_ids || []
+    );
+
+
+    /*
+     * ============================================================
+     * ADDONS
+     * ============================================================
+     */
+
+    const [
+        addons,
+        setAddons
+    ] = useState<AddonDraft[]>(
+        (service.addons || []).map(
+            serviceAddonToDraft
+        )
+    );
+
+
+    const [
+        deletedAddonIds,
+        setDeletedAddonIds
+    ] = useState<number[]>([]);
+
+
+    /*
+     * ============================================================
+     * ERROR
+     * ============================================================
+     */
+
+    const [
+        errorMessage,
+        setErrorMessage
+    ] = useState('');
+
+
+    /*
+     * ============================================================
+     * INPUT HELPERS
+     * ============================================================
+     */
+
     const handleIntegerChange = (
         value: string,
-        setter: React.Dispatch<React.SetStateAction<number>>
+        setter: React.Dispatch<
+            React.SetStateAction<number>
+        >
     ) => {
 
-        if (!/^\d*$/.test(value)) {
+        if (
+            !/^\d*$/.test(
+                value
+            )
+        ) {
             return;
         }
 
 
-        if (value === '') {
+        if (
+            value === ''
+        ) {
             setter(0);
             return;
         }
@@ -94,125 +320,22 @@ export default function EditService({
         value: string
     ) => {
 
-        if (!/^\d*[.,]?\d{0,2}$/.test(value)) {
+        if (
+            !/^\d*[.,]?\d{0,2}$/.test(
+                value
+            )
+        ) {
             return;
         }
 
 
         setPrice(
-            value.replace(',', '.')
+            value.replace(
+                ',',
+                '.'
+            )
         );
     };
-
-    /*
-     * ============================================================
-     * FORM
-     * ============================================================
-     */
-
-    const [
-        name,
-        setName
-    ] = useState(
-        service.name ||
-        ''
-    );
-
-
-    const [
-        description,
-        setDescription
-    ] = useState(
-        service.description ||
-        ''
-    );
-
-
-    const [
-        price,
-        setPrice
-    ] = useState(
-        service.price ??
-        ''
-    );
-
-
-    const [
-        duration,
-        setDuration
-    ] = useState(
-        service.duration_minutes ??
-        0
-    );
-
-
-    const [
-        bufferBefore,
-        setBufferBefore
-    ] = useState(
-        service.buffer_before_minutes ??
-        0
-    );
-
-
-    const [
-        bufferAfter,
-        setBufferAfter
-    ] = useState(
-        service.buffer_after_minutes ??
-        0
-    );
-
-
-    const [
-        isActive,
-        setIsActive
-    ] = useState(
-        service.is_active ??
-        true
-    );
-
-
-    /*
-     * ============================================================
-     * CATEGORY
-     * ============================================================
-     */
-
-    const [
-        selectedCategoryId,
-        setSelectedCategoryId
-    ] = useState<number | null>(
-        service.category ??
-        null
-    );
-
-
-    /*
-     * ============================================================
-     * STAFF
-     * ============================================================
-     */
-
-    const [
-        selectedStaffIds,
-        setSelectedStaffIds
-    ] = useState<number[]>(
-        service.staff_ids ||
-        []
-    );
-
-
-    /*
-     * ============================================================
-     * ERROR
-     * ============================================================
-     */
-
-    const [
-        errorMessage,
-        setErrorMessage
-    ] = useState('');
 
 
     /*
@@ -271,75 +394,292 @@ export default function EditService({
 
     /*
      * ============================================================
-     * OPEN
+     * SERVICE ADDONS
      * ============================================================
      */
 
-    const handleOpen =
+    const {
+        data: serviceAddons,
+        isFetching: isAddonsLoading
+    } = useQuery({
+
+        queryKey: [
+            'service-addons',
+            service.id
+        ],
+
+        queryFn: () =>
+            listServiceAddons(
+                service.id
+            ),
+
+        enabled:
+            isOpen
+    });
+
+
+    useEffect(
         () => {
 
-            /*
-             * Каждый раз при открытии
-             * берём свежие данные service.
-             */
+            if (
+                !serviceAddons
+            ) {
+                return;
+            }
 
-            setName(
-                service.name ||
-                ''
+
+            setAddons(
+                serviceAddons.map(
+                    serviceAddonToDraft
+                )
             );
 
 
-            setDescription(
-                service.description ||
-                ''
+            setDeletedAddonIds(
+                []
             );
 
+        },
+        [
+            serviceAddons
+        ]
+    );
 
-            setPrice(
-                service.price ??
-                ''
+
+    /*
+     * ============================================================
+     * ADDON ACTIONS
+     * ============================================================
+     */
+
+    const handleAddAddon = () => {
+
+        setAddons(
+            current => [
+                ...current,
+                createEmptyAddon()
+            ]
+        );
+    };
+
+
+    const handleRemoveAddon = (
+        addon: AddonDraft
+    ) => {
+
+        if (
+            addon.id !== undefined
+        ) {
+
+            setDeletedAddonIds(
+                current => {
+
+                    if (
+                        current.includes(
+                            addon.id!
+                        )
+                    ) {
+                        return current;
+                    }
+
+
+                    return [
+                        ...current,
+                        addon.id!
+                    ];
+                }
             );
+        }
 
 
-            setDuration(
-                service.duration_minutes ??
-                0
-            );
+        setAddons(
+            current =>
+                current.filter(
+                    item =>
+                        item.tempId !==
+                        addon.tempId
+                )
+        );
+    };
 
 
-            setBufferBefore(
-                service.buffer_before_minutes ??
-                0
-            );
+    const updateAddon = (
+        tempId: string,
+        changes: Partial<AddonDraft>
+    ) => {
+
+        setAddons(
+            current =>
+                current.map(
+                    addon => {
+
+                        if (
+                            addon.tempId !==
+                            tempId
+                        ) {
+                            return addon;
+                        }
 
 
-            setBufferAfter(
-                service.buffer_after_minutes ??
-                0
-            );
+                        return {
+                            ...addon,
+                            ...changes
+                        };
+                    }
+                )
+        );
+    };
 
 
-            setIsActive(
-                service.is_active ??
-                true
-            );
+    const handleAddonPriceChange = (
+        tempId: string,
+        value: string
+    ) => {
+
+        if (
+            !/^\d*[.,]?\d{0,2}$/.test(
+                value
+            )
+        ) {
+            return;
+        }
 
 
-            setSelectedCategoryId(
-                service.category ??
-                null
-            );
+        updateAddon(
+            tempId,
+            {
+                price:
+                    value.replace(
+                        ',',
+                        '.'
+                    )
+            }
+        );
+    };
 
 
-            setErrorMessage(
-                ''
-            );
+    const handleAddonDurationChange = (
+        tempId: string,
+        value: string
+    ) => {
+
+        if (
+            !/^\d*$/.test(
+                value
+            )
+        ) {
+            return;
+        }
 
 
-            setIsOpen(
-                true
-            );
-        };
+        updateAddon(
+            tempId,
+            {
+                duration_minutes:
+                    value === ''
+                        ? 0
+                        : Number(
+                            value
+                        )
+            }
+        );
+    };
+
+
+    /*
+     * ============================================================
+     * OPEN / CLOSE
+     * ============================================================
+     */
+
+    const handleOpen = () => {
+
+        setName(
+            service.name || ''
+        );
+
+
+        setDescription(
+            service.description || ''
+        );
+
+
+        setPrice(
+            String(
+                service.price ?? ''
+            )
+        );
+
+
+        setDuration(
+            service.duration_minutes ?? 0
+        );
+
+
+        setBufferBefore(
+            service.buffer_before_minutes ?? 0
+        );
+
+
+        setBufferAfter(
+            service.buffer_after_minutes ?? 0
+        );
+
+
+        setIsActive(
+            service.is_active ?? true
+        );
+
+
+        setSelectedCategoryId(
+            service.category ?? null
+        );
+
+
+        setSelectedStaffIds(
+            service.staff_ids || []
+        );
+
+
+        setAddons(
+            (service.addons || []).map(
+                serviceAddonToDraft
+            )
+        );
+
+
+        setDeletedAddonIds(
+            []
+        );
+
+
+        setErrorMessage(
+            ''
+        );
+
+
+        setIsOpen(
+            true
+        );
+    };
+
+
+    const handleClose = () => {
+
+        setErrorMessage(
+            ''
+        );
+
+
+        setDeletedAddonIds(
+            []
+        );
+
+
+        setIsOpen(
+            false
+        );
+    };
 
 
     /*
@@ -351,63 +691,125 @@ export default function EditService({
     const editMutation =
         useMutation({
 
-            mutationFn: () =>
-                editService(
+            mutationFn:
+                async () => {
 
                     /*
-                     * 1
+                     * ================================================
+                     * 1. MAIN SERVICE
+                     * ================================================
                      */
-                    service.id,
+
+                    await editService(
+                        service.id,
+                        selectedCategoryId,
+                        name.trim(),
+                        description.trim(),
+                        Number(price),
+                        Number(duration),
+                        Number(bufferBefore),
+                        Number(bufferAfter),
+                        isActive
+                    );
+
 
                     /*
-                     * 2
-                     * CATEGORY
+                     * ================================================
+                     * 2. STAFF
+                     * ================================================
                      */
-                    selectedCategoryId,
+
+                    await putStaffToService(
+                        service.id,
+                        selectedStaffIds
+                    );
+
 
                     /*
-                     * 3
+                     * ================================================
+                     * 3. ADDONS
+                     * ================================================
                      */
-                    name,
+
+                    const addonTasks:
+                        Promise<unknown>[] = [];
+
+
+                    for (
+                        const addon
+                        of addons
+                    ) {
+
+                        const payload:
+                            ServiceAddonPayload = {
+
+                                name:
+                                    addon.name.trim(),
+
+                                description:
+                                    addon.description.trim(),
+
+                                price:
+                                    Number(
+                                        addon.price
+                                    ),
+
+                                duration_minutes:
+                                    Number(
+                                        addon.duration_minutes
+                                    ),
+
+                                is_active:
+                                    addon.is_active
+                            };
+
+
+                        if (
+                            addon.id !== undefined
+                        ) {
+
+                            addonTasks.push(
+                                editServiceAddon(
+                                    addon.id,
+                                    payload
+                                )
+                            );
+                        }
+                        else {
+
+                            addonTasks.push(
+                                createServiceAddon(
+                                    service.id,
+                                    payload
+                                )
+                            );
+                        }
+                    }
+
 
                     /*
-                     * 4
+                     * ================================================
+                     * 4. DELETED ADDONS
+                     * ================================================
                      */
-                    description,
 
-                    /*
-                     * 5
-                     */
-                    Number(
-                        price
-                    ),
+                    for (
+                        const addonId
+                        of deletedAddonIds
+                    ) {
 
-                    /*
-                     * 6
-                     */
-                    Number(
-                        duration
-                    ),
+                        addonTasks.push(
+                            deleteServiceAddon(
+                                addonId
+                            )
+                        );
+                    }
 
-                    /*
-                     * 7
-                     */
-                    Number(
-                        bufferBefore
-                    ),
 
-                    /*
-                     * 8
-                     */
-                    Number(
-                        bufferAfter
-                    ),
-
-                    /*
-                     * 9
-                     */
-                    isActive
-                ),
+                    await Promise.all(
+                        addonTasks
+                    );
+                },
 
 
             onMutate: () => {
@@ -421,38 +823,43 @@ export default function EditService({
             onSuccess:
                 async () => {
 
-                    /*
-                     * Обновляем привязку мастеров.
-                     */
+                    await Promise.all([
 
-                    try {
+                        queryClient.invalidateQueries({
+                            queryKey: [
+                                'services',
+                                selectedBusiness?.id
+                            ]
+                        }),
 
-                        await putStaffToService(
-                            service.id,
-                            selectedStaffIds
-                        );
+                        queryClient.invalidateQueries({
+                            queryKey: [
+                                'service-addons',
+                                service.id
+                            ]
+                        }),
 
-                    } catch (
-                        error
-                    ) {
+                        queryClient.invalidateQueries({
+                            queryKey: [
+                                'assignedStaff',
+                                service.id
+                            ]
+                        }),
 
-                        console.error(
-                            'Ошибка при обновлении мастеров:',
-                            error
-                        );
-                    }
+                        queryClient.invalidateQueries({
+                            queryKey: [
+                                'booking-services',
+                                Number(
+                                    selectedBusiness?.id
+                                )
+                            ]
+                        })
+                    ]);
 
 
-                    /*
-                     * Обновляем список услуг.
-                     */
-
-                    await queryClient.invalidateQueries({
-                        queryKey: [
-                            'services',
-                            selectedBusiness?.id
-                        ]
-                    });
+                    setDeletedAddonIds(
+                        []
+                    );
 
 
                     setIsOpen(
@@ -488,83 +895,176 @@ export default function EditService({
      * ============================================================
      */
 
-    const handleSubmit =
-        (
-            e:
-                React.FormEvent
-        ) => {
+    const handleSubmit = (
+        e: React.FormEvent
+    ) => {
 
-            e.preventDefault();
+        e.preventDefault();
 
+
+        setErrorMessage(
+            ''
+        );
+
+
+        if (
+            !name.trim()
+        ) {
 
             setErrorMessage(
-                ''
+                'Введите название услуги.'
+            );
+
+            return;
+        }
+
+
+        if (
+            String(price).trim() === ''
+        ) {
+
+            setErrorMessage(
+                'Введите цену услуги.'
+            );
+
+            return;
+        }
+
+
+        if (
+            Number(price) < 0
+        ) {
+
+            setErrorMessage(
+                'Цена не может быть отрицательной.'
+            );
+
+            return;
+        }
+
+
+        if (
+            Number(duration) <= 0
+        ) {
+
+            setErrorMessage(
+                'Длительность услуги должна быть больше 0 минут.'
+            );
+
+            return;
+        }
+
+
+        if (
+            Number(bufferBefore) < 0 ||
+            Number(bufferAfter) < 0
+        ) {
+
+            setErrorMessage(
+                'Буфер услуги не может быть отрицательным.'
+            );
+
+            return;
+        }
+
+
+        /*
+         * ========================================================
+         * ADDONS VALIDATION
+         * ========================================================
+         */
+
+        for (
+            const addon
+            of addons
+        ) {
+
+            if (
+                !addon.name.trim()
+            ) {
+
+                setErrorMessage(
+                    'Введите название каждой дополнительной услуги.'
+                );
+
+                return;
+            }
+
+
+            if (
+                String(
+                    addon.price
+                ).trim() === ''
+            ) {
+
+                setErrorMessage(
+                    `Введите цену дополнительной услуги «${addon.name}».`
+                );
+
+                return;
+            }
+
+
+            if (
+                Number(
+                    addon.price
+                ) < 0
+            ) {
+
+                setErrorMessage(
+                    `Цена «${addon.name}» не может быть отрицательной.`
+                );
+
+                return;
+            }
+
+
+            if (
+                Number(
+                    addon.duration_minutes
+                ) < 0
+            ) {
+
+                setErrorMessage(
+                    `Длительность «${addon.name}» не может быть отрицательной.`
+                );
+
+                return;
+            }
+        }
+
+
+        const normalizedAddonNames =
+            addons.map(
+                addon =>
+                    addon
+                        .name
+                        .trim()
+                        .toLowerCase()
             );
 
 
-            if (
-                !name.trim()
-            ) {
-
-                setErrorMessage(
-                    'Введите название услуги.'
-                );
-
-                return;
-            }
+        const uniqueAddonNames =
+            new Set(
+                normalizedAddonNames
+            );
 
 
-            if (
-                String(price).trim() === ''
-            ) {
+        if (
+            uniqueAddonNames.size !==
+            normalizedAddonNames.length
+        ) {
 
-                setErrorMessage(
-                    'Введите цену услуги.'
-                );
+            setErrorMessage(
+                'Дополнительные услуги не могут иметь одинаковые названия.'
+            );
 
-                return;
-            }
-
-
-            if (
-                Number(price) < 0
-            ) {
-
-                setErrorMessage(
-                    'Цена не может быть отрицательной.'
-                );
-
-                return;
-            }
+            return;
+        }
 
 
-            if (
-                Number(duration) <= 0
-            ) {
-
-                setErrorMessage(
-                    'Длительность услуги должна быть больше 0 минут.'
-                );
-
-                return;
-            }
-
-
-            if (
-                Number(bufferBefore) < 0 ||
-                Number(bufferAfter) < 0
-            ) {
-
-                setErrorMessage(
-                    'Буфер услуги не может быть отрицательным.'
-                );
-
-                return;
-            }
-
-
-            editMutation.mutate();
-        };
+        editMutation.mutate();
+    };
 
 
     /*
@@ -636,18 +1136,11 @@ export default function EditService({
                 isOpen={
                     isOpen
                 }
-                onClose={() => {
-
-                    setErrorMessage(
-                        ''
-                    );
-
-                    setIsOpen(
-                        false
-                    );
-                }}
+                onClose={
+                    handleClose
+                }
                 title="Редактировать услугу"
-                description="Редактируйте услугу для выбранного бизнеса"
+                description="Редактируйте услугу и дополнительные услуги для выбранного бизнеса"
             >
 
                 <form
@@ -875,9 +1368,7 @@ export default function EditService({
 
 
                             <textarea
-                                rows={
-                                    3
-                                }
+                                rows={3}
                                 value={
                                     description
                                 }
@@ -917,8 +1408,9 @@ export default function EditService({
                         <div
                             className="
                                 grid
-                                grid-cols-2
+                                grid-cols-1
                                 gap-5
+                                sm:grid-cols-2
                             "
                         >
 
@@ -952,6 +1444,7 @@ export default function EditService({
 
                                     <Input
                                         type="text"
+                                        inputMode="decimal"
                                         value={
                                             price
                                         }
@@ -972,11 +1465,12 @@ export default function EditService({
                                             focus:ring-[#5955e8]
                                         "
                                         placeholder="0"
-                                            onChange={(e) =>
+                                        onChange={
+                                            e =>
                                                 handlePriceChange(
                                                     e.target.value
                                                 )
-                                            }
+                                        }
                                     />
 
 
@@ -1027,6 +1521,7 @@ export default function EditService({
 
                                     <Input
                                         type="text"
+                                        inputMode="numeric"
                                         value={
                                             duration
                                         }
@@ -1047,11 +1542,12 @@ export default function EditService({
                                             focus:ring-[#5955e8]
                                         "
                                         placeholder="0"
-                                        onChange={(e) =>
-                                            handleIntegerChange(
-                                                e.target.value,
-                                                setDuration
-                                            )
+                                        onChange={
+                                            e =>
+                                                handleIntegerChange(
+                                                    e.target.value,
+                                                    setDuration
+                                                )
                                         }
                                     />
 
@@ -1103,6 +1599,7 @@ export default function EditService({
 
                                     <Input
                                         type="text"
+                                        inputMode="numeric"
                                         value={
                                             bufferBefore
                                         }
@@ -1123,16 +1620,17 @@ export default function EditService({
                                             focus:ring-[#5955e8]
                                         "
                                         placeholder="0"
-                                        onChange={(e) =>
-                                            handleIntegerChange(
-                                                e.target.value,
-                                                setBufferBefore
-                                            )
+                                        onChange={
+                                            e =>
+                                                handleIntegerChange(
+                                                    e.target.value,
+                                                    setBufferBefore
+                                                )
                                         }
                                     />
 
 
-                                    <Typography
+                                    <span
                                         className="
                                             pointer-events-none
                                             absolute
@@ -1140,8 +1638,9 @@ export default function EditService({
                                             text-sm
                                             text-slate-500
                                         "
-                                        text="мин"
-                                    />
+                                    >
+                                        мин
+                                    </span>
 
                                 </div>
 
@@ -1178,6 +1677,7 @@ export default function EditService({
 
                                     <Input
                                         type="text"
+                                        inputMode="numeric"
                                         value={
                                             bufferAfter
                                         }
@@ -1198,16 +1698,17 @@ export default function EditService({
                                             focus:ring-[#5955e8]
                                         "
                                         placeholder="0"
-                                        onChange={(e) =>
-                                            handleIntegerChange(
-                                                e.target.value,
-                                                setBufferAfter
-                                            )
+                                        onChange={
+                                            e =>
+                                                handleIntegerChange(
+                                                    e.target.value,
+                                                    setBufferAfter
+                                                )
                                         }
                                     />
 
 
-                                    <Typography
+                                    <span
                                         className="
                                             pointer-events-none
                                             absolute
@@ -1215,12 +1716,596 @@ export default function EditService({
                                             text-sm
                                             text-slate-500
                                         "
-                                        text="мин"
-                                    />
+                                    >
+                                        мин
+                                    </span>
 
                                 </div>
 
                             </div>
+
+                        </div>
+
+
+                        <hr
+                            className="
+                                mb-1
+                                mt-2
+                                border-t
+                                border-[#f0f0f5]
+                            "
+                        />
+
+
+                        {/* =================================================
+                            ADDONS
+                        ================================================= */}
+
+                        <div
+                            className="
+                                flex
+                                flex-col
+                                gap-4
+                            "
+                        >
+
+                            <div
+                                className="
+                                    flex
+                                    items-center
+                                    justify-between
+                                    gap-4
+                                "
+                            >
+
+                                <div
+                                    className="
+                                        flex
+                                        flex-col
+                                        gap-1
+                                    "
+                                >
+
+                                    <Typography
+                                        text="Дополнительные услуги"
+                                        className="
+                                            text-sm
+                                            font-semibold
+                                            text-slate-800
+                                        "
+                                    />
+
+
+                                    <Typography
+                                        text="Клиент сможет выбрать их дополнительно к основной услуге"
+                                        className="
+                                            text-xs
+                                            text-slate-500
+                                        "
+                                    />
+
+                                </div>
+
+
+                                <Button
+                                    type="button"
+                                    onClick={
+                                        handleAddAddon
+                                    }
+                                    className="
+                                        flex
+                                        shrink-0
+                                        items-center
+                                        gap-2
+                                        rounded-lg
+                                        border
+                                        border-[#c7c4d8]
+                                        bg-white
+                                        px-3
+                                        py-2
+                                        transition-colors
+                                        hover:bg-slate-50
+                                    "
+                                >
+
+                                    <Icon
+                                        icon={
+                                            Plus
+                                        }
+                                        size={17}
+                                        className="
+                                            text-[#4F46E5]
+                                        "
+                                    />
+
+
+                                    <Typography
+                                        text="Добавить"
+                                        className="
+                                            text-sm
+                                            font-medium
+                                            text-[#4F46E5]
+                                        "
+                                    />
+
+                                </Button>
+
+                            </div>
+
+
+                            {isAddonsLoading ? (
+
+                                <div
+                                    className="
+                                        rounded-xl
+                                        border
+                                        border-[#d6d4e1]
+                                        bg-[#f8f9ff]
+                                        px-4
+                                        py-5
+                                        text-center
+                                        text-sm
+                                        text-slate-500
+                                    "
+                                >
+                                    Загрузка дополнительных услуг...
+                                </div>
+
+                            ) : addons.length === 0 ? (
+
+                                <div
+                                    className="
+                                        rounded-xl
+                                        border
+                                        border-dashed
+                                        border-[#d6d4e1]
+                                        bg-[#f8f9ff]
+                                        px-4
+                                        py-5
+                                        text-center
+                                        text-sm
+                                        text-slate-500
+                                    "
+                                >
+                                    Дополнительных услуг пока нет
+                                </div>
+
+                            ) : (
+
+                                addons.map(
+                                    (
+                                        addon,
+                                        index
+                                    ) => (
+
+                                        <div
+                                            key={
+                                                addon.tempId
+                                            }
+                                            className="
+                                                flex
+                                                flex-col
+                                                gap-4
+                                                rounded-xl
+                                                border
+                                                border-[#d6d4e1]
+                                                bg-white
+                                                p-4
+                                            "
+                                        >
+
+                                            {/* HEADER */}
+
+                                            <div
+                                                className="
+                                                    flex
+                                                    items-center
+                                                    justify-between
+                                                    gap-4
+                                                "
+                                            >
+
+                                                <Typography
+                                                    text={
+                                                        `Доп. услуга ${index + 1}`
+                                                    }
+                                                    className="
+                                                        text-sm
+                                                        font-semibold
+                                                        text-slate-800
+                                                    "
+                                                />
+
+
+                                                <button
+                                                    type="button"
+                                                    onClick={
+                                                        () =>
+                                                            handleRemoveAddon(
+                                                                addon
+                                                            )
+                                                    }
+                                                    className="
+                                                        flex
+                                                        h-9
+                                                        w-9
+                                                        cursor-pointer
+                                                        items-center
+                                                        justify-center
+                                                        rounded-lg
+                                                        text-red-500
+                                                        transition-colors
+                                                        hover:bg-red-50
+                                                    "
+                                                >
+
+                                                    <Trash2
+                                                        size={18}
+                                                    />
+
+                                                </button>
+
+                                            </div>
+
+
+                                            {/* NAME */}
+
+                                            <div
+                                                className="
+                                                    flex
+                                                    flex-col
+                                                    gap-1.5
+                                                "
+                                            >
+
+                                                <Typography
+                                                    text="Название"
+                                                    className="
+                                                        text-sm
+                                                        font-medium
+                                                        text-slate-800
+                                                    "
+                                                />
+
+
+                                                <Input
+                                                    type="text"
+                                                    value={
+                                                        addon.name
+                                                    }
+                                                    placeholder="Например: Снятие покрытия"
+                                                    className="
+                                                        w-full
+                                                        rounded-lg
+                                                        border
+                                                        border-[#d6d4e1]
+                                                        bg-[#f8f9ff]
+                                                        px-4
+                                                        py-3
+                                                        text-slate-900
+                                                        focus:border-[#5955e8]
+                                                        focus:outline-none
+                                                        focus:ring-1
+                                                        focus:ring-[#5955e8]
+                                                    "
+                                                    onChange={
+                                                        e =>
+                                                            updateAddon(
+                                                                addon.tempId,
+                                                                {
+                                                                    name:
+                                                                        e.target.value
+                                                                }
+                                                            )
+                                                    }
+                                                />
+
+                                            </div>
+
+
+                                            {/* DESCRIPTION */}
+
+                                            <div
+                                                className="
+                                                    flex
+                                                    flex-col
+                                                    gap-1.5
+                                                "
+                                            >
+
+                                                <Typography
+                                                    text="Описание"
+                                                    className="
+                                                        text-sm
+                                                        font-medium
+                                                        text-slate-800
+                                                    "
+                                                />
+
+
+                                                <textarea
+                                                    rows={2}
+                                                    value={
+                                                        addon.description
+                                                    }
+                                                    placeholder="Описание дополнительной услуги"
+                                                    className="
+                                                        w-full
+                                                        resize-none
+                                                        rounded-lg
+                                                        border
+                                                        border-[#d6d4e1]
+                                                        bg-[#f8f9ff]
+                                                        px-4
+                                                        py-3
+                                                        text-slate-900
+                                                        focus:border-[#5955e8]
+                                                        focus:outline-none
+                                                        focus:ring-1
+                                                        focus:ring-[#5955e8]
+                                                    "
+                                                    onChange={
+                                                        e =>
+                                                            updateAddon(
+                                                                addon.tempId,
+                                                                {
+                                                                    description:
+                                                                        e.target.value
+                                                                }
+                                                            )
+                                                    }
+                                                />
+
+                                            </div>
+
+
+                                            {/* PRICE / DURATION */}
+
+                                            <div
+                                                className="
+                                                    grid
+                                                    grid-cols-1
+                                                    gap-4
+                                                    sm:grid-cols-2
+                                                "
+                                            >
+
+                                                <div
+                                                    className="
+                                                        flex
+                                                        flex-col
+                                                        gap-1.5
+                                                    "
+                                                >
+
+                                                    <Typography
+                                                        text="Доп. цена"
+                                                        className="
+                                                            text-sm
+                                                            font-medium
+                                                            text-slate-800
+                                                        "
+                                                    />
+
+
+                                                    <div
+                                                        className="
+                                                            relative
+                                                            flex
+                                                            items-center
+                                                        "
+                                                    >
+
+                                                        <Input
+                                                            type="text"
+                                                            inputMode="decimal"
+                                                            value={
+                                                                addon.price
+                                                            }
+                                                            placeholder="0"
+                                                            className="
+                                                                w-full
+                                                                rounded-lg
+                                                                border
+                                                                border-[#d6d4e1]
+                                                                bg-[#f8f9ff]
+                                                                py-3
+                                                                pl-4
+                                                                pr-10
+                                                                text-slate-900
+                                                                focus:border-[#5955e8]
+                                                                focus:outline-none
+                                                                focus:ring-1
+                                                                focus:ring-[#5955e8]
+                                                            "
+                                                            onChange={
+                                                                e =>
+                                                                    handleAddonPriceChange(
+                                                                        addon.tempId,
+                                                                        e.target.value
+                                                                    )
+                                                            }
+                                                        />
+
+
+                                                        <span
+                                                            className="
+                                                                pointer-events-none
+                                                                absolute
+                                                                right-4
+                                                                text-sm
+                                                                text-slate-500
+                                                            "
+                                                        >
+                                                            ₸
+                                                        </span>
+
+                                                    </div>
+
+                                                </div>
+
+
+                                                <div
+                                                    className="
+                                                        flex
+                                                        flex-col
+                                                        gap-1.5
+                                                    "
+                                                >
+
+                                                    <Typography
+                                                        text="Доп. время"
+                                                        className="
+                                                            text-sm
+                                                            font-medium
+                                                            text-slate-800
+                                                        "
+                                                    />
+
+
+                                                    <div
+                                                        className="
+                                                            relative
+                                                            flex
+                                                            items-center
+                                                        "
+                                                    >
+
+                                                        <Input
+                                                            type="text"
+                                                            inputMode="numeric"
+                                                            value={
+                                                                addon.duration_minutes
+                                                            }
+                                                            placeholder="0"
+                                                            className="
+                                                                w-full
+                                                                rounded-lg
+                                                                border
+                                                                border-[#d6d4e1]
+                                                                bg-[#f8f9ff]
+                                                                py-3
+                                                                pl-4
+                                                                pr-12
+                                                                text-slate-900
+                                                                focus:border-[#5955e8]
+                                                                focus:outline-none
+                                                                focus:ring-1
+                                                                focus:ring-[#5955e8]
+                                                            "
+                                                            onChange={
+                                                                e =>
+                                                                    handleAddonDurationChange(
+                                                                        addon.tempId,
+                                                                        e.target.value
+                                                                    )
+                                                            }
+                                                        />
+
+
+                                                        <span
+                                                            className="
+                                                                pointer-events-none
+                                                                absolute
+                                                                right-4
+                                                                text-sm
+                                                                text-slate-500
+                                                            "
+                                                        >
+                                                            мин
+                                                        </span>
+
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+
+
+                                            {/* ACTIVE */}
+
+                                            <div
+                                                className="
+                                                    flex
+                                                    items-center
+                                                    justify-between
+                                                "
+                                            >
+
+                                                <Typography
+                                                    text="Доп. услуга активна"
+                                                    className="
+                                                        text-sm
+                                                        font-medium
+                                                        text-slate-800
+                                                    "
+                                                />
+
+
+                                                <label
+                                                    className="
+                                                        relative
+                                                        inline-flex
+                                                        cursor-pointer
+                                                        items-center
+                                                    "
+                                                >
+
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={
+                                                            addon.is_active
+                                                        }
+                                                        onChange={
+                                                            e =>
+                                                                updateAddon(
+                                                                    addon.tempId,
+                                                                    {
+                                                                        is_active:
+                                                                            e.target.checked
+                                                                    }
+                                                                )
+                                                        }
+                                                        className="
+                                                            peer
+                                                            sr-only
+                                                        "
+                                                    />
+
+
+                                                    <div
+                                                        className="
+                                                            peer
+                                                            h-6
+                                                            w-11
+                                                            rounded-full
+                                                            bg-gray-200
+                                                            after:absolute
+                                                            after:left-0.5
+                                                            after:top-0.5
+                                                            after:h-5
+                                                            after:w-5
+                                                            after:rounded-full
+                                                            after:border
+                                                            after:border-gray-300
+                                                            after:bg-white
+                                                            after:content-['']
+                                                            after:transition-all
+                                                            peer-checked:bg-[#5955e8]
+                                                            peer-checked:after:translate-x-full
+                                                            peer-checked:after:border-white
+                                                        "
+                                                    />
+
+                                                </label>
+
+                                            </div>
+
+                                        </div>
+                                    )
+                                )
+
+                            )}
 
                         </div>
 
@@ -1386,16 +2471,9 @@ export default function EditService({
 
                         <Button
                             type="button"
-                            onClick={() => {
-
-                                setErrorMessage(
-                                    ''
-                                );
-
-                                setIsOpen(
-                                    false
-                                );
-                            }}
+                            onClick={
+                                handleClose
+                            }
                             className="
                                 rounded-xl
                                 border
