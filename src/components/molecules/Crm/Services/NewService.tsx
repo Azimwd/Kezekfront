@@ -3041,6 +3041,7 @@ export default function NewService() {
                                 NewServiceMutate.isPending
                             }
                             className="
+                                cursor-pointer
                                 rounded-xl
                                 bg-[#4F46E5]
                                 px-6
@@ -3048,10 +3049,10 @@ export default function NewService() {
                                 shadow-sm
                                 transition-colors
                                 hover:bg-indigo-600
+                                disabled:cursor-not-allowed
                                 disabled:bg-gray-400
                             "
                         >
-
                             <Typography
                                 text={
                                     NewServiceMutate.isPending
@@ -3065,7 +3066,6 @@ export default function NewService() {
                                     text-white
                                 "
                             />
-
                         </Button>
 
                     </div>
