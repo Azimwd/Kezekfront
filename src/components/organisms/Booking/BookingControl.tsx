@@ -493,6 +493,15 @@ export default function BookingControl() {
 
 
     const [
+        selectedAddonIds,
+        setSelectedAddonIds
+    ] =
+        useState<number[]>(
+            []
+        );
+
+
+    const [
         selectedDate,
         setSelectedDate
     ] =
@@ -720,6 +729,7 @@ export default function BookingControl() {
                 'booking-dates',
                 selectedMasterId,
                 selectedServiceId,
+                selectedAddonIds,
                 today,
                 bookingDaysAhead
             ],
@@ -728,7 +738,9 @@ export default function BookingControl() {
                 getAvailabilityDates(
                     selectedMasterId!,
                     selectedServiceId!,
-                    today
+                    today,
+                    bookingDaysAhead,
+                    selectedAddonIds
                 ),
 
             enabled:
@@ -790,6 +802,7 @@ export default function BookingControl() {
                 'booking-slots',
                 selectedMasterId,
                 selectedServiceId,
+                selectedAddonIds,
                 selectedDate
             ],
 
@@ -797,7 +810,8 @@ export default function BookingControl() {
                 getDayAvailability(
                     selectedMasterId!,
                     selectedServiceId!,
-                    selectedDate
+                    selectedDate,
+                    selectedAddonIds
                 ),
 
             enabled:
@@ -843,6 +857,120 @@ export default function BookingControl() {
                 selectedServiceId
             ]
         );
+
+
+    const selectedAddons =
+        useMemo(
+            () => {
+
+                if (
+                    !selectedService
+                ) {
+                    return [];
+                }
+
+
+                return (
+                    selectedService
+                        .addons ??
+                    []
+                ).filter(
+                    addon =>
+                        addon.is_active &&
+                        selectedAddonIds.includes(
+                            addon.id
+                        )
+                );
+            },
+            [
+                selectedService,
+                selectedAddonIds
+            ]
+        );
+
+
+    const availableAddons =
+        useMemo(
+            () => {
+
+                if (
+                    !selectedService
+                ) {
+                    return [];
+                }
+
+
+                return (
+                    selectedService
+                        .addons ??
+                    []
+                ).filter(
+                    addon =>
+                        addon.is_active
+                );
+            },
+            [
+                selectedService
+            ]
+        );
+
+
+    const addonsTotalPrice =
+        useMemo(
+            () =>
+                selectedAddons.reduce(
+                    (
+                        total,
+                        addon
+                    ) =>
+                        total +
+                        Number(
+                            addon.price
+                        ),
+                    0
+                ),
+            [
+                selectedAddons
+            ]
+        );
+
+
+    const addonsTotalDuration =
+        useMemo(
+            () =>
+                selectedAddons.reduce(
+                    (
+                        total,
+                        addon
+                    ) =>
+                        total +
+                        addon.duration_minutes,
+                    0
+                ),
+            [
+                selectedAddons
+            ]
+        );
+
+
+    const totalPrice =
+        (
+            selectedService
+                ? Number(
+                    selectedService.price
+                )
+                : 0
+        ) +
+        addonsTotalPrice;
+
+
+    const totalDuration =
+        (
+            selectedService
+                ?.duration_minutes ??
+            0
+        ) +
+        addonsTotalDuration;
 
 
     const selectedMaster =
@@ -936,8 +1064,64 @@ export default function BookingControl() {
             );
 
 
+            setSelectedAddonIds(
+                []
+            );
+
+
             setSelectedMasterId(
                 null
+            );
+
+
+            setSelectedDate(
+                ''
+            );
+
+
+            setSelectedStartAt(
+                ''
+            );
+
+
+            setErrorMessage(
+                ''
+            );
+        };
+
+
+    /*
+     * ========================================================
+     * TOGGLE ADDON
+     * ========================================================
+     */
+
+    const handleToggleAddon =
+        (
+            addonId: number
+        ) => {
+
+            setSelectedAddonIds(
+                current => {
+
+                    if (
+                        current.includes(
+                            addonId
+                        )
+                    ) {
+
+                        return current.filter(
+                            id =>
+                                id !== addonId
+                        );
+                    }
+
+
+                    return [
+                        ...current,
+                        addonId
+                    ];
+                }
             );
 
 
@@ -1070,6 +1254,9 @@ export default function BookingControl() {
 
                         service:
                             selectedService.id,
+
+                        addon_ids:
+                            selectedAddonIds,
 
                         /*
                          * start_at приходит от backend
@@ -1408,6 +1595,42 @@ export default function BookingControl() {
                                 selectedService
                                     ?.name ??
                                 '—'
+                            }
+                        />
+
+                        {selectedAddons.length > 0 && (
+
+                            <SummaryLine
+                                label="Дополнительно"
+                                value={
+                                    selectedAddons
+                                        .map(
+                                            addon =>
+                                                addon.name
+                                        )
+                                        .join(
+                                            ', '
+                                        )
+                                }
+                            />
+
+                        )}
+
+
+                        <SummaryLine
+                            label="Стоимость"
+                            value={
+                                formatMoney(
+                                    totalPrice
+                                )
+                            }
+                        />
+
+
+                        <SummaryLine
+                            label="Длительность"
+                            value={
+                                `${totalDuration} мин`
                             }
                         />
 
@@ -1785,11 +2008,276 @@ export default function BookingControl() {
                     </BookingSection>
 
 
-                    {/* STAFF */}
+                    {/* ADDONS */}
 
                     <BookingSection
                         number={
                             2
+                        }
+                        title="Дополнительные услуги"
+                        disabled={
+                            !selectedServiceId
+                        }
+                    >
+
+                        {!selectedService ? (
+
+                            <EmptyText
+                                text="Сначала выберите основную услугу."
+                            />
+
+                        ) : availableAddons.length ===
+                          0 ? (
+
+                            <EmptyText
+                                text="Для этой услуги дополнительных опций нет."
+                            />
+
+                        ) : (
+
+                            <div
+                                className="
+                                    grid
+                                    grid-cols-1
+                                    gap-3
+                                    md:grid-cols-2
+                                "
+                            >
+
+                                {availableAddons.map(
+                                    addon => {
+
+                                        const selected =
+                                            selectedAddonIds.includes(
+                                                addon.id
+                                            );
+
+
+                                        return (
+                                            <button
+                                                key={
+                                                    addon.id
+                                                }
+                                                type="button"
+                                                onClick={() =>
+                                                    handleToggleAddon(
+                                                        addon.id
+                                                    )
+                                                }
+                                                className={`
+                                                    relative
+                                                    flex
+                                                    min-h-[110px]
+                                                    cursor-pointer
+                                                    flex-col
+                                                    items-start
+                                                    rounded-2xl
+                                                    border
+                                                    p-4
+                                                    text-left
+                                                    transition
+
+                                                    ${
+                                                        selected
+                                                            ? `
+                                                                border-[#4F46E5]
+                                                                bg-[#F5F5FF]
+                                                                ring-1
+                                                                ring-[#4F46E5]
+                                                            `
+                                                            : `
+                                                                border-[#D9DDEC]
+                                                                bg-white
+                                                                hover:border-[#A5A0ED]
+                                                            `
+                                                    }
+                                                `}
+                                            >
+
+                                                {selected && (
+
+                                                    <div
+                                                        className="
+                                                            absolute
+                                                            right-3
+                                                            top-3
+                                                            flex
+                                                            h-6
+                                                            w-6
+                                                            items-center
+                                                            justify-center
+                                                            rounded-full
+                                                            bg-[#4F46E5]
+                                                            text-white
+                                                        "
+                                                    >
+
+                                                        <Check
+                                                            size={
+                                                                14
+                                                            }
+                                                        />
+
+                                                    </div>
+                                                )}
+
+
+                                                <div
+                                                    className="
+                                                        pr-8
+                                                        text-sm
+                                                        font-semibold
+                                                        text-slate-900
+                                                    "
+                                                >
+                                                    {
+                                                        addon.name
+                                                    }
+                                                </div>
+
+
+                                                {addon.description && (
+
+                                                    <div
+                                                        className="
+                                                            mt-1.5
+                                                            line-clamp-2
+                                                            text-xs
+                                                            leading-5
+                                                            text-slate-500
+                                                        "
+                                                    >
+                                                        {
+                                                            addon.description
+                                                        }
+                                                    </div>
+                                                )}
+
+
+                                                <div
+                                                    className="
+                                                        mt-auto
+                                                        flex
+                                                        w-full
+                                                        items-end
+                                                        justify-between
+                                                        gap-3
+                                                        pt-4
+                                                    "
+                                                >
+
+                                                    <div
+                                                        className="
+                                                            flex
+                                                            items-center
+                                                            gap-1.5
+                                                            text-xs
+                                                            text-slate-500
+                                                        "
+                                                    >
+
+                                                        <Clock3
+                                                            size={
+                                                                14
+                                                            }
+                                                        />
+
+                                                        +{
+                                                            addon.duration_minutes
+                                                        } мин
+
+                                                    </div>
+
+
+                                                    <div
+                                                        className="
+                                                            text-sm
+                                                            font-bold
+                                                            text-[#4F46E5]
+                                                        "
+                                                    >
+                                                        +{
+                                                            formatMoney(
+                                                                addon.price
+                                                            )
+                                                        }
+                                                    </div>
+
+                                                </div>
+
+                                            </button>
+                                        );
+                                    }
+                                )}
+
+                            </div>
+                        )}
+
+
+                        {selectedAddons.length > 0 && (
+
+                            <div
+                                className="
+                                    mt-4
+                                    rounded-xl
+                                    border
+                                    border-[#D9DDEC]
+                                    bg-[#F7F8FD]
+                                    px-4
+                                    py-3
+                                "
+                            >
+
+                                <div
+                                    className="
+                                        text-xs
+                                        text-slate-500
+                                    "
+                                >
+                                    С учётом выбранных дополнений
+                                </div>
+
+
+                                <div
+                                    className="
+                                        mt-1
+                                        flex
+                                        flex-wrap
+                                        gap-x-6
+                                        gap-y-1
+                                        text-sm
+                                        font-semibold
+                                        text-slate-800
+                                    "
+                                >
+
+                                    <span>
+                                        {
+                                            totalDuration
+                                        } мин
+                                    </span>
+
+                                    <span>
+                                        {
+                                            formatMoney(
+                                                totalPrice
+                                            )
+                                        }
+                                    </span>
+
+                                </div>
+
+                            </div>
+                        )}
+
+                    </BookingSection>
+
+
+                    {/* STAFF */}
+
+                    <BookingSection
+                        number={
+                            3
                         }
                         title="Выберите мастера"
                         disabled={
@@ -2004,7 +2492,7 @@ export default function BookingControl() {
 
                     <BookingSection
                         number={
-                            3
+                            4
                         }
                         title="Выберите день"
                         disabled={
@@ -2171,7 +2659,7 @@ export default function BookingControl() {
 
                     <BookingSection
                         number={
-                            4
+                            5
                         }
                         title="Выберите доступное время"
                         disabled={
@@ -2260,7 +2748,7 @@ export default function BookingControl() {
 
                     <BookingSection
                         number={
-                            5
+                            6
                         }
                         title="Ваши данные"
                     >
@@ -2620,6 +3108,36 @@ export default function BookingControl() {
                                 }
                             />
 
+                            {selectedAddons.length > 0 && (
+
+                                <SummaryItem
+                                    icon={
+                                        Scissors
+                                    }
+                                    title="Дополнительно"
+                                    value={
+                                        selectedAddons
+                                            .map(
+                                                addon =>
+                                                    addon.name
+                                            )
+                                            .join(
+                                                ', '
+                                            )
+                                    }
+                                    subValue={
+                                        `+${
+                                            addonsTotalDuration
+                                        } мин · +${
+                                            formatMoney(
+                                                addonsTotalPrice
+                                            )
+                                        }`
+                                    }
+                                />
+
+                            )}
+
                             <SummaryItem
                                 icon={
                                     UserRound
@@ -2696,7 +3214,7 @@ export default function BookingControl() {
                                     >
                                         {selectedService
                                             ? formatMoney(
-                                                  selectedService.price
+                                                  totalPrice
                                               )
                                             : '—'}
                                     </span>
