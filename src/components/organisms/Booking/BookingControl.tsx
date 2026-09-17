@@ -21,6 +21,7 @@ import {
     MapPin,
     Phone,
     Scissors,
+    Search,
     UserRound
 } from 'lucide-react';
 
@@ -77,6 +78,32 @@ interface ApiErrorData {
     [key: string]:
         unknown;
 }
+
+
+type BookingServiceWithCategory =
+    BookingService & {
+        category_name?: string | null;
+    };
+
+
+const getServiceCategoryName = (
+    service: BookingService
+) => {
+
+    const categoryName =
+        (
+            service as
+                BookingServiceWithCategory
+        )
+            .category_name
+            ?.trim();
+
+
+    return (
+        categoryName ||
+        'Другие услуги'
+    );
+};
 
 
 /*
@@ -481,6 +508,48 @@ export default function BookingControl() {
         );
 
 
+    /*
+     * ========================================================
+     * SERVICE PICKER
+     * ========================================================
+     */
+
+    const [
+        serviceSearch,
+        setServiceSearch
+    ] =
+        useState(
+            ''
+        );
+
+
+    const [
+        selectedServiceCategory,
+        setSelectedServiceCategory
+    ] =
+        useState(
+            'all'
+        );
+
+
+    const [
+        isServicePickerOpen,
+        setIsServicePickerOpen
+    ] =
+        useState(
+            true
+        );
+
+
+    const [
+        visibleServicesCount,
+        setVisibleServicesCount
+    ] =
+        useState(
+            6
+        );
+
+
     const [
         selectedMasterId,
         setSelectedMasterId
@@ -659,6 +728,135 @@ export default function BookingControl() {
             retry:
                 false
         });
+
+
+    /*
+     * ========================================================
+     * SERVICE PICKER DATA
+     * ========================================================
+     */
+
+    const serviceCategories =
+        useMemo(
+            () => {
+
+                const categories:
+                    string[] =
+                    services.map(
+                        service =>
+                            getServiceCategoryName(
+                                service
+                            )
+                    );
+
+
+                return Array.from(
+                    new Set(
+                        categories
+                    )
+                ).sort(
+                    (
+                        first,
+                        second
+                    ) =>
+                        first.localeCompare(
+                            second,
+                            'ru'
+                        )
+                );
+            },
+            [
+                services
+            ]
+        );
+
+
+    const filteredServices =
+        useMemo(
+            () => {
+
+                const normalizedSearch =
+                    serviceSearch
+                        .trim()
+                        .toLowerCase();
+
+
+                return services.filter(
+                    service => {
+
+                        const categoryName =
+                            getServiceCategoryName(
+                                service
+                            );
+
+
+                        const matchesCategory =
+                            selectedServiceCategory ===
+                                'all' ||
+                            categoryName ===
+                                selectedServiceCategory;
+
+
+                        if (
+                            !matchesCategory
+                        ) {
+                            return false;
+                        }
+
+
+                        if (
+                            !normalizedSearch
+                        ) {
+                            return true;
+                        }
+
+
+                        const haystack = [
+                            service.name,
+                            service.description ??
+                                '',
+                            categoryName
+                        ]
+                            .join(
+                                ' '
+                            )
+                            .toLowerCase();
+
+
+                        return haystack.includes(
+                            normalizedSearch
+                        );
+                    }
+                );
+            },
+            [
+                services,
+                serviceSearch,
+                selectedServiceCategory
+            ]
+        );
+
+
+    const visibleServices =
+        useMemo(
+            () =>
+                filteredServices.slice(
+                    0,
+                    visibleServicesCount
+                ),
+            [
+                filteredServices,
+                visibleServicesCount
+            ]
+        );
+
+
+    const remainingServicesCount =
+        Math.max(
+            filteredServices.length -
+                visibleServices.length,
+            0
+        );
 
 
     /*
@@ -1086,6 +1284,11 @@ export default function BookingControl() {
 
             setErrorMessage(
                 ''
+            );
+
+
+            setIsServicePickerOpen(
+                false
             );
         };
 
@@ -1822,7 +2025,11 @@ export default function BookingControl() {
                         number={
                             1
                         }
-                        title="Выберите услугу"
+                        title={
+                            selectedService
+                                ? 'Услуга'
+                                : 'Выберите услугу'
+                        }
                     >
 
                         {isServicesLoading ? (
@@ -1844,166 +2051,631 @@ export default function BookingControl() {
                                 text="У бизнеса пока нет доступных услуг."
                             />
 
+                        ) : selectedService &&
+                          !isServicePickerOpen ? (
+
+                            /*
+                             * После выбора скрываем большой список
+                             * и оставляем только компактное резюме.
+                             */
+
+                            <div
+                                className="
+                                    flex
+                                    items-center
+                                    gap-3
+                                    rounded-2xl
+                                    border
+                                    border-[#CFCBF8]
+                                    bg-[#F7F7FF]
+                                    p-3.5
+                                    sm:p-4
+                                "
+                            >
+
+                                <div
+                                    className="
+                                        flex
+                                        h-9
+                                        w-9
+                                        shrink-0
+                                        items-center
+                                        justify-center
+                                        rounded-full
+                                        bg-[#4F46E5]
+                                        text-white
+                                    "
+                                >
+                                    <Check
+                                        size={
+                                            17
+                                        }
+                                    />
+                                </div>
+
+
+                                <div
+                                    className="
+                                        min-w-0
+                                        flex-1
+                                    "
+                                >
+
+                                    <div
+                                        className="
+                                            truncate
+                                            text-sm
+                                            font-semibold
+                                            text-slate-900
+                                            sm:text-[15px]
+                                        "
+                                    >
+                                        {
+                                            selectedService.name
+                                        }
+                                    </div>
+
+
+                                    <div
+                                        className="
+                                            mt-1
+                                            flex
+                                            flex-wrap
+                                            items-center
+                                            gap-x-3
+                                            gap-y-1
+                                            text-xs
+                                            text-slate-500
+                                        "
+                                    >
+
+                                        <span
+                                            className="
+                                                flex
+                                                items-center
+                                                gap-1
+                                            "
+                                        >
+                                            <Clock3
+                                                size={
+                                                    13
+                                                }
+                                            />
+
+                                            {
+                                                selectedService
+                                                    .duration_minutes
+                                            }{' '}
+                                            мин
+                                        </span>
+
+
+                                        <span
+                                            className="
+                                                font-semibold
+                                                text-[#4F46E5]
+                                            "
+                                        >
+                                            {formatMoney(
+                                                selectedService.price
+                                            )}
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+
+                                <button
+                                    type="button"
+                                    onClick={() => {
+
+                                        setIsServicePickerOpen(
+                                            true
+                                        );
+
+                                        setVisibleServicesCount(
+                                            6
+                                        );
+                                    }}
+                                    className="
+                                        shrink-0
+                                        cursor-pointer
+                                        rounded-lg
+                                        px-2.5
+                                        py-2
+                                        text-xs
+                                        font-semibold
+                                        text-[#4F46E5]
+                                        transition
+                                        hover:bg-[#ECEBFF]
+                                        sm:px-3
+                                        sm:text-sm
+                                    "
+                                >
+                                    Изменить
+                                </button>
+
+                            </div>
+
                         ) : (
 
                             <div
                                 className="
-                                    grid
-                                    grid-cols-1
-                                    gap-3
-                                    md:grid-cols-2
+                                    flex
+                                    flex-col
+                                    gap-4
                                 "
                             >
-                                {services.map(
-                                    service => {
 
-                                        const selected =
-                                            selectedServiceId ===
-                                            service.id;
+                                {/* SEARCH */}
+
+                                <div
+                                    className="
+                                        relative
+                                    "
+                                >
+
+                                    <Search
+                                        size={
+                                            17
+                                        }
+                                        className="
+                                            pointer-events-none
+                                            absolute
+                                            left-3.5
+                                            top-1/2
+                                            -translate-y-1/2
+                                            text-slate-400
+                                        "
+                                    />
 
 
-                                        return (
-                                            <button
-                                                key={
-                                                    service.id
-                                                }
-                                                type="button"
-                                                onClick={() =>
-                                                    handleSelectService(
-                                                        service.id
-                                                    )
-                                                }
-                                                className={`
-                                                    relative
-                                                    flex
-                                                    min-h-[125px]
-                                                    cursor-pointer
-                                                    flex-col
-                                                    items-start
-                                                    rounded-2xl
-                                                    border
-                                                    p-5
-                                                    text-left
-                                                    transition
+                                    <input
+                                        type="search"
+                                        value={
+                                            serviceSearch
+                                        }
+                                        onChange={
+                                            event => {
 
-                                                    ${
-                                                        selected
-                                                            ? `
-                                                                border-[#4F46E5]
-                                                                bg-[#F5F5FF]
-                                                                ring-1
-                                                                ring-[#4F46E5]
-                                                            `
-                                                            : `
-                                                                border-[#D9DDEC]
-                                                                bg-white
-                                                                hover:border-[#A5A0ED]
-                                                            `
-                                                    }
-                                                `}
-                                            >
-                                                {selected && (
-                                                    <div
-                                                        className="
-                                                            absolute
-                                                            right-4
-                                                            top-4
-                                                            flex
-                                                            h-6
-                                                            w-6
-                                                            items-center
-                                                            justify-center
-                                                            rounded-full
+                                                setServiceSearch(
+                                                    event.target.value
+                                                );
+
+                                                setVisibleServicesCount(
+                                                    6
+                                                );
+                                            }
+                                        }
+                                        placeholder="Найти услугу"
+                                        className="
+                                            h-11
+                                            w-full
+                                            rounded-xl
+                                            border
+                                            border-[#D9DDEC]
+                                            bg-white
+                                            pl-10
+                                            pr-4
+                                            text-sm
+                                            text-slate-900
+                                            outline-none
+                                            transition
+                                            placeholder:text-slate-400
+                                            focus:border-[#4F46E5]
+                                            focus:ring-2
+                                            focus:ring-[#4F46E5]/10
+                                        "
+                                    />
+
+                                </div>
+
+
+                                {/* CATEGORIES */}
+
+                                {serviceCategories.length >
+                                    1 && (
+
+                                    <div
+                                        className="
+                                            -mx-1
+                                            flex
+                                            gap-2
+                                            overflow-x-auto
+                                            px-1
+                                            pb-1
+                                        "
+                                    >
+
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+
+                                                setSelectedServiceCategory(
+                                                    'all'
+                                                );
+
+                                                setVisibleServicesCount(
+                                                    6
+                                                );
+                                            }}
+                                            className={`
+                                                shrink-0
+                                                cursor-pointer
+                                                rounded-full
+                                                border
+                                                px-3.5
+                                                py-2
+                                                text-xs
+                                                font-semibold
+                                                transition
+
+                                                ${
+                                                    selectedServiceCategory ===
+                                                    'all'
+                                                        ? `
+                                                            border-[#4F46E5]
                                                             bg-[#4F46E5]
                                                             text-white
-                                                        "
-                                                    >
-                                                        <Check
-                                                            size={
-                                                                14
-                                                            }
-                                                        />
-                                                    </div>
-                                                )}
+                                                        `
+                                                        : `
+                                                            border-[#D9DDEC]
+                                                            bg-white
+                                                            text-slate-600
+                                                            hover:border-[#A5A0ED]
+                                                            hover:text-[#4F46E5]
+                                                        `
+                                                }
+                                            `}
+                                        >
+                                            Все
+                                        </button>
 
-                                                <div
-                                                    className="
-                                                        pr-8
-                                                        text-[15px]
+
+                                        {serviceCategories.map(
+                                            category => (
+
+                                                <button
+                                                    key={
+                                                        category
+                                                    }
+                                                    type="button"
+                                                    onClick={() => {
+
+                                                        setSelectedServiceCategory(
+                                                            category
+                                                        );
+
+                                                        setVisibleServicesCount(
+                                                            6
+                                                        );
+                                                    }}
+                                                    className={`
+                                                        shrink-0
+                                                        cursor-pointer
+                                                        rounded-full
+                                                        border
+                                                        px-3.5
+                                                        py-2
+                                                        text-xs
                                                         font-semibold
-                                                        text-slate-900
-                                                    "
+                                                        transition
+
+                                                        ${
+                                                            selectedServiceCategory ===
+                                                            category
+                                                                ? `
+                                                                    border-[#4F46E5]
+                                                                    bg-[#4F46E5]
+                                                                    text-white
+                                                                `
+                                                                : `
+                                                                    border-[#D9DDEC]
+                                                                    bg-white
+                                                                    text-slate-600
+                                                                    hover:border-[#A5A0ED]
+                                                                    hover:text-[#4F46E5]
+                                                                `
+                                                        }
+                                                    `}
                                                 >
                                                     {
-                                                        service.name
+                                                        category
                                                     }
-                                                </div>
+                                                </button>
 
-                                                {service.description && (
-                                                    <div
-                                                        className="
-                                                            mt-1.5
-                                                            line-clamp-2
-                                                            text-xs
-                                                            leading-5
-                                                            text-slate-500
-                                                        "
-                                                    >
-                                                        {
-                                                            service.description
-                                                        }
-                                                    </div>
-                                                )}
+                                            )
+                                        )}
 
-                                                <div
-                                                    className="
-                                                        mt-auto
-                                                        flex
-                                                        w-full
-                                                        items-end
-                                                        justify-between
-                                                        gap-3
-                                                        pt-4
-                                                    "
-                                                >
-                                                    <div
-                                                        className="
-                                                            flex
-                                                            items-center
-                                                            gap-1.5
-                                                            text-xs
-                                                            text-slate-500
-                                                        "
-                                                    >
-                                                        <Clock3
-                                                            size={
-                                                                14
-                                                            }
-                                                        />
+                                    </div>
 
-                                                        {
-                                                            service.duration_minutes
-                                                        }{' '}
-                                                        мин
-                                                    </div>
-
-                                                    <div
-                                                        className="
-                                                            text-base
-                                                            font-bold
-                                                            text-[#4F46E5]
-                                                        "
-                                                    >
-                                                        {formatMoney(
-                                                            service.price
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </button>
-                                        );
-                                    }
                                 )}
+
+
+                                {/* SERVICES LIST */}
+
+                                {filteredServices.length ===
+                                    0 ? (
+
+                                    <div
+                                        className="
+                                            rounded-xl
+                                            border
+                                            border-dashed
+                                            border-[#D9DDEC]
+                                            bg-slate-50
+                                            px-4
+                                            py-6
+                                            text-center
+                                            text-sm
+                                            text-slate-500
+                                        "
+                                    >
+                                        По вашему запросу услуг не найдено.
+                                    </div>
+
+                                ) : (
+
+                                    <>
+                                        <div
+                                            className="
+                                                grid
+                                                grid-cols-1
+                                                gap-2
+                                                md:grid-cols-2
+                                                md:gap-3
+                                            "
+                                        >
+
+                                            {visibleServices.map(
+                                                service => {
+
+                                                    const selected =
+                                                        selectedServiceId ===
+                                                        service.id;
+
+
+                                                    return (
+                                                        <button
+                                                            key={
+                                                                service.id
+                                                            }
+                                                            type="button"
+                                                            onClick={() =>
+                                                                handleSelectService(
+                                                                    service.id
+                                                                )
+                                                            }
+                                                            className={`
+                                                                group
+                                                                relative
+                                                                flex
+                                                                min-w-0
+                                                                cursor-pointer
+                                                                items-center
+                                                                gap-3
+                                                                rounded-xl
+                                                                border
+                                                                px-3.5
+                                                                py-3
+                                                                text-left
+                                                                transition
+                                                                sm:px-4
+                                                                sm:py-3.5
+
+                                                                ${
+                                                                    selected
+                                                                        ? `
+                                                                            border-[#4F46E5]
+                                                                            bg-[#F5F5FF]
+                                                                            ring-1
+                                                                            ring-[#4F46E5]
+                                                                        `
+                                                                        : `
+                                                                            border-[#D9DDEC]
+                                                                            bg-white
+                                                                            hover:border-[#A5A0ED]
+                                                                            hover:bg-[#FAFAFF]
+                                                                        `
+                                                                }
+                                                            `}
+                                                        >
+
+                                                            <div
+                                                                className={`
+                                                                    flex
+                                                                    h-7
+                                                                    w-7
+                                                                    shrink-0
+                                                                    items-center
+                                                                    justify-center
+                                                                    rounded-full
+                                                                    border
+                                                                    transition
+
+                                                                    ${
+                                                                        selected
+                                                                            ? `
+                                                                                border-[#4F46E5]
+                                                                                bg-[#4F46E5]
+                                                                                text-white
+                                                                            `
+                                                                            : `
+                                                                                border-[#D9DDEC]
+                                                                                bg-white
+                                                                                text-transparent
+                                                                                group-hover:border-[#A5A0ED]
+                                                                            `
+                                                                    }
+                                                                `}
+                                                            >
+                                                                <Check
+                                                                    size={
+                                                                        14
+                                                                    }
+                                                                />
+                                                            </div>
+
+
+                                                            <div
+                                                                className="
+                                                                    min-w-0
+                                                                    flex-1
+                                                                "
+                                                            >
+
+                                                                <div
+                                                                    className="
+                                                                        flex
+                                                                        items-start
+                                                                        justify-between
+                                                                        gap-3
+                                                                    "
+                                                                >
+
+                                                                    <div
+                                                                        className="
+                                                                            min-w-0
+                                                                            flex-1
+                                                                        "
+                                                                    >
+
+                                                                        <div
+                                                                            className="
+                                                                                line-clamp-2
+                                                                                text-sm
+                                                                                font-semibold
+                                                                                leading-5
+                                                                                text-slate-900
+                                                                            "
+                                                                        >
+                                                                            {
+                                                                                service.name
+                                                                            }
+                                                                        </div>
+
+
+                                                                        {service.description && (
+
+                                                                            <div
+                                                                                className="
+                                                                                    mt-1
+                                                                                    hidden
+                                                                                    line-clamp-1
+                                                                                    text-xs
+                                                                                    leading-5
+                                                                                    text-slate-500
+                                                                                    md:block
+                                                                                "
+                                                                            >
+                                                                                {
+                                                                                    service.description
+                                                                                }
+                                                                            </div>
+
+                                                                        )}
+
+                                                                    </div>
+
+
+                                                                    <div
+                                                                        className="
+                                                                            shrink-0
+                                                                            whitespace-nowrap
+                                                                            text-sm
+                                                                            font-bold
+                                                                            text-[#4F46E5]
+                                                                        "
+                                                                    >
+                                                                        {formatMoney(
+                                                                            service.price
+                                                                        )}
+                                                                    </div>
+
+                                                                </div>
+
+
+                                                                <div
+                                                                    className="
+                                                                        mt-1.5
+                                                                        flex
+                                                                        items-center
+                                                                        gap-1.5
+                                                                        text-[11px]
+                                                                        text-slate-500
+                                                                        sm:text-xs
+                                                                    "
+                                                                >
+                                                                    <Clock3
+                                                                        size={
+                                                                            13
+                                                                        }
+                                                                    />
+
+                                                                    {
+                                                                        service
+                                                                            .duration_minutes
+                                                                    }{' '}
+                                                                    мин
+                                                                </div>
+
+                                                            </div>
+
+                                                        </button>
+                                                    );
+                                                }
+                                            )}
+
+                                        </div>
+
+
+                                        {remainingServicesCount >
+                                            0 && (
+
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setVisibleServicesCount(
+                                                        current =>
+                                                            current +
+                                                            6
+                                                    )
+                                                }
+                                                className="
+                                                    w-full
+                                                    cursor-pointer
+                                                    rounded-xl
+                                                    border
+                                                    border-[#D9DDEC]
+                                                    bg-white
+                                                    px-4
+                                                    py-2.5
+                                                    text-sm
+                                                    font-semibold
+                                                    text-[#4F46E5]
+                                                    transition
+                                                    hover:border-[#A5A0ED]
+                                                    hover:bg-[#FAFAFF]
+                                                "
+                                            >
+                                                Показать ещё{' '}
+                                                {
+                                                    Math.min(
+                                                        remainingServicesCount,
+                                                        6
+                                                    )
+                                                }
+                                            </button>
+
+                                        )}
+
+                                    </>
+
+                                )}
+
                             </div>
+
                         )}
                     </BookingSection>
 
