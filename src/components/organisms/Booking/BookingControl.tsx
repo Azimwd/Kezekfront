@@ -546,7 +546,7 @@ export default function BookingControl() {
         setVisibleServicesCount
     ] =
         useState(
-            6
+            4
         );
 
 
@@ -567,6 +567,15 @@ export default function BookingControl() {
     ] =
         useState<number[]>(
             []
+        );
+
+
+    const [
+        isAddonsExpanded,
+        setIsAddonsExpanded
+    ] =
+        useState(
+            false
         );
 
 
@@ -1113,6 +1122,76 @@ export default function BookingControl() {
         );
 
 
+    /*
+     * ========================================================
+     * COMPACT ADDONS
+     * ========================================================
+     *
+     * В свернутом состоянии показываем максимум 4 позиции,
+     * но уже выбранные дополнения всегда оставляем видимыми.
+     */
+
+    const visibleAddons =
+        useMemo(
+            () => {
+
+                if (
+                    isAddonsExpanded
+                ) {
+                    return availableAddons;
+                }
+
+
+                const selected =
+                    availableAddons.filter(
+                        addon =>
+                            selectedAddonIds.includes(
+                                addon.id
+                            )
+                    );
+
+
+                const unselected =
+                    availableAddons.filter(
+                        addon =>
+                            !selectedAddonIds.includes(
+                                addon.id
+                            )
+                    );
+
+
+                const freePlaces =
+                    Math.max(
+                        4 -
+                            selected.length,
+                        0
+                    );
+
+
+                return [
+                    ...selected,
+                    ...unselected.slice(
+                        0,
+                        freePlaces
+                    )
+                ];
+            },
+            [
+                availableAddons,
+                selectedAddonIds,
+                isAddonsExpanded
+            ]
+        );
+
+
+    const hiddenAddonsCount =
+        Math.max(
+            availableAddons.length -
+                visibleAddons.length,
+            0
+        );
+
+
     const addonsTotalPrice =
         useMemo(
             () =>
@@ -1264,6 +1343,11 @@ export default function BookingControl() {
 
             setSelectedAddonIds(
                 []
+            );
+
+
+            setIsAddonsExpanded(
+                false
             );
 
 
@@ -2175,7 +2259,7 @@ export default function BookingControl() {
                                         );
 
                                         setVisibleServicesCount(
-                                            6
+                                            4
                                         );
                                     }}
                                     className="
@@ -2244,7 +2328,7 @@ export default function BookingControl() {
                                                 );
 
                                                 setVisibleServicesCount(
-                                                    6
+                                                    4
                                                 );
                                             }
                                         }
@@ -2297,7 +2381,7 @@ export default function BookingControl() {
                                                 );
 
                                                 setVisibleServicesCount(
-                                                    6
+                                                    4
                                                 );
                                             }}
                                             className={`
@@ -2348,7 +2432,7 @@ export default function BookingControl() {
                                                         );
 
                                                         setVisibleServicesCount(
-                                                            6
+                                                            4
                                                         );
                                                     }}
                                                     className={`
@@ -2630,18 +2714,27 @@ export default function BookingControl() {
                                         </div>
 
 
-                                        {remainingServicesCount >
-                                            0 && (
+                                        {filteredServices.length >
+                                            4 && (
 
                                             <button
                                                 type="button"
-                                                onClick={() =>
-                                                    setVisibleServicesCount(
-                                                        current =>
-                                                            current +
-                                                            6
-                                                    )
-                                                }
+                                                onClick={() => {
+                                                    if (
+                                                        remainingServicesCount >
+                                                        0
+                                                    ) {
+                                                        setVisibleServicesCount(
+                                                            current =>
+                                                                current +
+                                                                4
+                                                        );
+                                                    } else {
+                                                        setVisibleServicesCount(
+                                                            4
+                                                        );
+                                                    }
+                                                }}
                                                 className="
                                                     w-full
                                                     cursor-pointer
@@ -2659,13 +2752,18 @@ export default function BookingControl() {
                                                     hover:bg-[#FAFAFF]
                                                 "
                                             >
-                                                Показать ещё{' '}
-                                                {
-                                                    Math.min(
-                                                        remainingServicesCount,
-                                                        6
-                                                    )
-                                                }
+                                                {remainingServicesCount >
+                                                0 ? (
+                                                    <>
+                                                        Показать ещё{' '}
+                                                        {Math.min(
+                                                            remainingServicesCount,
+                                                            4
+                                                        )}
+                                                    </>
+                                                ) : (
+                                                    'Скрыть'
+                                                )}
                                             </button>
 
                                         )}
@@ -2686,7 +2784,11 @@ export default function BookingControl() {
                         number={
                             2
                         }
-                        title="Дополнительные услуги"
+                        title={
+                            selectedAddonIds.length > 0
+                                ? `Дополнительные услуги (${selectedAddonIds.length})`
+                                : 'Дополнительные услуги'
+                        }
                         disabled={
                             !selectedServiceId
                         }
@@ -2709,177 +2811,284 @@ export default function BookingControl() {
 
                             <div
                                 className="
-                                    grid
-                                    grid-cols-1
+                                    flex
+                                    flex-col
                                     gap-3
-                                    md:grid-cols-2
                                 "
                             >
 
-                                {availableAddons.map(
-                                    addon => {
+                                <div
+                                    className="
+                                        flex
+                                        items-center
+                                        justify-between
+                                        gap-3
+                                    "
+                                >
+                                    <p
+                                        className="
+                                            text-xs
+                                            leading-5
+                                            text-slate-500
+                                        "
+                                    >
+                                        Необязательно — можно выбрать несколько или пропустить.
+                                    </p>
 
-                                        const selected =
-                                            selectedAddonIds.includes(
-                                                addon.id
-                                            );
+                                    {selectedAddonIds.length > 0 && (
+
+                                        <span
+                                            className="
+                                                shrink-0
+                                                rounded-full
+                                                bg-[#EEF2FF]
+                                                px-2.5
+                                                py-1
+                                                text-[11px]
+                                                font-semibold
+                                                text-[#4F46E5]
+                                            "
+                                        >
+                                            Выбрано {selectedAddonIds.length}
+                                        </span>
+
+                                    )}
+                                </div>
 
 
-                                        return (
-                                            <button
-                                                key={
+                                <div
+                                    className="
+                                        grid
+                                        grid-cols-1
+                                        gap-2
+                                        md:grid-cols-2
+                                        md:gap-3
+                                    "
+                                >
+
+                                    {visibleAddons.map(
+                                        addon => {
+
+                                            const selected =
+                                                selectedAddonIds.includes(
                                                     addon.id
-                                                }
-                                                type="button"
-                                                onClick={() =>
-                                                    handleToggleAddon(
+                                                );
+
+
+                                            return (
+                                                <button
+                                                    key={
                                                         addon.id
-                                                    )
-                                                }
-                                                className={`
-                                                    relative
-                                                    flex
-                                                    min-h-[110px]
-                                                    cursor-pointer
-                                                    flex-col
-                                                    items-start
-                                                    rounded-2xl
-                                                    border
-                                                    p-4
-                                                    text-left
-                                                    transition
-
-                                                    ${
-                                                        selected
-                                                            ? `
-                                                                border-[#4F46E5]
-                                                                bg-[#F5F5FF]
-                                                                ring-1
-                                                                ring-[#4F46E5]
-                                                            `
-                                                            : `
-                                                                border-[#D9DDEC]
-                                                                bg-white
-                                                                hover:border-[#A5A0ED]
-                                                            `
                                                     }
-                                                `}
-                                            >
+                                                    type="button"
+                                                    onClick={() =>
+                                                        handleToggleAddon(
+                                                            addon.id
+                                                        )
+                                                    }
+                                                    className={`
+                                                        group
+                                                        flex
+                                                        min-w-0
+                                                        cursor-pointer
+                                                        items-center
+                                                        gap-3
+                                                        rounded-xl
+                                                        border
+                                                        px-3.5
+                                                        py-3
+                                                        text-left
+                                                        transition
+                                                        sm:px-4
 
-                                                {selected && (
+                                                        ${
+                                                            selected
+                                                                ? `
+                                                                    border-[#4F46E5]
+                                                                    bg-[#F5F5FF]
+                                                                    ring-1
+                                                                    ring-[#4F46E5]
+                                                                `
+                                                                : `
+                                                                    border-[#D9DDEC]
+                                                                    bg-white
+                                                                    hover:border-[#A5A0ED]
+                                                                    hover:bg-[#FAFAFF]
+                                                                `
+                                                        }
+                                                    `}
+                                                >
 
                                                     <div
-                                                        className="
-                                                            absolute
-                                                            right-3
-                                                            top-3
+                                                        className={`
                                                             flex
-                                                            h-6
-                                                            w-6
+                                                            h-7
+                                                            w-7
+                                                            shrink-0
                                                             items-center
                                                             justify-center
                                                             rounded-full
-                                                            bg-[#4F46E5]
-                                                            text-white
-                                                        "
-                                                    >
+                                                            border
+                                                            transition
 
+                                                            ${
+                                                                selected
+                                                                    ? `
+                                                                        border-[#4F46E5]
+                                                                        bg-[#4F46E5]
+                                                                        text-white
+                                                                    `
+                                                                    : `
+                                                                        border-[#D9DDEC]
+                                                                        bg-white
+                                                                        text-transparent
+                                                                        group-hover:border-[#A5A0ED]
+                                                                    `
+                                                            }
+                                                        `}
+                                                    >
                                                         <Check
                                                             size={
                                                                 14
                                                             }
                                                         />
-
                                                     </div>
-                                                )}
 
-
-                                                <div
-                                                    className="
-                                                        pr-8
-                                                        text-sm
-                                                        font-semibold
-                                                        text-slate-900
-                                                    "
-                                                >
-                                                    {
-                                                        addon.name
-                                                    }
-                                                </div>
-
-
-                                                {addon.description && (
 
                                                     <div
                                                         className="
-                                                            mt-1.5
-                                                            line-clamp-2
-                                                            text-xs
-                                                            leading-5
-                                                            text-slate-500
+                                                            min-w-0
+                                                            flex-1
                                                         "
                                                     >
-                                                        {
-                                                            addon.description
-                                                        }
+
+                                                        <div
+                                                            className="
+                                                                line-clamp-2
+                                                                text-sm
+                                                                font-semibold
+                                                                leading-5
+                                                                text-slate-900
+                                                            "
+                                                        >
+                                                            {
+                                                                addon.name
+                                                            }
+                                                        </div>
+
+
+                                                        {addon.description && (
+
+                                                            <div
+                                                                className="
+                                                                    mt-0.5
+                                                                    hidden
+                                                                    line-clamp-1
+                                                                    text-xs
+                                                                    text-slate-500
+                                                                    md:block
+                                                                "
+                                                            >
+                                                                {
+                                                                    addon.description
+                                                                }
+                                                            </div>
+
+                                                        )}
+
                                                     </div>
-                                                )}
 
-
-                                                <div
-                                                    className="
-                                                        mt-auto
-                                                        flex
-                                                        w-full
-                                                        items-end
-                                                        justify-between
-                                                        gap-3
-                                                        pt-4
-                                                    "
-                                                >
 
                                                     <div
                                                         className="
                                                             flex
-                                                            items-center
-                                                            gap-1.5
-                                                            text-xs
-                                                            text-slate-500
+                                                            shrink-0
+                                                            flex-col
+                                                            items-end
+                                                            gap-1
                                                         "
                                                     >
 
-                                                        <Clock3
-                                                            size={
-                                                                14
+                                                        <div
+                                                            className="
+                                                                whitespace-nowrap
+                                                                text-sm
+                                                                font-bold
+                                                                text-[#4F46E5]
+                                                            "
+                                                        >
+                                                            +{
+                                                                formatMoney(
+                                                                    addon.price
+                                                                )
                                                             }
-                                                        />
+                                                        </div>
 
-                                                        +{
-                                                            addon.duration_minutes
-                                                        } мин
+
+                                                        <div
+                                                            className="
+                                                                flex
+                                                                items-center
+                                                                gap-1
+                                                                whitespace-nowrap
+                                                                text-[11px]
+                                                                text-slate-500
+                                                            "
+                                                        >
+                                                            <Clock3
+                                                                size={
+                                                                    12
+                                                                }
+                                                            />
+
+                                                            +{
+                                                                addon.duration_minutes
+                                                            } мин
+                                                        </div>
 
                                                     </div>
 
+                                                </button>
+                                            );
+                                        }
+                                    )}
 
-                                                    <div
-                                                        className="
-                                                            text-sm
-                                                            font-bold
-                                                            text-[#4F46E5]
-                                                        "
-                                                    >
-                                                        +{
-                                                            formatMoney(
-                                                                addon.price
-                                                            )
-                                                        }
-                                                    </div>
+                                </div>
 
-                                                </div>
 
-                                            </button>
-                                        );
-                                    }
+                                {availableAddons.length >
+                                    4 && (
+
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setIsAddonsExpanded(
+                                                current =>
+                                                    !current
+                                            )
+                                        }
+                                        className="
+                                            w-full
+                                            cursor-pointer
+                                            rounded-xl
+                                            border
+                                            border-[#D9DDEC]
+                                            bg-white
+                                            px-4
+                                            py-2.5
+                                            text-sm
+                                            font-semibold
+                                            text-[#4F46E5]
+                                            transition
+                                            hover:border-[#A5A0ED]
+                                            hover:bg-[#FAFAFF]
+                                        "
+                                    >
+                                        {isAddonsExpanded
+                                            ? 'Скрыть'
+                                            : `Показать ещё ${hiddenAddonsCount}`}
+                                    </button>
+
                                 )}
 
                             </div>
