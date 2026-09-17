@@ -1,5 +1,8 @@
 import {
-    useState
+    useState,
+    type Dispatch,
+    type FormEvent,
+    type SetStateAction
 } from 'react';
 
 import {
@@ -9,7 +12,8 @@ import {
 
 import {
     CircleAlert,
-    Plus
+    Plus,
+    Trash2
 } from 'lucide-react';
 
 import Button from '../../../atoms/Button';
@@ -25,6 +29,8 @@ import {
 
 import {
     createService,
+    createServiceAddon,
+    deleteService,
     putStaffToService
 } from '../../../../api/services';
 
@@ -36,13 +42,76 @@ import {
 } from '../../../../utils/getApiErrorMessage';
 
 
+/*
+ * ============================================================
+ * ADDON DRAFT
+ * ============================================================
+ */
+
+interface AddonDraft {
+
+    tempId: string;
+
+    name: string;
+
+    description: string;
+
+    price: string;
+
+    duration_minutes: number;
+
+    is_active: boolean;
+}
+
+
+/*
+ * ============================================================
+ * CREATE EMPTY ADDON
+ * ============================================================
+ */
+
+const createEmptyAddon =
+    (): AddonDraft => ({
+
+        tempId:
+            `${Date.now()}-${Math.random()}`,
+
+        name:
+            '',
+
+        description:
+            '',
+
+        price:
+            '',
+
+        duration_minutes:
+            0,
+
+        is_active:
+            true
+    });
+
+
 export default function NewService() {
+
+    /*
+     * ============================================================
+     * SIDE PAGE
+     * ============================================================
+     */
 
     const [
         isOpen,
         setIsOpen
     ] = useState(false);
 
+
+    /*
+     * ============================================================
+     * BUSINESS
+     * ============================================================
+     */
 
     const {
         selectedBusiness
@@ -52,59 +121,7 @@ export default function NewService() {
     const queryClient =
         useQueryClient();
 
-    const handleIntegerChange = (
-        value: string,
-        setter: React.Dispatch<React.SetStateAction<number>>
-    ) => {
 
-        /*
-        * Разрешаем только цифры.
-        */
-
-        if (!/^\d*$/.test(value)) {
-            return;
-        }
-
-
-        /*
-        * Если поле очистили,
-        * ставим 0 вместо NaN.
-        */
-
-        if (value === '') {
-            setter(0);
-            return;
-        }
-
-
-        setter(
-            Number(value)
-        );
-    };
-
-
-    const handlePriceChange = (
-        value: string
-    ) => {
-
-        /*
-        * Разрешаем:
-        *
-        * 100
-        * 100.5
-        * 100.50
-        * 100,50
-        */
-
-        if (!/^\d*[.,]?\d{0,2}$/.test(value)) {
-            return;
-        }
-
-
-        setPrice(
-            value.replace(',', '.')
-        );
-    };
     /*
      * ============================================================
      * SERVICE DATA
@@ -183,6 +200,20 @@ export default function NewService() {
 
     /*
      * ============================================================
+     * ADDONS
+     * ============================================================
+     */
+
+    const [
+        addons,
+        setAddons
+    ] = useState<AddonDraft[]>(
+        []
+    );
+
+
+    /*
+     * ============================================================
      * ERROR
      * ============================================================
      */
@@ -195,6 +226,267 @@ export default function NewService() {
 
     /*
      * ============================================================
+     * INTEGER INPUT
+     * ============================================================
+     */
+
+    const handleIntegerChange = (
+        value: string,
+        setter: Dispatch<SetStateAction<number>>
+    ) => {
+
+        if (
+            !/^\d*$/.test(
+                value
+            )
+        ) {
+            return;
+        }
+
+
+        if (
+            value === ''
+        ) {
+
+            setter(
+                0
+            );
+
+            return;
+        }
+
+
+        setter(
+            Number(
+                value
+            )
+        );
+    };
+
+
+    /*
+     * ============================================================
+     * PRICE INPUT
+     * ============================================================
+     */
+
+    const handlePriceChange = (
+        value: string
+    ) => {
+
+        if (
+            !/^\d*[.,]?\d{0,2}$/.test(
+                value
+            )
+        ) {
+            return;
+        }
+
+
+        setPrice(
+            value.replace(
+                ',',
+                '.'
+            )
+        );
+    };
+
+
+    /*
+     * ============================================================
+     * ADD ADDON
+     * ============================================================
+     */
+
+    const handleAddAddon = () => {
+
+        setAddons(
+            current => [
+                ...current,
+                createEmptyAddon()
+            ]
+        );
+    };
+
+
+    /*
+     * ============================================================
+     * REMOVE ADDON
+     * ============================================================
+     */
+
+    const handleRemoveAddon = (
+        tempId: string
+    ) => {
+
+        setAddons(
+            current =>
+                current.filter(
+                    addon =>
+                        addon.tempId !==
+                        tempId
+                )
+        );
+    };
+
+
+    /*
+     * ============================================================
+     * UPDATE ADDON
+     * ============================================================
+     */
+
+    const updateAddon = (
+        tempId: string,
+        changes: Partial<AddonDraft>
+    ) => {
+
+        setAddons(
+            current =>
+                current.map(
+                    addon => {
+
+                        if (
+                            addon.tempId !==
+                            tempId
+                        ) {
+                            return addon;
+                        }
+
+
+                        return {
+                            ...addon,
+                            ...changes
+                        };
+                    }
+                )
+        );
+    };
+
+
+    /*
+     * ============================================================
+     * ADDON PRICE
+     * ============================================================
+     */
+
+    const handleAddonPriceChange = (
+        tempId: string,
+        value: string
+    ) => {
+
+        if (
+            !/^\d*[.,]?\d{0,2}$/.test(
+                value
+            )
+        ) {
+            return;
+        }
+
+
+        updateAddon(
+            tempId,
+            {
+                price:
+                    value.replace(
+                        ',',
+                        '.'
+                    )
+            }
+        );
+    };
+
+
+    /*
+     * ============================================================
+     * ADDON DURATION
+     * ============================================================
+     */
+
+    const handleAddonDurationChange = (
+        tempId: string,
+        value: string
+    ) => {
+
+        if (
+            !/^\d*$/.test(
+                value
+            )
+        ) {
+            return;
+        }
+
+
+        updateAddon(
+            tempId,
+            {
+                duration_minutes:
+                    value === ''
+                        ? 0
+                        : Number(
+                            value
+                        )
+            }
+        );
+    };
+
+
+    /*
+     * ============================================================
+     * RESET FORM
+     * ============================================================
+     */
+
+    const resetForm = () => {
+
+        setServiceName(
+            ''
+        );
+
+        setServiceDesc(
+            ''
+        );
+
+        setPrice(
+            ''
+        );
+
+        setDuration(
+            0
+        );
+
+        setBufferBefore(
+            0
+        );
+
+        setBufferAfter(
+            0
+        );
+
+        setIsActive(
+            true
+        );
+
+        setSelectedCategoryId(
+            null
+        );
+
+        setSelectedStaffIds(
+            []
+        );
+
+        setAddons(
+            []
+        );
+
+        setErrorMessage(
+            ''
+        );
+    };
+
+
+    /*
+     * ============================================================
      * CREATE SERVICE
      * ============================================================
      */
@@ -202,43 +494,207 @@ export default function NewService() {
     const NewServiceMutate =
         useMutation({
 
-            mutationFn: () => {
+            mutationFn:
+                async () => {
 
-                if (
-                    !selectedBusiness?.id
-                ) {
+                    if (
+                        !selectedBusiness?.id
+                    ) {
 
-                    throw new Error(
-                        'Бизнес не выбран'
-                    );
-                }
+                        throw new Error(
+                            'Бизнес не выбран.'
+                        );
+                    }
 
 
-                return createService(
-                    Number(
-                        selectedBusiness.id
-                    ),
+                    /*
+                     * ============================================
+                     * 1. CREATE MAIN SERVICE
+                     * ============================================
+                     */
 
-                    selectedCategoryId,
+                    const service =
+                        await createService(
 
-                    serviceName,
+                            Number(
+                                selectedBusiness.id
+                            ),
 
-                    serviceDesc,
+                            selectedCategoryId,
 
-                    Number(
-                        price
-                    ),
+                            serviceName.trim(),
 
-                    duration,
+                            serviceDesc.trim(),
 
-                    bufferBefore,
+                            Number(
+                                price
+                            ),
 
-                    bufferAfter,
+                            duration,
 
-                    isActive
-                );
-            },
+                            bufferBefore,
 
+                            bufferAfter,
+
+                            isActive
+                        );
+
+
+                    /*
+                     * Если следующая операция завершится ошибкой,
+                     * удаляем созданную услугу.
+                     *
+                     * Это компенсирующий rollback.
+                     */
+
+                    try {
+
+                        const tasks:
+                            Promise<unknown>[] =
+                            [];
+
+
+                        /*
+                         * ========================================
+                         * 2. STAFF
+                         * ========================================
+                         */
+
+                        if (
+                            selectedStaffIds.length >
+                            0
+                        ) {
+
+                            tasks.push(
+
+                                putStaffToService(
+                                    service.id,
+                                    selectedStaffIds
+                                )
+                            );
+                        }
+
+
+                        /*
+                         * ========================================
+                         * 3. ADDONS
+                         * ========================================
+                         */
+
+                        for (
+                            const addon
+                            of addons
+                        ) {
+
+                            tasks.push(
+
+                                createServiceAddon(
+                                    service.id,
+                                    {
+                                        name:
+                                            addon
+                                                .name
+                                                .trim(),
+
+                                        description:
+                                            addon
+                                                .description
+                                                .trim(),
+
+                                        price:
+                                            Number(
+                                                addon.price
+                                            ),
+
+                                        duration_minutes:
+                                            addon
+                                                .duration_minutes,
+
+                                        is_active:
+                                            addon
+                                                .is_active
+                                    }
+                                )
+                            );
+                        }
+
+
+                        /*
+                         * Ждём завершения ВСЕХ запросов.
+                         *
+                         * allSettled нужен, чтобы перед rollback
+                         * не осталось выполняющихся запросов.
+                         */
+
+                        const results =
+                            await Promise.allSettled(
+                                tasks
+                            );
+
+
+                        const failedResult =
+                            results.find(
+                                result =>
+                                    result.status ===
+                                    'rejected'
+                            );
+
+
+                        if (
+                            failedResult &&
+                            failedResult.status ===
+                            'rejected'
+                        ) {
+
+                            throw (
+                                failedResult.reason
+                            );
+                        }
+
+
+                        return service;
+
+                    }
+
+                    catch (
+                        error
+                    ) {
+
+                        /*
+                         * ========================================
+                         * ROLLBACK
+                         * ========================================
+                         */
+
+                        try {
+
+                            await deleteService(
+                                service.id
+                            );
+
+                        }
+
+                        catch (
+                            rollbackError
+                        ) {
+
+                            console.error(
+                                'Не удалось удалить услугу после ошибки:',
+                                rollbackError
+                            );
+                        }
+
+
+                        throw error;
+                    }
+                },
+
+
+            /*
+             * ====================================================
+             * BEFORE
+             * ====================================================
+             */
 
             onMutate: () => {
 
@@ -248,39 +704,14 @@ export default function NewService() {
             },
 
 
+            /*
+             * ====================================================
+             * SUCCESS
+             * ====================================================
+             */
+
             onSuccess:
-                async (
-                    data
-                ) => {
-
-                    /*
-                     * Привязка мастеров.
-                     */
-
-                    if (
-                        selectedStaffIds.length >
-                            0 &&
-                        data?.id
-                    ) {
-
-                        try {
-
-                            await putStaffToService(
-                                data.id,
-                                selectedStaffIds
-                            );
-
-                        } catch (
-                            error
-                        ) {
-
-                            console.error(
-                                'Ошибка при привязке мастеров:',
-                                error
-                            );
-                        }
-                    }
-
+                async () => {
 
                     /*
                      * Обновляем список услуг.
@@ -290,7 +721,7 @@ export default function NewService() {
                         selectedBusiness?.id
                     ) {
 
-                        queryClient.invalidateQueries({
+                        await queryClient.invalidateQueries({
                             queryKey: [
                                 'services',
                                 selectedBusiness.id
@@ -299,55 +730,20 @@ export default function NewService() {
                     }
 
 
-                    /*
-                     * Сбрасываем форму.
-                     */
+                    resetForm();
 
-                    setErrorMessage(
-                        ''
-                    );
 
                     setIsOpen(
                         false
                     );
-
-                    setServiceName(
-                        ''
-                    );
-
-                    setServiceDesc(
-                        ''
-                    );
-
-                    setPrice(
-                        ''
-                    );
-
-                    setDuration(
-                        0
-                    );
-
-                    setBufferBefore(
-                        0
-                    );
-
-                    setBufferAfter(
-                        0
-                    );
-
-                    setIsActive(
-                        true
-                    );
-
-                    setSelectedCategoryId(
-                        null
-                    );
-
-                    setSelectedStaffIds(
-                        []
-                    );
                 },
 
+
+            /*
+             * ====================================================
+             * ERROR
+             * ====================================================
+             */
 
             onError:
                 (
@@ -355,7 +751,7 @@ export default function NewService() {
                 ) => {
 
                     console.error(
-                        'Ошибка создания:',
+                        'Ошибка создания услуги:',
                         error
                     );
 
@@ -372,14 +768,13 @@ export default function NewService() {
 
     /*
      * ============================================================
-     * SUBMIT
+     * VALIDATE + SUBMIT
      * ============================================================
      */
 
     const handleCreateService =
         (
-            e:
-                React.FormEvent
+            e: FormEvent
         ) => {
 
             e.preventDefault();
@@ -389,6 +784,12 @@ export default function NewService() {
                 ''
             );
 
+
+            /*
+             * ====================================================
+             * SERVICE NAME
+             * ====================================================
+             */
 
             if (
                 !serviceName.trim()
@@ -401,6 +802,12 @@ export default function NewService() {
                 return;
             }
 
+
+            /*
+             * ====================================================
+             * SERVICE PRICE
+             * ====================================================
+             */
 
             if (
                 price.trim() === ''
@@ -415,7 +822,9 @@ export default function NewService() {
 
 
             if (
-                Number(price) < 0
+                Number(
+                    price
+                ) < 0
             ) {
 
                 setErrorMessage(
@@ -425,6 +834,12 @@ export default function NewService() {
                 return;
             }
 
+
+            /*
+             * ====================================================
+             * SERVICE DURATION
+             * ====================================================
+             */
 
             if (
                 duration <= 0
@@ -437,6 +852,12 @@ export default function NewService() {
                 return;
             }
 
+
+            /*
+             * ====================================================
+             * BUFFER
+             * ====================================================
+             */
 
             if (
                 bufferBefore < 0 ||
@@ -451,9 +872,110 @@ export default function NewService() {
             }
 
 
+            /*
+             * ====================================================
+             * ADDONS
+             * ====================================================
+             */
+
+            for (
+                const addon
+                of addons
+            ) {
+
+                if (
+                    !addon.name.trim()
+                ) {
+
+                    setErrorMessage(
+                        'Введите название каждой дополнительной услуги.'
+                    );
+
+                    return;
+                }
+
+
+                if (
+                    addon.price.trim() === ''
+                ) {
+
+                    setErrorMessage(
+                        `Введите цену дополнительной услуги «${addon.name}».`
+                    );
+
+                    return;
+                }
+
+
+                if (
+                    Number(
+                        addon.price
+                    ) < 0
+                ) {
+
+                    setErrorMessage(
+                        `Цена «${addon.name}» не может быть отрицательной.`
+                    );
+
+                    return;
+                }
+
+
+                if (
+                    addon.duration_minutes < 0
+                ) {
+
+                    setErrorMessage(
+                        `Длительность «${addon.name}» не может быть отрицательной.`
+                    );
+
+                    return;
+                }
+            }
+
+
+            /*
+             * Проверяем одинаковые названия addons.
+             */
+
+            const normalizedAddonNames =
+                addons.map(
+                    addon =>
+                        addon
+                            .name
+                            .trim()
+                            .toLowerCase()
+                );
+
+
+            const uniqueAddonNames =
+                new Set(
+                    normalizedAddonNames
+                );
+
+
+            if (
+                uniqueAddonNames.size !==
+                normalizedAddonNames.length
+            ) {
+
+                setErrorMessage(
+                    'Дополнительные услуги не могут иметь одинаковые названия.'
+                );
+
+                return;
+            }
+
+
             NewServiceMutate.mutate();
         };
 
+
+    /*
+     * ============================================================
+     * BUSINESS NOT SELECTED
+     * ============================================================
+     */
 
     if (
         !selectedBusiness
@@ -472,6 +994,75 @@ export default function NewService() {
             selectedBusiness.id
         );
 
+
+    /*
+     * ============================================================
+     * TOTAL PREVIEW
+     * ============================================================
+     */
+
+    const addonsTotalPrice =
+        addons.reduce(
+            (
+                total,
+                addon
+            ) => {
+
+                const addonPrice =
+                    Number(
+                        addon.price
+                    );
+
+
+                return (
+                    total +
+                    (
+                        Number.isFinite(
+                            addonPrice
+                        )
+                            ? addonPrice
+                            : 0
+                    )
+                );
+
+            },
+            0
+        );
+
+
+    const addonsTotalDuration =
+        addons.reduce(
+            (
+                total,
+                addon
+            ) =>
+                total +
+                addon.duration_minutes,
+            0
+        );
+
+
+    const servicePrice =
+        Number(
+            price
+        ) || 0;
+
+
+    const finalPricePreview =
+        servicePrice +
+        addonsTotalPrice;
+
+
+    const finalDurationPreview =
+        duration +
+        addonsTotalDuration;
+
+
+    /*
+     * ============================================================
+     * JSX
+     * ============================================================
+     */
 
     return (
         <>
@@ -502,10 +1093,17 @@ export default function NewService() {
                     md:shrink-0
                 "
                 onClick={() => {
-                    setErrorMessage('');
-                    setIsOpen(true);
+
+                    setErrorMessage(
+                        ''
+                    );
+
+                    setIsOpen(
+                        true
+                    );
                 }}
             >
+
                 <Icon
                     icon={Plus}
                     size={20}
@@ -519,6 +1117,7 @@ export default function NewService() {
                         font-semibold
                     "
                 />
+
             </Button>
 
 
@@ -527,9 +1126,11 @@ export default function NewService() {
             ===================================================== */}
 
             <SidePage
+
                 isOpen={
                     isOpen
                 }
+
                 onClose={() => {
 
                     setErrorMessage(
@@ -540,8 +1141,12 @@ export default function NewService() {
                         false
                     );
                 }}
+
                 title="Создать услугу"
-                description="Добавьте новую услугу для выбранного бизнеса"
+
+                description={
+                    "Добавьте новую услугу для выбранного бизнеса"
+                }
             >
 
                 <form
@@ -564,7 +1169,9 @@ export default function NewService() {
                         "
                     >
 
-                        {/* BUSINESS */}
+                        {/* =========================================
+                            BUSINESS
+                        ========================================= */}
 
                         <div
                             className="
@@ -618,7 +1225,9 @@ export default function NewService() {
                                         text-sm
                                         text-gray-700
                                     "
-                                    text="Услуга будет создана только для этого бизнеса"
+                                    text={
+                                        "Услуга будет создана только для этого бизнеса"
+                                    }
                                 />
 
                             </div>
@@ -626,7 +1235,9 @@ export default function NewService() {
                         </div>
 
 
-                        {/* ERROR */}
+                        {/* =========================================
+                            ERROR
+                        ========================================= */}
 
                         {errorMessage && (
 
@@ -666,11 +1277,12 @@ export default function NewService() {
                                 </div>
 
                             </div>
-
                         )}
 
 
-                        {/* NAME */}
+                        {/* =========================================
+                            SERVICE NAME
+                        ========================================= */}
 
                         <div
                             className="
@@ -722,7 +1334,9 @@ export default function NewService() {
                         </div>
 
 
-                        {/* CATEGORY */}
+                        {/* =========================================
+                            CATEGORY
+                        ========================================= */}
 
                         <CategorySelector
                             value={
@@ -734,7 +1348,9 @@ export default function NewService() {
                         />
 
 
-                        {/* DESCRIPTION */}
+                        {/* =========================================
+                            DESCRIPTION
+                        ========================================= */}
 
                         <div
                             className="
@@ -788,15 +1404,20 @@ export default function NewService() {
                         </div>
 
 
-                        {/* PRICE / DURATION */}
+                        {/* =========================================
+                            PRICE / DURATION / BUFFER
+                        ========================================= */}
 
                         <div
                             className="
                                 grid
-                                grid-cols-2
+                                grid-cols-1
                                 gap-5
+                                sm:grid-cols-2
                             "
                         >
+
+                            {/* PRICE */}
 
                             <div
                                 className="
@@ -827,7 +1448,9 @@ export default function NewService() {
                                     <Input
                                         type="text"
                                         inputMode="decimal"
-                                        value={price}
+                                        value={
+                                            price
+                                        }
                                         className="
                                             w-full
                                             rounded-lg
@@ -845,10 +1468,11 @@ export default function NewService() {
                                             focus:ring-[#5955e8]
                                         "
                                         placeholder="0"
-                                        onChange={(e) =>
-                                            handlePriceChange(
-                                                e.target.value
-                                            )
+                                        onChange={
+                                            e =>
+                                                handlePriceChange(
+                                                    e.target.value
+                                                )
                                         }
                                     />
 
@@ -869,6 +1493,8 @@ export default function NewService() {
 
                             </div>
 
+
+                            {/* DURATION */}
 
                             <div
                                 className="
@@ -899,7 +1525,9 @@ export default function NewService() {
                                     <Input
                                         type="text"
                                         inputMode="numeric"
-                                        value={duration}
+                                        value={
+                                            duration
+                                        }
                                         className="
                                             w-full
                                             rounded-lg
@@ -917,11 +1545,12 @@ export default function NewService() {
                                             focus:ring-[#5955e8]
                                         "
                                         placeholder="0"
-                                        onChange={(e) =>
-                                            handleIntegerChange(
-                                                e.target.value,
-                                                setDuration
-                                            )
+                                        onChange={
+                                            e =>
+                                                handleIntegerChange(
+                                                    e.target.value,
+                                                    setDuration
+                                                )
                                         }
                                     />
 
@@ -974,7 +1603,9 @@ export default function NewService() {
                                     <Input
                                         type="text"
                                         inputMode="numeric"
-                                        value={bufferBefore}
+                                        value={
+                                            bufferBefore
+                                        }
                                         className="
                                             w-full
                                             rounded-lg
@@ -992,16 +1623,17 @@ export default function NewService() {
                                             focus:ring-[#5955e8]
                                         "
                                         placeholder="0"
-                                        onChange={(e) =>
-                                            handleIntegerChange(
-                                                e.target.value,
-                                                setBufferBefore
-                                            )
+                                        onChange={
+                                            e =>
+                                                handleIntegerChange(
+                                                    e.target.value,
+                                                    setBufferBefore
+                                                )
                                         }
                                     />
 
 
-                                    <Typography
+                                    <span
                                         className="
                                             pointer-events-none
                                             absolute
@@ -1009,8 +1641,9 @@ export default function NewService() {
                                             text-sm
                                             text-slate-500
                                         "
-                                        text="мин"
-                                    />
+                                    >
+                                        мин
+                                    </span>
 
                                 </div>
 
@@ -1048,7 +1681,9 @@ export default function NewService() {
                                     <Input
                                         type="text"
                                         inputMode="numeric"
-                                        value={bufferAfter}
+                                        value={
+                                            bufferAfter
+                                        }
                                         className="
                                             w-full
                                             rounded-lg
@@ -1066,16 +1701,17 @@ export default function NewService() {
                                             focus:ring-[#5955e8]
                                         "
                                         placeholder="0"
-                                        onChange={(e) =>
-                                            handleIntegerChange(
-                                                e.target.value,
-                                                setBufferAfter
-                                            )
+                                        onChange={
+                                            e =>
+                                                handleIntegerChange(
+                                                    e.target.value,
+                                                    setBufferAfter
+                                                )
                                         }
                                     />
 
 
-                                    <Typography
+                                    <span
                                         className="
                                             pointer-events-none
                                             absolute
@@ -1083,8 +1719,9 @@ export default function NewService() {
                                             text-sm
                                             text-slate-500
                                         "
-                                        text="мин"
-                                    />
+                                    >
+                                        мин
+                                    </span>
 
                                 </div>
 
@@ -1103,7 +1740,670 @@ export default function NewService() {
                         />
 
 
-                        {/* ACTIVE */}
+                        {/* =========================================
+                            ADDONS HEADER
+                        ========================================= */}
+
+                        <div
+                            className="
+                                flex
+                                flex-col
+                                gap-4
+                            "
+                        >
+
+                            <div
+                                className="
+                                    flex
+                                    items-center
+                                    justify-between
+                                    gap-4
+                                "
+                            >
+
+                                <div
+                                    className="
+                                        flex
+                                        flex-col
+                                        gap-1
+                                    "
+                                >
+
+                                    <Typography
+                                        text="Дополнительные услуги"
+                                        className="
+                                            text-sm
+                                            font-semibold
+                                            text-slate-800
+                                        "
+                                    />
+
+
+                                    <Typography
+                                        text={
+                                            "Клиент сможет выбрать их дополнительно к основной услуге"
+                                        }
+                                        className="
+                                            text-xs
+                                            text-slate-500
+                                        "
+                                    />
+
+                                </div>
+
+
+                                <Button
+                                    type="button"
+                                    onClick={
+                                        handleAddAddon
+                                    }
+                                    className="
+                                        flex
+                                        shrink-0
+                                        items-center
+                                        gap-2
+                                        rounded-lg
+                                        border
+                                        border-[#c7c4d8]
+                                        bg-white
+                                        px-3
+                                        py-2
+                                        transition-colors
+                                        hover:bg-slate-50
+                                    "
+                                >
+
+                                    <Icon
+                                        icon={Plus}
+                                        size={17}
+                                        className="
+                                            text-[#4F46E5]
+                                        "
+                                    />
+
+
+                                    <Typography
+                                        text="Добавить"
+                                        className="
+                                            text-sm
+                                            font-medium
+                                            text-[#4F46E5]
+                                        "
+                                    />
+
+                                </Button>
+
+                            </div>
+
+
+                            {/* =====================================
+                                NO ADDONS
+                            ===================================== */}
+
+                            {addons.length === 0 && (
+
+                                <div
+                                    className="
+                                        rounded-xl
+                                        border
+                                        border-dashed
+                                        border-[#d6d4e1]
+                                        bg-[#f8f9ff]
+                                        px-4
+                                        py-5
+                                        text-center
+                                        text-sm
+                                        text-slate-500
+                                    "
+                                >
+                                    Дополнительных услуг пока нет
+                                </div>
+
+                            )}
+
+
+                            {/* =====================================
+                                ADDON CARDS
+                            ===================================== */}
+
+                            {addons.map(
+                                (
+                                    addon,
+                                    index
+                                ) => (
+
+                                    <div
+                                        key={
+                                            addon.tempId
+                                        }
+                                        className="
+                                            flex
+                                            flex-col
+                                            gap-4
+                                            rounded-xl
+                                            border
+                                            border-[#d6d4e1]
+                                            bg-white
+                                            p-4
+                                        "
+                                    >
+
+                                        {/* HEADER */}
+
+                                        <div
+                                            className="
+                                                flex
+                                                items-center
+                                                justify-between
+                                                gap-4
+                                            "
+                                        >
+
+                                            <Typography
+                                                text={
+                                                    `Доп. услуга ${index + 1}`
+                                                }
+                                                className="
+                                                    text-sm
+                                                    font-semibold
+                                                    text-slate-800
+                                                "
+                                            />
+
+
+                                            <button
+                                                type="button"
+                                                onClick={
+                                                    () =>
+                                                        handleRemoveAddon(
+                                                            addon.tempId
+                                                        )
+                                                }
+                                                className="
+                                                    flex
+                                                    h-9
+                                                    w-9
+                                                    cursor-pointer
+                                                    items-center
+                                                    justify-center
+                                                    rounded-lg
+                                                    text-red-500
+                                                    transition-colors
+                                                    hover:bg-red-50
+                                                "
+                                            >
+
+                                                <Trash2
+                                                    size={18}
+                                                />
+
+                                            </button>
+
+                                        </div>
+
+
+                                        {/* NAME */}
+
+                                        <div
+                                            className="
+                                                flex
+                                                flex-col
+                                                gap-1.5
+                                            "
+                                        >
+
+                                            <Typography
+                                                text="Название"
+                                                className="
+                                                    text-sm
+                                                    font-medium
+                                                    text-slate-800
+                                                "
+                                            />
+
+
+                                            <Input
+                                                type="text"
+                                                value={
+                                                    addon.name
+                                                }
+                                                placeholder={
+                                                    "Например: Снятие покрытия"
+                                                }
+                                                className="
+                                                    w-full
+                                                    rounded-lg
+                                                    border
+                                                    border-[#d6d4e1]
+                                                    bg-[#f8f9ff]
+                                                    px-4
+                                                    py-3
+                                                    text-slate-900
+                                                    focus:border-[#5955e8]
+                                                    focus:outline-none
+                                                    focus:ring-1
+                                                    focus:ring-[#5955e8]
+                                                "
+                                                onChange={
+                                                    e =>
+                                                        updateAddon(
+                                                            addon.tempId,
+                                                            {
+                                                                name:
+                                                                    e.target.value
+                                                            }
+                                                        )
+                                                }
+                                            />
+
+                                        </div>
+
+
+                                        {/* DESCRIPTION */}
+
+                                        <div
+                                            className="
+                                                flex
+                                                flex-col
+                                                gap-1.5
+                                            "
+                                        >
+
+                                            <Typography
+                                                text="Описание"
+                                                className="
+                                                    text-sm
+                                                    font-medium
+                                                    text-slate-800
+                                                "
+                                            />
+
+
+                                            <textarea
+                                                rows={2}
+                                                value={
+                                                    addon.description
+                                                }
+                                                placeholder={
+                                                    "Описание дополнительной услуги"
+                                                }
+                                                className="
+                                                    w-full
+                                                    resize-none
+                                                    rounded-lg
+                                                    border
+                                                    border-[#d6d4e1]
+                                                    bg-[#f8f9ff]
+                                                    px-4
+                                                    py-3
+                                                    text-slate-900
+                                                    focus:border-[#5955e8]
+                                                    focus:outline-none
+                                                    focus:ring-1
+                                                    focus:ring-[#5955e8]
+                                                "
+                                                onChange={
+                                                    e =>
+                                                        updateAddon(
+                                                            addon.tempId,
+                                                            {
+                                                                description:
+                                                                    e.target.value
+                                                            }
+                                                        )
+                                                }
+                                            />
+
+                                        </div>
+
+
+                                        {/* PRICE + DURATION */}
+
+                                        <div
+                                            className="
+                                                grid
+                                                grid-cols-1
+                                                gap-4
+                                                sm:grid-cols-2
+                                            "
+                                        >
+
+                                            {/* ADDON PRICE */}
+
+                                            <div
+                                                className="
+                                                    flex
+                                                    flex-col
+                                                    gap-1.5
+                                                "
+                                            >
+
+                                                <Typography
+                                                    text="Доп. цена"
+                                                    className="
+                                                        text-sm
+                                                        font-medium
+                                                        text-slate-800
+                                                    "
+                                                />
+
+
+                                                <div
+                                                    className="
+                                                        relative
+                                                        flex
+                                                        items-center
+                                                    "
+                                                >
+
+                                                    <Input
+                                                        type="text"
+                                                        inputMode="decimal"
+                                                        value={
+                                                            addon.price
+                                                        }
+                                                        placeholder="0"
+                                                        className="
+                                                            w-full
+                                                            rounded-lg
+                                                            border
+                                                            border-[#d6d4e1]
+                                                            bg-[#f8f9ff]
+                                                            py-3
+                                                            pl-4
+                                                            pr-10
+                                                            text-slate-900
+                                                            focus:border-[#5955e8]
+                                                            focus:outline-none
+                                                            focus:ring-1
+                                                            focus:ring-[#5955e8]
+                                                        "
+                                                        onChange={
+                                                            e =>
+                                                                handleAddonPriceChange(
+                                                                    addon.tempId,
+                                                                    e.target.value
+                                                                )
+                                                        }
+                                                    />
+
+
+                                                    <span
+                                                        className="
+                                                            pointer-events-none
+                                                            absolute
+                                                            right-4
+                                                            text-sm
+                                                            text-slate-500
+                                                        "
+                                                    >
+                                                        ₸
+                                                    </span>
+
+                                                </div>
+
+                                            </div>
+
+
+                                            {/* ADDON DURATION */}
+
+                                            <div
+                                                className="
+                                                    flex
+                                                    flex-col
+                                                    gap-1.5
+                                                "
+                                            >
+
+                                                <Typography
+                                                    text="Доп. время"
+                                                    className="
+                                                        text-sm
+                                                        font-medium
+                                                        text-slate-800
+                                                    "
+                                                />
+
+
+                                                <div
+                                                    className="
+                                                        relative
+                                                        flex
+                                                        items-center
+                                                    "
+                                                >
+
+                                                    <Input
+                                                        type="text"
+                                                        inputMode="numeric"
+                                                        value={
+                                                            addon.duration_minutes
+                                                        }
+                                                        placeholder="0"
+                                                        className="
+                                                            w-full
+                                                            rounded-lg
+                                                            border
+                                                            border-[#d6d4e1]
+                                                            bg-[#f8f9ff]
+                                                            py-3
+                                                            pl-4
+                                                            pr-12
+                                                            text-slate-900
+                                                            focus:border-[#5955e8]
+                                                            focus:outline-none
+                                                            focus:ring-1
+                                                            focus:ring-[#5955e8]
+                                                        "
+                                                        onChange={
+                                                            e =>
+                                                                handleAddonDurationChange(
+                                                                    addon.tempId,
+                                                                    e.target.value
+                                                                )
+                                                        }
+                                                    />
+
+
+                                                    <span
+                                                        className="
+                                                            pointer-events-none
+                                                            absolute
+                                                            right-4
+                                                            text-sm
+                                                            text-slate-500
+                                                        "
+                                                    >
+                                                        мин
+                                                    </span>
+
+                                                </div>
+
+                                            </div>
+
+                                        </div>
+
+
+                                        {/* ACTIVE */}
+
+                                        <div
+                                            className="
+                                                flex
+                                                items-center
+                                                justify-between
+                                            "
+                                        >
+
+                                            <Typography
+                                                text={
+                                                    "Доп. услуга активна"
+                                                }
+                                                className="
+                                                    text-sm
+                                                    font-medium
+                                                    text-slate-800
+                                                "
+                                            />
+
+
+                                            <label
+                                                className="
+                                                    relative
+                                                    inline-flex
+                                                    cursor-pointer
+                                                    items-center
+                                                "
+                                            >
+
+                                                <input
+                                                    type="checkbox"
+                                                    checked={
+                                                        addon.is_active
+                                                    }
+                                                    onChange={
+                                                        e =>
+                                                            updateAddon(
+                                                                addon.tempId,
+                                                                {
+                                                                    is_active:
+                                                                        e.target.checked
+                                                                }
+                                                            )
+                                                    }
+                                                    className="
+                                                        peer
+                                                        sr-only
+                                                    "
+                                                />
+
+
+                                                <div
+                                                    className="
+                                                        peer
+                                                        h-6
+                                                        w-11
+                                                        rounded-full
+                                                        bg-gray-200
+                                                        after:absolute
+                                                        after:left-0.5
+                                                        after:top-0.5
+                                                        after:h-5
+                                                        after:w-5
+                                                        after:rounded-full
+                                                        after:border
+                                                        after:border-gray-300
+                                                        after:bg-white
+                                                        after:content-['']
+                                                        after:transition-all
+                                                        peer-checked:bg-[#5955e8]
+                                                        peer-checked:after:translate-x-full
+                                                        peer-checked:after:border-white
+                                                    "
+                                                />
+
+                                            </label>
+
+                                        </div>
+
+                                    </div>
+                                )
+                            )}
+
+
+                            {/* =====================================
+                                TOTAL PREVIEW
+                            ===================================== */}
+
+                            {addons.length > 0 && (
+
+                                <div
+                                    className="
+                                        rounded-xl
+                                        border
+                                        border-[#c7c4d8]
+                                        bg-[#eff4ff]
+                                        p-4
+                                    "
+                                >
+
+                                    <Typography
+                                        text={
+                                            "Если клиент выберет все дополнительные услуги:"
+                                        }
+                                        className="
+                                            mb-2
+                                            text-sm
+                                            font-medium
+                                            text-slate-700
+                                        "
+                                    />
+
+
+                                    <div
+                                        className="
+                                            flex
+                                            flex-wrap
+                                            gap-x-6
+                                            gap-y-2
+                                            text-sm
+                                        "
+                                    >
+
+                                        <span>
+                                            Цена:{' '}
+                                            <strong>
+                                                {
+                                                    finalPricePreview
+                                                        .toLocaleString(
+                                                            'ru-RU'
+                                                        )
+                                                } ₸
+                                            </strong>
+                                        </span>
+
+
+                                        <span>
+                                            Длительность:{' '}
+                                            <strong>
+                                                {
+                                                    finalDurationPreview
+                                                } мин
+                                            </strong>
+                                        </span>
+
+                                    </div>
+
+
+                                    <Typography
+                                        text={
+                                            `Буферы применяются один раз: ${bufferBefore} мин до всей записи и ${bufferAfter} мин после всей записи.`
+                                        }
+                                        className="
+                                            mt-2
+                                            text-xs
+                                            text-slate-500
+                                        "
+                                    />
+
+                                </div>
+                            )}
+
+                        </div>
+
+
+                        <hr
+                            className="
+                                mb-1
+                                mt-2
+                                border-t
+                                border-[#f0f0f5]
+                            "
+                        />
+
+
+                        {/* =========================================
+                            MAIN SERVICE ACTIVE
+                        ========================================= */}
 
                         <div
                             className="
@@ -1181,7 +2481,9 @@ export default function NewService() {
                     </div>
 
 
-                    {/* STAFF */}
+                    {/* =============================================
+                        STAFF
+                    ============================================= */}
 
                     <div
                         className="
@@ -1208,7 +2510,9 @@ export default function NewService() {
                     </div>
 
 
-                    {/* FOOTER */}
+                    {/* =============================================
+                        FOOTER
+                    ============================================= */}
 
                     <div
                         className="

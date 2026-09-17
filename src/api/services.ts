@@ -1,18 +1,80 @@
 import { api } from './api';
 
 
-export interface ServiceItem {
+/*
+ * ============================================================
+ * SERVICE ADDON
+ * ============================================================
+ */
+
+export interface ServiceAddonItem {
     id: number;
-    business: number;
-    category: number | null;
-    category_name: string | null;
+    service: number;
+
     name: string;
     description: string | null;
+
     price: string | number;
     duration_minutes: number;
+
+    is_active: boolean;
+
+    created_at?: string;
+    updated_at?: string;
+}
+
+
+export interface ServiceAddonPayload {
+    name: string;
+    description: string;
+
+    price: number;
+    duration_minutes: number;
+
+    is_active: boolean;
+}
+
+
+export interface ServiceAddonResponse {
+    message: string;
+    data: ServiceAddonItem;
+}
+
+
+export interface ServiceAddonsResponse {
+    message: string;
+    data: ServiceAddonItem[];
+}
+
+
+/*
+ * ============================================================
+ * SERVICE
+ * ============================================================
+ */
+
+export interface ServiceItem {
+    id: number;
+
+    business: number;
+
+    category: number | null;
+    category_name: string | null;
+
+    name: string;
+    description: string | null;
+
+    price: string | number;
+
+    duration_minutes: number;
+
     buffer_before_minutes: number;
     buffer_after_minutes: number;
+
     is_active: boolean;
+
+    addons: ServiceAddonItem[];
+
     created_at?: string;
     updated_at?: string;
 }
@@ -41,15 +103,27 @@ export interface ServiceResponse {
 }
 
 
+/*
+ * ============================================================
+ * STAFF
+ * ============================================================
+ */
+
 export interface StaffMember {
     id: number;
+
     business: number;
+
     first_name: string;
     last_name: string;
+
     position: string;
     description: string;
+
     photo: string | null;
+
     is_active: boolean;
+
     services_count?: number;
     active_services_count?: number;
 }
@@ -74,8 +148,10 @@ export interface StaffResponse {
 
 export interface ServiceStaffItem {
     id: number;
+
     staff: number;
     staff_name: string;
+
     service: number;
     service_name: string;
 }
@@ -117,9 +193,6 @@ export const createService = async (
                 buffer_before_minutes,
                 buffer_after_minutes,
                 is_active
-            },
-            {
-                withCredentials: true
             }
         );
 
@@ -149,9 +222,7 @@ export const listOfServices = async (
             {
                 params: {
                     page
-                },
-
-                withCredentials: true
+                }
             }
         );
 
@@ -190,9 +261,6 @@ export const editService = async (
                 buffer_before_minutes,
                 buffer_after_minutes,
                 is_active
-            },
-            {
-                withCredentials: true
             }
         );
 
@@ -217,10 +285,7 @@ export const deleteService = async (
 
     const response =
         await api.delete(
-            `/api/businesses/services/${serviceId}/`,
-            {
-                withCredentials: true
-            }
+            `/api/businesses/services/${serviceId}/`
         );
 
 
@@ -249,9 +314,7 @@ export const searchStaff = async (
                     search: searchQuery,
                     status,
                     page
-                },
-
-                withCredentials: true
+                }
             }
         );
 
@@ -276,9 +339,6 @@ export const putStaffToService = async (
             `/api/businesses/services/${serviceId}/staff/`,
             {
                 staff_ids
-            },
-            {
-                withCredentials: true
             }
         );
 
@@ -303,12 +363,90 @@ export const getAssignedStaffForService = async (
             {
                 params: {
                     assigned_only: true
-                },
-
-                withCredentials: true
+                }
             }
         );
 
 
     return response.data;
+};
+
+
+/*
+ * ============================================================
+ * CREATE SERVICE ADDON
+ * ============================================================
+ */
+
+export const createServiceAddon = async (
+    serviceId: number,
+    data: ServiceAddonPayload
+): Promise<ServiceAddonItem> => {
+
+    const response =
+        await api.post<ServiceAddonResponse>(
+            `/api/businesses/services/${serviceId}/addons/`,
+            data
+        );
+
+
+    return response.data.data;
+};
+
+
+/*
+ * ============================================================
+ * LIST SERVICE ADDONS
+ * ============================================================
+ */
+
+export const listServiceAddons = async (
+    serviceId: number
+): Promise<ServiceAddonItem[]> => {
+
+    const response =
+        await api.get<ServiceAddonsResponse>(
+            `/api/businesses/services/${serviceId}/addons/`
+        );
+
+
+    return response.data.data;
+};
+
+
+/*
+ * ============================================================
+ * EDIT SERVICE ADDON
+ * ============================================================
+ */
+
+export const editServiceAddon = async (
+    addonId: number,
+    data: Partial<ServiceAddonPayload>
+): Promise<ServiceAddonItem> => {
+
+    const response =
+        await api.patch<ServiceAddonResponse>(
+            `/api/businesses/addons/${addonId}/`,
+            data
+        );
+
+
+    return response.data.data;
+};
+
+
+/*
+ * ============================================================
+ * DELETE SERVICE ADDON
+ * ============================================================
+ */
+
+export const deleteServiceAddon = async (
+    addonId: number
+): Promise<void> => {
+
+    await api.delete(
+        `/api/businesses/addons/${addonId}/`
+    );
 };
