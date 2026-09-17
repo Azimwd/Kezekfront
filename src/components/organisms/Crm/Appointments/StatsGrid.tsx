@@ -743,6 +743,102 @@ function QuickStatus({
  * COMPONENT
  * ============================================================
  */
+interface AppointmentAddon {
+    id: number;
+    addon: number | null;
+    name: string;
+    price?: string | number;
+    duration_minutes?: number;
+}
+
+
+interface AppointmentServiceProps {
+    serviceName?: string | null;
+    addons?: AppointmentAddon[];
+    isCanceled: boolean;
+}
+
+
+function AppointmentService({
+    serviceName,
+    addons = [],
+    isCanceled
+}: AppointmentServiceProps) {
+
+    return (
+        <div
+            className="
+                flex
+                min-w-0
+                flex-col
+                gap-1
+            "
+        >
+            <div
+                className={`
+                    break-words
+                    text-sm
+                    font-medium
+
+                    ${
+                        isCanceled
+                            ? `
+                                text-slate-400
+                                line-through
+                            `
+                            : `
+                                text-slate-700
+                            `
+                    }
+                `}
+            >
+                {serviceName || '—'}
+            </div>
+
+
+            {addons.length > 0 && (
+
+                <div
+                    className="
+                        flex
+                        flex-col
+                        gap-0.5
+                    "
+                >
+                    {addons.map(
+                        addon => (
+
+                            <div
+                                key={addon.id}
+                                className={`
+                                    break-words
+                                    text-xs
+                                    font-medium
+
+                                    ${
+                                        isCanceled
+                                            ? `
+                                                text-slate-400
+                                                line-through
+                                            `
+                                            : `
+                                                text-[#4F46E5]
+                                            `
+                                    }
+                                `}
+                            >
+                                + {addon.name}
+                            </div>
+
+                        )
+                    )}
+                </div>
+
+            )}
+
+        </div>
+    );
+}
 
 export default function StatsGrid() {
 
@@ -2134,29 +2230,24 @@ export default function StatsGrid() {
                                             </div>
 
 
-                                            <div
-                                                className={`
-                                                    mt-1.5
-                                                    break-words
-                                                    text-[12px]
-                                                    font-medium
+                                            <div className="mt-1.5">
 
-                                                    ${
-                                                        isCanceled
-                                                            ? `
-                                                                text-slate-400
-                                                                line-through
-                                                            `
-                                                            : `
-                                                                text-slate-700
-                                                            `
+                                                <AppointmentService
+                                                    serviceName={
+                                                        row.service_name
                                                     }
-                                                `}
-                                            >
-                                                {
-                                                    row.service_name ||
-                                                    '—'
-                                                }
+                                                    addons={
+                                                        Array.isArray(
+                                                            row.addons
+                                                        )
+                                                            ? row.addons
+                                                            : []
+                                                    }
+                                                    isCanceled={
+                                                        isCanceled
+                                                    }
+                                                />
+
                                             </div>
 
                                         </div>
@@ -2535,28 +2626,21 @@ export default function StatsGrid() {
                                                 "
                                             >
 
-                                                <div
-                                                    className={`
-                                                        text-sm
-                                                        font-medium
-
-                                                        ${
-                                                            isCanceled
-                                                                ? `
-                                                                    text-slate-400
-                                                                    line-through
-                                                                `
-                                                                : `
-                                                                    text-slate-700
-                                                                `
-                                                        }
-                                                    `}
-                                                >
-                                                    {
-                                                        row.service_name ||
-                                                        '—'
+                                                <AppointmentService
+                                                    serviceName={
+                                                        row.service_name
                                                     }
-                                                </div>
+                                                    addons={
+                                                        Array.isArray(
+                                                            row.addons
+                                                        )
+                                                            ? row.addons
+                                                            : []
+                                                    }
+                                                    isCanceled={
+                                                        isCanceled
+                                                    }
+                                                />
 
                                             </td>
 
