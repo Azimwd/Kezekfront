@@ -10,6 +10,10 @@ import {
     useQueryClient
 } from '@tanstack/react-query';
 
+import type {
+    AxiosError
+} from 'axios';
+
 import {
     CircleAlert,
     Plus,
@@ -62,6 +66,173 @@ interface AddonDraft {
 
     is_active: boolean;
 }
+
+/*
+ * ============================================================
+ * ADDON ERRORS
+ * ============================================================
+ */
+
+type AddonErrorMap =
+    Record<
+        string,
+        string[]
+    >;
+
+
+interface AddonApiErrorData {
+    message?: unknown;
+    detail?: unknown;
+    non_field_errors?: unknown;
+
+    name?: unknown;
+    price?: unknown;
+    duration_minutes?: unknown;
+    is_active?: unknown;
+
+    [key: string]:
+        unknown;
+}
+
+
+class AddonMutationError
+    extends Error {
+
+    tempId: string;
+
+    addonName: string;
+
+    originalError: unknown;
+
+
+    constructor(
+        tempId: string,
+        addonName: string,
+        originalError: unknown
+    ) {
+
+        super(
+            `Ошибка дополнительной услуги: ${
+                addonName.trim() ||
+                'без названия'
+            }`
+        );
+
+
+        this.name =
+            'AddonMutationError';
+
+        this.tempId =
+            tempId;
+
+        this.addonName =
+            addonName;
+
+        this.originalError =
+            originalError;
+    }
+}
+
+
+const collectApiMessages = (
+    value: unknown
+): string[] => {
+
+    if (
+        typeof value ===
+        'string'
+    ) {
+
+        const prepared =
+            value.trim();
+
+        return prepared
+            ? [
+                prepared
+            ]
+            : [];
+    }
+
+
+    if (
+        Array.isArray(
+            value
+        )
+    ) {
+
+        return value.flatMap(
+            collectApiMessages
+        );
+    }
+
+
+    if (
+        value &&
+        typeof value ===
+            'object'
+    ) {
+
+        return Object.values(
+            value as Record<
+                string,
+                unknown
+            >
+        ).flatMap(
+            collectApiMessages
+        );
+    }
+
+
+    return [];
+};
+
+
+const getAddonApiErrorMessages = (
+    error: unknown
+): string[] => {
+
+    const axiosError =
+        error as AxiosError<
+            AddonApiErrorData
+        >;
+
+
+    const data =
+        axiosError.response
+            ?.data;
+
+
+    const messages =
+        data
+            ? collectApiMessages(
+                data
+            )
+            : [];
+
+
+    const uniqueMessages =
+        Array.from(
+            new Set(
+                messages
+            )
+        );
+
+
+    if (
+        uniqueMessages.length >
+        0
+    ) {
+        return uniqueMessages;
+    }
+
+
+    return [
+        getApiErrorMessage(
+            error,
+            'Не удалось сохранить дополнительную услугу.'
+        )
+    ];
+};
 
 
 /*
@@ -212,6 +383,14 @@ export default function NewService() {
     );
 
 
+    const [
+        addonErrors,
+        setAddonErrors
+    ] = useState<AddonErrorMap>(
+        {}
+    );
+
+
     /*
      * ============================================================
      * ERROR
@@ -309,6 +488,38 @@ export default function NewService() {
     };
 
 
+    const clearAddonError = (
+        tempId: string
+    ) => {
+
+        setAddonErrors(
+            current => {
+
+                if (
+                    !current[
+                        tempId
+                    ]
+                ) {
+                    return current;
+                }
+
+
+                const next = {
+                    ...current
+                };
+
+
+                delete next[
+                    tempId
+                ];
+
+
+                return next;
+            }
+        );
+    };
+
+
     /*
      * ============================================================
      * REMOVE ADDON
@@ -327,6 +538,11 @@ export default function NewService() {
                         tempId
                 )
         );
+
+
+        clearAddonError(
+            tempId
+        );
     };
 
 
@@ -340,6 +556,11 @@ export default function NewService() {
         tempId: string,
         changes: Partial<AddonDraft>
     ) => {
+
+        clearAddonError(
+            tempId
+        );
+
 
         setAddons(
             current =>
@@ -431,6 +652,206 @@ export default function NewService() {
     };
 
 
+
+
+    /*
+     * ============================================================
+     * VALIDATE ADDONS
+     * ============================================================
+     */
+
+    const validateAddons = () => {
+
+        const nextErrors:
+            AddonErrorMap = {};
+
+
+        const addError = (
+            tempId: string,
+            message: string
+        ) => {
+
+            nextErrors[
+                tempId
+            ] = [
+                ...(
+                    nextErrors[
+                        tempId
+                    ] ?? []
+                ),
+                message
+            ];
+        };
+
+
+        const namesMap =
+            new Map<
+                string,
+                string[]
+            >();
+
+
+        addons.forEach(
+            (
+                addon,
+                index
+            ) => {
+
+                const preparedName =
+                    addon.name
+                        .trim();
+
+
+                const preparedPrice =
+                    addon.price
+                        .trim();
+
+
+                if (
+                    !preparedName
+                ) {
+
+                    addError(
+                        addon.tempId,
+                        `Доп. услуга ${
+                            index + 1
+                        }: введите название.`
+                    );
+                }
+                else {
+
+                    const normalizedName =
+                        preparedName
+                            .toLocaleLowerCase(
+                                'ru'
+                            );
+
+
+                    const ids =
+                        namesMap.get(
+                            normalizedName
+                        ) ?? [];
+
+
+                    namesMap.set(
+                        normalizedName,
+                        [
+                            ...ids,
+                            addon.tempId
+                        ]
+                    );
+                }
+
+
+                if (
+                    preparedPrice ===
+                    ''
+                ) {
+
+                    addError(
+                        addon.tempId,
+                        'Введите цену дополнительной услуги.'
+                    );
+                }
+                else {
+
+                    const numericPrice =
+                        Number(
+                            preparedPrice
+                        );
+
+
+                    if (
+                        !Number.isFinite(
+                            numericPrice
+                        )
+                    ) {
+
+                        addError(
+                            addon.tempId,
+                            'Цена должна быть числом.'
+                        );
+                    }
+                    else if (
+                        numericPrice <
+                        0
+                    ) {
+
+                        addError(
+                            addon.tempId,
+                            'Цена не может быть отрицательной.'
+                        );
+                    }
+                }
+
+
+                if (
+                    !Number.isFinite(
+                        addon
+                            .duration_minutes
+                    ) ||
+                    addon
+                        .duration_minutes <
+                        0
+                ) {
+
+                    addError(
+                        addon.tempId,
+                        'Дополнительное время не может быть отрицательным.'
+                    );
+                }
+            }
+        );
+
+
+        namesMap.forEach(
+            tempIds => {
+
+                if (
+                    tempIds.length <
+                    2
+                ) {
+                    return;
+                }
+
+
+                tempIds.forEach(
+                    tempId => {
+
+                        addError(
+                            tempId,
+                            'Название дополнительной услуги должно быть уникальным.'
+                        );
+                    }
+                );
+            }
+        );
+
+
+        setAddonErrors(
+            nextErrors
+        );
+
+
+        if (
+            Object.keys(
+                nextErrors
+            ).length >
+            0
+        ) {
+
+            setErrorMessage(
+                'Проверьте ошибки в дополнительных услугах ниже.'
+            );
+
+            return false;
+        }
+
+
+        return true;
+    };
+
+
     /*
      * ============================================================
      * RESET FORM
@@ -477,6 +898,10 @@ export default function NewService() {
 
         setAddons(
             []
+        );
+
+        setAddonErrors(
+            {}
         );
 
         setErrorMessage(
@@ -613,6 +1038,15 @@ export default function NewService() {
                                         is_active:
                                             addon
                                                 .is_active
+                                    }
+                                ).catch(
+                                    error => {
+
+                                        throw new AddonMutationError(
+                                            addon.tempId,
+                                            addon.name,
+                                            error
+                                        );
                                     }
                                 )
                             );
@@ -756,6 +1190,42 @@ export default function NewService() {
                     );
 
 
+                    if (
+                        error instanceof
+                        AddonMutationError
+                    ) {
+
+                        const messages =
+                            getAddonApiErrorMessages(
+                                error
+                                    .originalError
+                            );
+
+
+                        setAddonErrors(
+                            current => ({
+                                ...current,
+                                [
+                                    error
+                                        .tempId
+                                ]:
+                                    messages
+                            })
+                        );
+
+
+                        setErrorMessage(
+                            `Не удалось сохранить дополнительную услугу «${
+                                error.addonName.trim() ||
+                                'без названия'
+                            }». Исправьте ошибку ниже.`
+                        );
+
+
+                        return;
+                    }
+
+
                     setErrorMessage(
                         getApiErrorMessage(
                             error,
@@ -878,91 +1348,9 @@ export default function NewService() {
              * ====================================================
              */
 
-            for (
-                const addon
-                of addons
-            ) {
-
-                if (
-                    !addon.name.trim()
-                ) {
-
-                    setErrorMessage(
-                        'Введите название каждой дополнительной услуги.'
-                    );
-
-                    return;
-                }
-
-
-                if (
-                    addon.price.trim() === ''
-                ) {
-
-                    setErrorMessage(
-                        `Введите цену дополнительной услуги «${addon.name}».`
-                    );
-
-                    return;
-                }
-
-
-                if (
-                    Number(
-                        addon.price
-                    ) < 0
-                ) {
-
-                    setErrorMessage(
-                        `Цена «${addon.name}» не может быть отрицательной.`
-                    );
-
-                    return;
-                }
-
-
-                if (
-                    addon.duration_minutes < 0
-                ) {
-
-                    setErrorMessage(
-                        `Длительность «${addon.name}» не может быть отрицательной.`
-                    );
-
-                    return;
-                }
-            }
-
-
-            /*
-             * Проверяем одинаковые названия addons.
-             */
-
-            const normalizedAddonNames =
-                addons.map(
-                    addon =>
-                        addon
-                            .name
-                            .trim()
-                            .toLowerCase()
-                );
-
-
-            const uniqueAddonNames =
-                new Set(
-                    normalizedAddonNames
-                );
-
-
             if (
-                uniqueAddonNames.size !==
-                normalizedAddonNames.length
+                !validateAddons()
             ) {
-
-                setErrorMessage(
-                    'Дополнительные услуги не могут иметь одинаковые названия.'
-                );
-
                 return;
             }
 
@@ -1876,16 +2264,28 @@ export default function NewService() {
                                         key={
                                             addon.tempId
                                         }
-                                        className="
+                                        className={`
                                             flex
                                             flex-col
                                             gap-4
                                             rounded-xl
                                             border
-                                            border-[#d6d4e1]
-                                            bg-white
                                             p-4
-                                        "
+
+                                            ${
+                                                addonErrors[
+                                                    addon.tempId
+                                                ]?.length
+                                                    ? `
+                                                        border-red-300
+                                                        bg-red-50/30
+                                                    `
+                                                    : `
+                                                        border-[#d6d4e1]
+                                                        bg-white
+                                                    `
+                                            }
+                                        `}
                                     >
 
                                         {/* HEADER */}
@@ -1940,6 +2340,69 @@ export default function NewService() {
                                             </button>
 
                                         </div>
+
+
+                                        {addonErrors[
+                                            addon.tempId
+                                        ]?.length > 0 && (
+
+                                            <div
+                                                className="
+                                                    flex
+                                                    items-start
+                                                    gap-2
+                                                    rounded-lg
+                                                    border
+                                                    border-red-200
+                                                    bg-red-50
+                                                    px-3
+                                                    py-2.5
+                                                    text-xs
+                                                    text-red-700
+                                                "
+                                            >
+
+                                                <CircleAlert
+                                                    size={16}
+                                                    className="
+                                                        mt-0.5
+                                                        shrink-0
+                                                        text-red-500
+                                                    "
+                                                />
+
+
+                                                <div
+                                                    className="
+                                                        flex
+                                                        flex-col
+                                                        gap-1
+                                                    "
+                                                >
+
+                                                    {addonErrors[
+                                                        addon.tempId
+                                                    ].map(
+                                                        (
+                                                            message,
+                                                            errorIndex
+                                                        ) => (
+
+                                                            <div
+                                                                key={
+                                                                    `${addon.tempId}-${errorIndex}`
+                                                                }
+                                                            >
+                                                                {message}
+                                                            </div>
+                                                        )
+                                                    )}
+
+                                                </div>
+
+                                            </div>
+
+                                        )}
 
 
                                         {/* NAME */}
