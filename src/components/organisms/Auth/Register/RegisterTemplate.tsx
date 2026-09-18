@@ -215,7 +215,7 @@ export default function RegisterTemplate() {
 
                 <div>
                     <label className="mb-2 block text-[13px] font-medium text-[#172033]">
-                        Фамилия
+                        Фамилия (не обязательно)
                     </label>
 
                     <div className="relative">
