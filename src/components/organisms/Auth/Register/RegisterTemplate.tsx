@@ -62,7 +62,6 @@ export default function RegisterTemplate() {
         if (
             !email.trim() ||
             !firstName.trim() ||
-            !lastName.trim() ||
             !password.trim() ||
             !confirmPassword.trim()
         ) {
