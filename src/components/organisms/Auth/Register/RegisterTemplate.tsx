@@ -175,7 +175,7 @@ export default function RegisterTemplate() {
             <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                     <label className="mb-2 block text-[13px] font-medium text-[#172033]">
-                        Имя
+                        Имя *
                     </label>
 
                     <div className="relative">
@@ -215,7 +215,7 @@ export default function RegisterTemplate() {
 
                 <div>
                     <label className="mb-2 block text-[13px] font-medium text-[#172033]">
-                        Фамилия (не обязательно)
+                        Фамилия
                     </label>
 
                     <div className="relative">
@@ -257,7 +257,7 @@ export default function RegisterTemplate() {
             {/* EMAIL */}
             <div className="mt-4">
                 <label className="mb-2 block text-[13px] font-medium text-[#172033]">
-                    Email
+                    Email *
                 </label>
 
                 <div className="relative">
@@ -298,7 +298,7 @@ export default function RegisterTemplate() {
             {/* PASSWORD */}
             <div className="mt-4">
                 <label className="mb-2 block text-[13px] font-medium text-[#172033]">
-                    Пароль
+                    Пароль *
                 </label>
 
                 <div className="relative">
@@ -361,7 +361,7 @@ export default function RegisterTemplate() {
             {/* CONFIRM PASSWORD */}
             <div className="mt-4">
                 <label className="mb-2 block text-[13px] font-medium text-[#172033]">
-                    Подтвердите пароль
+                    Подтвердите пароль *
                 </label>
 
                 <div className="relative">

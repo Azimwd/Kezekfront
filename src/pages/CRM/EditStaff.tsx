@@ -458,18 +458,6 @@ export default function EditStaff() {
 
 
             if (
-                !last_name
-            ) {
-
-                setErrorMessage(
-                    'Введите фамилию мастера.'
-                );
-
-                return;
-            }
-
-
-            if (
                 !position.trim()
             ) {
 

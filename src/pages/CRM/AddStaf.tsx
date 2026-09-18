@@ -293,18 +293,6 @@ export default function AddStaf() {
 
 
             if (
-                !staffLastName.trim()
-            ) {
-
-                setErrorMessage(
-                    'Введите фамилию мастера.'
-                );
-
-                return;
-            }
-
-
-            if (
                 !staffPosition.trim()
             ) {
 

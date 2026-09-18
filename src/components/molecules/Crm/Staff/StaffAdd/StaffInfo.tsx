@@ -102,7 +102,7 @@ export default function StaffInfo({
 
                         <Typography
                             className="block text-[13px] font-semibold text-[#475569] mb-2"
-                            text={'Фамилия (не обязательно)'}
+                            text={'Фамилия'}
                         />
 
 
