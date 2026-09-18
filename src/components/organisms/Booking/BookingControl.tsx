@@ -43,7 +43,9 @@ import {
     getDayAvailability
 } from '../../../api/scheduling';
 
-
+import BusinessReviews
+    from '../../../components/organisms/Reviews/BusinessReviews';
+    
 /*
  * ============================================================
  * TYPES
@@ -4243,6 +4245,21 @@ export default function BookingControl() {
                 </aside>
 
             </div>
+
+            <div
+                className="
+                    mt-12
+                    border-t
+                    border-[#EAECF0]
+                    pt-10
+                "
+            >
+                <BusinessReviews
+                    businessId={
+                        businessId
+                    }
+                />
+            </div>
         </div>
     );
 }
@@ -4481,6 +4498,7 @@ function TimeGroup({
                                     slot.start_at
                                 )}
                             </button>
+                            
                         );
                     }
                 )}
