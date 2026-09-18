@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import {
     Pencil,
     Trash2
@@ -108,6 +110,26 @@ export default function StaffTable({
 
     /*
      * ============================================================
+     * DELETE MODAL
+     * ============================================================
+     */
+
+    const [
+        deleteTarget,
+        setDeleteTarget
+    ] = useState<Staff | null>(
+        null
+    );
+
+
+    const [
+        deleteError,
+        setDeleteError
+    ] = useState('');
+
+
+    /*
+     * ============================================================
      * DELETE
      * ============================================================
      */
@@ -133,6 +155,16 @@ export default function StaffTable({
                         'staff'
                     ]
                 });
+
+
+                setDeleteTarget(
+                    null
+                );
+
+
+                setDeleteError(
+                    ''
+                );
             },
 
 
@@ -146,30 +178,66 @@ export default function StaffTable({
                 );
 
 
-                alert(
-                    'Произошла ошибка при удалении.'
+                setDeleteError(
+                    'Не удалось удалить сотрудника. Попробуйте ещё раз.'
                 );
             }
         });
 
 
-    const handleDelete = (
-        id: number
+    const openDeleteModal = (
+        staff: Staff
     ) => {
 
-        const isConfirmed =
-            window.confirm(
-                'Вы уверены, что хотите удалить этого сотрудника?'
-            );
+        setDeleteError(
+            ''
+        );
 
+
+        setDeleteTarget(
+            staff
+        );
+    };
+
+
+    const closeDeleteModal = () => {
 
         if (
-            isConfirmed
+            deleteMutation.isPending
         ) {
-            deleteMutation.mutate(
-                id
-            );
+            return;
         }
+
+
+        setDeleteError(
+            ''
+        );
+
+
+        setDeleteTarget(
+            null
+        );
+    };
+
+
+    const handleConfirmDelete = () => {
+
+        if (
+            !deleteTarget ||
+            deleteMutation.isPending
+        ) {
+            return;
+        }
+
+
+        setDeleteError(
+            ''
+        );
+
+
+        deleteMutation.mutate(
+            deleteTarget.id
+        );
     };
 
 
@@ -211,9 +279,10 @@ export default function StaffTable({
      */
 
     return (
-        <div
-            className="
-                mx-0
+        <>
+            <div
+                className="
+                    mx-0
                 flex
                 w-full
                 min-w-0
@@ -499,8 +568,8 @@ export default function StaffTable({
                                                 }
                                             `}
                                             onClick={() =>
-                                                handleDelete(
-                                                    staff.id
+                                                openDeleteModal(
+                                                    staff
                                                 )
                                             }
                                             disabled={
@@ -1084,8 +1153,8 @@ export default function StaffTable({
                                                         }
                                                     `}
                                                     onClick={() =>
-                                                        handleDelete(
-                                                            staff.id
+                                                        openDeleteModal(
+                                                            staff
                                                         )
                                                     }
                                                     disabled={
@@ -1120,5 +1189,196 @@ export default function StaffTable({
             </div>
 
         </div>
+
+
+        {deleteTarget && (
+
+            <div
+                className="
+                    fixed
+                    inset-0
+                    z-[100]
+                    flex
+                    items-center
+                    justify-center
+                    bg-slate-950/45
+                    px-4
+                    backdrop-blur-[2px]
+                "
+                onMouseDown={
+                    closeDeleteModal
+                }
+            >
+
+                <div
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="delete-staff-title"
+                    onMouseDown={
+                        event =>
+                            event.stopPropagation()
+                    }
+                    className="
+                        w-full
+                        max-w-[440px]
+                        rounded-3xl
+                        border
+                        border-slate-200
+                        bg-white
+                        p-6
+                        shadow-2xl
+                    "
+                >
+
+                    <div
+                        className="
+                            flex
+                            h-12
+                            w-12
+                            items-center
+                            justify-center
+                            rounded-2xl
+                            bg-red-50
+                            text-red-500
+                        "
+                    >
+                        <Trash2 size={22} />
+                    </div>
+
+                    <h2
+                        id="delete-staff-title"
+                        className="
+                            mt-5
+                            text-xl
+                            font-bold
+                            text-slate-900
+                        "
+                    >
+                        Удалить сотрудника?
+                    </h2>
+
+                    <p
+                        className="
+                            mt-2
+                            text-sm
+                            leading-6
+                            text-slate-500
+                        "
+                    >
+                        Вы собираетесь удалить{' '}
+                        <span className="font-semibold text-slate-800">
+                            {`${deleteTarget.first_name} ${deleteTarget.last_name || ''}`.trim()}
+                        </span>
+                        . Это действие нельзя отменить.
+                    </p>
+
+                    {deleteTarget.active_services_count !== undefined &&
+                        deleteTarget.active_services_count > 0 && (
+                            <div
+                                className="
+                                    mt-4
+                                    rounded-xl
+                                    border
+                                    border-amber-200
+                                    bg-amber-50
+                                    px-4
+                                    py-3
+                                    text-sm
+                                    leading-5
+                                    text-amber-800
+                                "
+                            >
+                                У сотрудника привязано услуг:{' '}
+                                <strong>
+                                    {deleteTarget.active_services_count}
+                                </strong>
+                                . После удаления проверьте привязки услуг.
+                            </div>
+                        )}
+
+                    {deleteError && (
+                        <div
+                            className="
+                                mt-4
+                                rounded-xl
+                                border
+                                border-red-200
+                                bg-red-50
+                                px-4
+                                py-3
+                                text-sm
+                                leading-5
+                                text-red-700
+                            "
+                        >
+                            {deleteError}
+                        </div>
+                    )}
+
+                    <div
+                        className="
+                            mt-6
+                            flex
+                            flex-col-reverse
+                            gap-3
+                            sm:flex-row
+                            sm:justify-end
+                        "
+                    >
+                        <Button
+                            type="button"
+                            disabled={deleteMutation.isPending}
+                            onClick={closeDeleteModal}
+                            className="
+                                cursor-pointer
+                                rounded-xl
+                                border
+                                border-slate-200
+                                bg-white
+                                px-5
+                                py-2.5
+                                text-sm
+                                font-semibold
+                                text-slate-700
+                                transition-colors
+                                hover:bg-slate-50
+                                disabled:cursor-not-allowed
+                                disabled:opacity-50
+                            "
+                        >
+                            Отмена
+                        </Button>
+
+                        <Button
+                            type="button"
+                            disabled={deleteMutation.isPending}
+                            onClick={handleConfirmDelete}
+                            className="
+                                cursor-pointer
+                                rounded-xl
+                                bg-red-500
+                                px-5
+                                py-2.5
+                                text-sm
+                                font-semibold
+                                text-white
+                                shadow-sm
+                                transition-colors
+                                hover:bg-red-600
+                                disabled:cursor-not-allowed
+                                disabled:opacity-60
+                            "
+                        >
+                            {deleteMutation.isPending
+                                ? 'Удаление...'
+                                : 'Удалить'}
+                        </Button>
+                    </div>
+                </div>
+            </div>
+
+        )}
+
+        </>
     );
 }

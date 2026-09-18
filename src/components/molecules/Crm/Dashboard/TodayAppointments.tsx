@@ -985,7 +985,7 @@ export default function TodayAppointments({
                                                             type="button"
                                                             onClick={() =>
                                                                 navigate(
-                                                                    `/crm/appointments/${appointment.id}`
+                                                                    `/crm/appointments/edit/${appointment.id}`
                                                                 )
                                                             }
                                                             title="Открыть запись"
