@@ -412,8 +412,8 @@ export default function EditService({
     const [
         selectedStaffIds,
         setSelectedStaffIds
-    ] = useState<number[]>(
-        service.staff_ids || []
+    ] = useState<number[] | null>(
+        null
     );
 
 
@@ -525,7 +525,8 @@ export default function EditService({
 
     const {
         data: assignedStaffData,
-        isFetching: isAssignedLoading
+        isFetching: isAssignedLoading,
+        isError: isAssignedError
     } = useQuery({
 
         queryKey: [
@@ -539,7 +540,16 @@ export default function EditService({
             ),
 
         enabled:
-            isOpen
+            isOpen,
+
+        staleTime:
+            0,
+
+        refetchOnMount:
+            'always',
+
+        retry:
+            false
     });
 
 
@@ -547,25 +557,29 @@ export default function EditService({
         () => {
 
             if (
-                assignedStaffData?.data
+                !isOpen ||
+                !assignedStaffData?.data
             ) {
-
-                const ids =
-                    assignedStaffData.data.map(
-                        (
-                            staff: any
-                        ) =>
-                            staff.id
-                    );
-
-
-                setSelectedStaffIds(
-                    ids
-                );
+                return;
             }
+
+
+            const ids =
+                assignedStaffData.data.map(
+                    (
+                        staff: any
+                    ) =>
+                        staff.id
+                );
+
+
+            setSelectedStaffIds(
+                ids
+            );
 
         },
         [
+            isOpen,
             assignedStaffData
         ]
     );
@@ -1058,8 +1072,15 @@ export default function EditService({
         );
 
 
+        /*
+         * null = привязанные мастера ещё не загружены.
+         * []   = мастера загружены, и их действительно нет.
+         *
+         * Не используем service.staff_ids как источник истины:
+         * при каждом открытии ждём свежий ответ backend.
+         */
         setSelectedStaffIds(
-            service.staff_ids || []
+            null
         );
 
 
@@ -1108,6 +1129,11 @@ export default function EditService({
         );
 
 
+        setSelectedStaffIds(
+            null
+        );
+
+
         setIsOpen(
             false
         );
@@ -1125,6 +1151,21 @@ export default function EditService({
 
             mutationFn:
                 async () => {
+
+                    /*
+                     * Никогда не отправляем на backend пустое состояние
+                     * до завершения загрузки привязанных мастеров.
+                     */
+                    if (
+                        selectedStaffIds ===
+                        null
+                    ) {
+
+                        throw new Error(
+                            'Привязанные мастера ещё не загружены.'
+                        );
+                    }
+
 
                     /*
                      * ================================================
@@ -1416,6 +1457,36 @@ export default function EditService({
         setErrorMessage(
             ''
         );
+
+
+        /*
+         * Не разрешаем сохранять услугу, пока не известна
+         * актуальная привязка мастеров.
+         */
+        if (
+            isAssignedError
+        ) {
+
+            setErrorMessage(
+                'Не удалось загрузить привязанных мастеров. Сохранение остановлено.'
+            );
+
+            return;
+        }
+
+
+        if (
+            isAssignedLoading ||
+            selectedStaffIds ===
+                null
+        ) {
+
+            setErrorMessage(
+                'Подождите, пока загрузятся привязанные мастера.'
+            );
+
+            return;
+        }
 
 
         if (
@@ -2953,7 +3024,44 @@ export default function EditService({
                         "
                     >
 
-                        {isAssignedLoading ? (
+                        {isAssignedError ? (
+
+                            <div
+                                className="
+                                    flex
+                                    items-start
+                                    gap-2
+                                    rounded-xl
+                                    border
+                                    border-red-200
+                                    bg-red-50
+                                    px-4
+                                    py-3
+                                    text-sm
+                                    text-red-700
+                                "
+                            >
+
+                                <CircleAlert
+                                    size={18}
+                                    className="
+                                        mt-0.5
+                                        shrink-0
+                                        text-red-500
+                                    "
+                                />
+
+
+                                <span>
+                                    Не удалось загрузить привязанных мастеров.
+                                    Сохранение услуги временно недоступно.
+                                </span>
+
+                            </div>
+
+                        ) : isAssignedLoading ||
+                          selectedStaffIds ===
+                            null ? (
 
                             <Typography
                                 text="Загрузка привязанных мастеров..."
@@ -2973,7 +3081,10 @@ export default function EditService({
                                     selectedStaffIds
                                 }
                                 onChangeSelected={
-                                    setSelectedStaffIds
+                                    ids =>
+                                        setSelectedStaffIds(
+                                            ids
+                                        )
                                 }
                             />
 
@@ -3040,7 +3151,11 @@ export default function EditService({
                         <Button
                             type="submit"
                             disabled={
-                                editMutation.isPending
+                                editMutation.isPending ||
+                                isAssignedLoading ||
+                                isAssignedError ||
+                                selectedStaffIds ===
+                                    null
                             }
                             className="
                                 cursor-pointer
@@ -3059,7 +3174,11 @@ export default function EditService({
                                 text={
                                     editMutation.isPending
                                         ? 'Сохранение...'
-                                        : 'Сохранить'
+                                        : isAssignedLoading ||
+                                          selectedStaffIds ===
+                                              null
+                                            ? 'Загрузка...'
+                                            : 'Сохранить'
                                 }
                                 className="
                                     whitespace-nowrap
