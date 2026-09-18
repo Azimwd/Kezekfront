@@ -3719,7 +3719,7 @@ export default function BookingControl() {
                                         text-slate-700
                                     "
                                 >
-                                    Фамилия *
+                                    Фамилия
                                 </label>
 
                                 <div

@@ -975,7 +975,7 @@ export default function NewBusiness() {
                 );
 
             } catch (
-                error
+            error
             ) {
 
                 console.error(
@@ -1086,7 +1086,25 @@ export default function NewBusiness() {
         <>
 
             <Button
-                className="flex justify-center items-center gap-2 px-1 py-3 bg-[#4F46E5] hover:bg-indigo-600 rounded-xl text-white transition-colors shadow-sm w-full cursor-pointer"
+                className="transition-colors duration-200 
+                    flex
+                    w-full
+                    cursor-pointer
+                    items-center
+                    justify-center
+                    gap-2
+                    rounded-xl
+                    bg-[#4F46E5]
+                    px-5
+                    py-3
+                    text-white
+                    shadow-sm
+                    transition-colors
+                    hover:bg-indigo-600
+
+                    sm:w-auto
+                    sm:shrink-0
+                    sm:px-6"
                 onClick={() => {
                     setErrorMessage('');
                     setIsModalOpen(true);
@@ -1611,31 +1629,28 @@ export default function NewBusiness() {
 
 
                                             <div
-                                                className={`block w-11 h-6 rounded-full transition-colors ${
-                                                    isActiveStatus
+                                                className={`block w-11 h-6 rounded-full transition-colors ${isActiveStatus
                                                         ? 'bg-[#3b27b5]'
                                                         : 'bg-gray-300'
-                                                }`}
+                                                    }`}
                                             />
 
 
                                             <div
-                                                className={`absolute left-[2px] top-[2px] bg-white w-5 h-5 rounded-full transition-transform ${
-                                                    isActiveStatus
+                                                className={`absolute left-[2px] top-[2px] bg-white w-5 h-5 rounded-full transition-transform ${isActiveStatus
                                                         ? 'translate-x-5'
                                                         : ''
-                                                }`}
+                                                    }`}
                                             />
 
                                         </div>
 
 
                                         <Typography
-                                            className={`text-sm font-medium ${
-                                                isActiveStatus
+                                            className={`text-sm font-medium ${isActiveStatus
                                                     ? 'text-[#3b27b5]'
                                                     : 'text-gray-500'
-                                            }`}
+                                                }`}
                                             text={
                                                 isActiveStatus
                                                     ? 'Активен'
@@ -1680,12 +1695,11 @@ export default function NewBusiness() {
                                 NewBusinessMutation.isPending ||
                                 !!rawImage
                             }
-                            className={`px-5 py-2 bg-[#3b27b5] rounded-lg transition-colors cursor-pointer ${
-                                NewBusinessMutation.isPending ||
-                                !!rawImage
+                            className={`px-5 py-2 bg-[#3b27b5] rounded-lg transition-colors cursor-pointer ${NewBusinessMutation.isPending ||
+                                    !!rawImage
                                     ? 'opacity-70 cursor-not-allowed'
                                     : 'hover:bg-indigo-800'
-                            }`}
+                                }`}
                         >
 
                             <Typography
