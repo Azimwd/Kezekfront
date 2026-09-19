@@ -352,32 +352,6 @@ export default function EditAppointment() {
      * ========================================================
      */
 
-    const formatDate =
-        format(
-            new Date(
-                appointment.start_at
-            ),
-            'do MMMM, yyyy'
-        );
-
-
-    const formatTimeFrom =
-        format(
-            new Date(
-                appointment.start_at
-            ),
-            'HH:mm'
-        );
-
-
-    const formatTimeTo =
-        format(
-            new Date(
-                appointment.end_at
-            ),
-            'HH:mm'
-        );
-
 
     const formatCreateAt =
         format(
@@ -403,19 +377,20 @@ export default function EditAppointment() {
      * ========================================================
      */
 
-    const duration =
-        intervalToDuration({
-
-            start:
-                new Date(
-                    appointment.start_at
-                ),
-
-            end:
-                new Date(
-                    appointment.end_at
-                )
-        });
+    const durationMinutes =
+        Math.max(
+            0,
+            Math.round(
+                (
+                    new Date(
+                        appointment.end_at
+                    ).getTime() -
+                    new Date(
+                        appointment.start_at
+                    ).getTime()
+                ) / 60000
+            )
+        );
 
 
     /*
@@ -504,20 +479,14 @@ export default function EditAppointment() {
                         description={
                             appointment.service_description
                         }
-                        duration={
-                            duration
+                        duration_minutes={
+                            durationMinutes
                         }
                         price={
                             appointment.price
                         }
-                        format_date={
-                            formatDate
-                        }
-                        format_time_from={
-                            formatTimeFrom
-                        }
-                        format_time_to={
-                            formatTimeTo
+                        addons={
+                            appointment.addons || []
                         }
                     />
 
