@@ -1,9 +1,14 @@
-import { User } from 'lucide-react';
+import {
+    Phone,
+    User,
+    WalletCards,
+    CalendarCheck
+} from 'lucide-react';
 
 import Icon from '../../../atoms/Icon';
 import Typography from '../../../atoms/Typography';
 
-interface ClientInforProps {
+interface ClientInfoProps {
     name: string;
     last_name: string;
     phone_num: string;
@@ -17,69 +22,95 @@ export default function ClientInfo({
     phone_num,
     client_ltv,
     client_total_visit
-}: ClientInforProps) {
+}: ClientInfoProps) {
+    const fullName = `${name || ''} ${last_name || ''}`.trim();
+
     return (
-        <div className="w-full rounded-2xl border border-[#c7c4d8] bg-white px-6 py-5">
+        <div className="h-full w-full rounded-2xl border border-[#EAECF0] bg-white p-6">
             <Typography
-                text="Информация о клиенте"
-                className="text-xl font-medium text-[#111827]"
+                text="Клиент"
+                className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500"
             />
 
-            <div className=" flex items-center gap-6 mt-6 py-4">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-[#4F46E5] bg-[#dce9ff]">
-                    <Icon icon={User} size={28} className="text-[#4F46E5]" />
+            <div className="mt-5 flex items-center gap-4">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#EEF2FF]">
+                    <Icon
+                        icon={User}
+                        size={24}
+                        className="text-[#4F46E5]"
+                    />
                 </div>
 
-                <div className="grid flex-1 grid-cols-3 gap-12">
-                    <div className="flex flex-col gap-1">
-                        <div className="flex gap-1">
+                <div className="min-w-0">
+                    <Typography
+                        text={fullName || 'Имя не указано'}
+                        className="truncate text-lg font-semibold text-[#111827]"
+                    />
+
+                    <Typography
+                        text="Клиент"
+                        className="mt-0.5 text-sm text-slate-500"
+                    />
+                </div>
+            </div>
+
+            <div className="mt-6 grid gap-3">
+                <div className="flex items-center gap-3 rounded-xl bg-[#F8FAFC] px-4 py-3">
+                    <Icon
+                        icon={Phone}
+                        size={18}
+                        className="shrink-0 text-slate-500"
+                    />
+
+                    <div className="min-w-0">
+                        <Typography
+                            text="Телефон"
+                            className="text-xs text-slate-500"
+                        />
+                        <Typography
+                            text={phone_num || 'Не указан'}
+                            className="mt-0.5 truncate text-sm font-medium text-[#111827]"
+                        />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                    <div className="flex items-center gap-3 rounded-xl bg-[#F8FAFC] px-4 py-3">
+                        <Icon
+                            icon={CalendarCheck}
+                            size={18}
+                            className="shrink-0 text-[#4F46E5]"
+                        />
+
+                        <div>
                             <Typography
-                                text={name}
-                                className="text-lg font-medium text-[#111827]"
+                                text="Визитов"
+                                className="text-xs text-slate-500"
                             />
 
                             <Typography
-                                text={last_name}
-                                className="text-lg font-medium text-[#111827]"
-                            />
-                        </div>
-
-                        <div className="flex items-baseline gap-2">
-                            <Typography
-                                text={client_total_visit}
-                                className="text-base font-medium text-[#4F46E5]"
-                            />
-                            <Typography
-                                text="визитов"
-                                className="text-sm text-gray-500"
+                                text={String(client_total_visit)}
+                                className="mt-0.5 text-sm font-semibold text-[#111827]"
                             />
                         </div>
                     </div>
 
-                    <div className="flex flex-col gap-1">
-                        <Typography
-                            text="Номер"
-                            className="text-sm text-gray-500"
+                    <div className="flex items-center gap-3 rounded-xl bg-[#F8FAFC] px-4 py-3">
+                        <Icon
+                            icon={WalletCards}
+                            size={18}
+                            className="shrink-0 text-[#4F46E5]"
                         />
-                        <Typography
-                            text={phone_num}
-                            className="text-base font-medium text-[#111827]"
-                        />
-                    </div>
 
-                    <div className="flex flex-col gap-1">
-                        <Typography
-                            text="LTV"
-                            className="text-sm text-gray-500"
-                        />
-                        <div className="flex gap-1">
+                        <div>
                             <Typography
-                                text={client_ltv}
-                                className="text-base font-medium text-[#111827]"
+                                text="LTV"
+                                className="text-xs text-slate-500"
                             />
+
                             <Typography
-                                text={'₸'}
-                                className="text-base font-medium text-[#111827]"
+                                text={`${client_ltv} ₸`}
+                                className="mt-0.5 text-sm font-semibold text-[#111827]"
                             />
                         </div>
                     </div>

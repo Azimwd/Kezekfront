@@ -1,5 +1,4 @@
 import {
-    useEffect,
     useState
 } from 'react';
 
@@ -13,6 +12,15 @@ import {
     useQueryClient
 } from '@tanstack/react-query';
 
+import {
+    format,
+    intervalToDuration
+} from 'date-fns';
+
+import {
+    ru
+} from 'date-fns/locale';
+
 
 import ClientInfo from '../../../molecules/Crm/Appointments/ClientInfo';
 
@@ -23,6 +31,8 @@ import AppointmentComment from '../../../molecules/Crm/Appointments/AppointmentC
 import AppointmentStaff from '../../../molecules/Crm/Appointments/AppointmentStaff';
 
 import RescheduleModal from '../../../molecules/Crm/Appointments/RescheduleModal';
+
+import Details from '../../../organisms/Crm/Appointments/Edit/Details';
 
 
 import {
@@ -57,35 +67,11 @@ export default function AppointmentEditControl() {
     ] = useState(false);
 
 
-    const [
-        selectedDate,
-        setSelectedDate
-    ] = useState('');
-
-
-    const [
-        selectedTime,
-        setSelectedTime
-    ] = useState('');
-
-
     /*
-     * Пока пример.
-     *
-     * После подключим сюда твой
-     * AvailableSlotsView.
+     * ============================================================
+     * GET APPOINTMENT
+     * ============================================================
      */
-    const [
-        availableSlots
-    ] = useState<string[]>([
-        '09:00',
-        '10:30',
-        '11:00',
-        '14:00',
-        '15:30',
-        '16:00'
-    ]);
-
 
     const {
         data,
@@ -106,7 +92,8 @@ export default function AppointmentEditControl() {
         enabled:
             Number.isFinite(
                 appointmentId
-            ),
+            ) &&
+            appointmentId > 0,
 
         retry: false
     });
@@ -116,51 +103,11 @@ export default function AppointmentEditControl() {
         data?.data;
 
 
-    useEffect(() => {
-
-        if (
-            !appointment?.start_at
-        ) {
-            return;
-        }
-
-
-        const date =
-            new Date(
-                appointment.start_at
-            );
-
-
-        const year =
-            date.getFullYear();
-
-
-        const month =
-            String(
-                date.getMonth() + 1
-            ).padStart(
-                2,
-                '0'
-            );
-
-
-        const day =
-            String(
-                date.getDate()
-            ).padStart(
-                2,
-                '0'
-            );
-
-
-        setSelectedDate(
-            `${year}-${month}-${day}`
-        );
-
-    }, [
-        appointment?.start_at
-    ]);
-
+    /*
+     * ============================================================
+     * REFRESH
+     * ============================================================
+     */
 
     const refresh = () => {
 
@@ -181,6 +128,12 @@ export default function AppointmentEditControl() {
     };
 
 
+    /*
+     * ============================================================
+     * CONFIRM
+     * ============================================================
+     */
+
     const confirmMutation =
         useMutation({
 
@@ -193,6 +146,12 @@ export default function AppointmentEditControl() {
                 refresh
         });
 
+
+    /*
+     * ============================================================
+     * COMPLETE
+     * ============================================================
+     */
 
     const completeMutation =
         useMutation({
@@ -207,6 +166,12 @@ export default function AppointmentEditControl() {
         });
 
 
+    /*
+     * ============================================================
+     * CANCEL
+     * ============================================================
+     */
+
     const cancelMutation =
         useMutation({
 
@@ -219,6 +184,12 @@ export default function AppointmentEditControl() {
                 refresh
         });
 
+
+    /*
+     * ============================================================
+     * RESCHEDULE
+     * ============================================================
+     */
 
     const rescheduleMutation =
         useMutation({
@@ -237,91 +208,184 @@ export default function AppointmentEditControl() {
                     false
                 );
 
-                setSelectedTime(
-                    ''
-                );
-
                 refresh();
             }
         });
 
 
-    const handleReschedule = () => {
-
-        if (
-            !selectedDate ||
-            !selectedTime
-        ) {
-            return;
-        }
-
-
-        const date =
-            new Date(
-                `${selectedDate}T${selectedTime}:00`
-            );
-
-
-        rescheduleMutation.mutate(
-            date.toISOString()
-        );
-    };
-
+    /*
+     * ============================================================
+     * LOADING
+     * ============================================================
+     */
 
     if (isLoading) {
+
         return (
-            <div className="py-16 text-center text-slate-500">
+            <div
+                className="
+                    flex
+                    min-h-[300px]
+                    items-center
+                    justify-center
+                    text-sm
+                    text-slate-500
+                "
+            >
                 Загрузка записи...
             </div>
         );
     }
 
 
+    /*
+     * ============================================================
+     * ERROR
+     * ============================================================
+     */
+
     if (
         error ||
         !appointment
     ) {
+
         return (
-            <div className="py-16 text-center text-red-500">
+            <div
+                className="
+                    flex
+                    min-h-[300px]
+                    items-center
+                    justify-center
+                    text-sm
+                    text-red-500
+                "
+            >
                 Не удалось загрузить запись.
             </div>
         );
     }
 
 
+    /*
+     * ============================================================
+     * DATE
+     * ============================================================
+     */
+
+    const startDate =
+        new Date(
+            appointment.start_at
+        );
+
+
+    const endDate =
+        new Date(
+            appointment.end_at
+        );
+
+
+    const formatDate =
+        format(
+            startDate,
+            'd MMMM yyyy',
+            {
+                locale: ru
+            }
+        );
+
+
+    const formatTimeFrom =
+        format(
+            startDate,
+            'HH:mm'
+        );
+
+
+    const formatTimeTo =
+        format(
+            endDate,
+            'HH:mm'
+        );
+
+
+    /*
+     * Полная продолжительность записи.
+     *
+     * Берётся из start_at / end_at,
+     * поэтому сюда уже входит время
+     * дополнительных услуг.
+     */
+    const duration =
+        intervalToDuration({
+            start: startDate,
+            end: endDate
+        });
+
+
+    /*
+     * ============================================================
+     * MUTATION STATE
+     * ============================================================
+     */
+
     const actionPending =
         confirmMutation.isPending ||
         completeMutation.isPending ||
-        cancelMutation.isPending;
+        cancelMutation.isPending ||
+        rescheduleMutation.isPending;
 
+
+    /*
+     * ============================================================
+     * RENDER
+     * ============================================================
+     */
 
     return (
         <div
             className="
                 flex
+                w-full
                 flex-col
                 gap-6
             "
         >
 
-            <ClientInfo
-                name={
-                    appointment.client_first_name
+            {/* ==================================================
+                DETAILS
+            ================================================== */}
+
+            <Details
+                service_name={
+                    appointment.service_name
                 }
-                last_name={
-                    appointment.client_last_name
+                description={
+                    appointment.service_description
                 }
-                phone_num={
-                    appointment.client_phone
+                duration={
+                    duration
                 }
-                client_ltv={
-                    appointment.client_ltv
+                price={
+                    appointment.price
                 }
-                client_total_visit={
-                    appointment.client_total_visit
+                format_date={
+                    formatDate
+                }
+                format_time_from={
+                    formatTimeFrom
+                }
+                format_time_to={
+                    formatTimeTo
+                }
+                addons={
+                    appointment.addons || []
                 }
             />
 
+
+            {/* ==================================================
+                APPOINTMENT MANAGEMENT
+            ================================================== */}
 
             <AppointmentManagement
                 status={
@@ -347,6 +411,57 @@ export default function AppointmentEditControl() {
             />
 
 
+            {/* ==================================================
+                CLIENT + STAFF
+            ================================================== */}
+
+            <div
+                className="
+                    grid
+                    grid-cols-1
+                    gap-6
+                    xl:grid-cols-2
+                "
+            >
+
+                <ClientInfo
+                    name={
+                        appointment.client_first_name
+                    }
+                    last_name={
+                        appointment.client_last_name || ''
+                    }
+                    phone_num={
+                        appointment.client_phone
+                    }
+                    client_ltv={
+                        appointment.client_ltv
+                    }
+                    client_total_visit={
+                        appointment.client_total_visits
+                    }
+                />
+
+
+                <AppointmentStaff
+                    firstName={
+                        appointment.staff_first_name
+                    }
+                    lastName={
+                        appointment.staff_last_name
+                    }
+                    position={
+                        appointment.staff_position
+                    }
+                />
+
+            </div>
+
+
+            {/* ==================================================
+                COMMENT
+            ================================================== */}
+
             <AppointmentComment
                 comment={
                     appointment.comment
@@ -354,20 +469,12 @@ export default function AppointmentEditControl() {
             />
 
 
-            <AppointmentStaff
-                firstName={
-                    appointment.staff_first_name
-                }
-                lastName={
-                    appointment.staff_last_name
-                }
-                position={
-                    appointment.staff_position
-                }
-            />
-
+            {/* ==================================================
+                RESCHEDULE MODAL
+            ================================================== */}
 
             {showReschedule && (
+
                 <RescheduleModal
                     currentStartAt={
                         appointment.start_at
@@ -398,6 +505,7 @@ export default function AppointmentEditControl() {
                         rescheduleMutation.isPending
                     }
                 />
+
             )}
 
         </div>
