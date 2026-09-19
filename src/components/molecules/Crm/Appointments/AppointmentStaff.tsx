@@ -1,10 +1,10 @@
 import {
-    BadgeCheck,
     User
 } from 'lucide-react';
 
 import Icon from '../../../atoms/Icon';
 import Typography from '../../../atoms/Typography';
+
 
 interface AppointmentStaffProps {
     firstName: string | null;
@@ -12,61 +12,104 @@ interface AppointmentStaffProps {
     position: string | null;
 }
 
+
 export default function AppointmentStaff({
     firstName,
     lastName,
     position
 }: AppointmentStaffProps) {
-    const fullName = `${firstName || ''} ${lastName || ''}`.trim();
+
+    const fullName =
+        `${firstName || ''} ${lastName || ''}`.trim();
+
 
     return (
-        <div className="h-full w-full rounded-2xl border border-[#EAECF0] bg-white p-6">
+        <div
+            className="
+                h-full
+                w-full
+                rounded-2xl
+                border
+                border-[#E3E6ED]
+                bg-white
+                p-5
+                shadow-[0_2px_8px_rgba(15,23,42,0.04)]
+            "
+        >
+
             <Typography
-                text="Мастер"
-                className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500"
+                text="МАСТЕР"
+                className="
+                    text-[11px]
+                    font-semibold
+                    uppercase
+                    tracking-wider
+                    text-slate-600
+                "
             />
 
-            <div className="mt-5 flex items-center gap-4">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#EEF2FF]">
+
+            <div
+                className="
+                    mt-5
+                    flex
+                    items-center
+                    gap-4
+                "
+            >
+
+                <div
+                    className="
+                        flex
+                        h-12
+                        w-12
+                        shrink-0
+                        items-center
+                        justify-center
+                        rounded-full
+                        bg-[#EEF2FF]
+                    "
+                >
                     <Icon
                         icon={User}
-                        size={24}
+                        size={21}
                         className="text-[#4F46E5]"
                     />
                 </div>
 
+
                 <div className="min-w-0">
-                    <Typography
-                        text={fullName || 'Мастер не назначен'}
-                        className="truncate text-lg font-semibold text-[#111827]"
-                    />
 
                     <Typography
-                        text={position || 'Должность не указана'}
-                        className="mt-0.5 text-sm text-slate-500"
+                        text={
+                            fullName ||
+                            'Мастер не назначен'
+                        }
+                        className="
+                            truncate
+                            text-base
+                            font-semibold
+                            text-[#111827]
+                        "
                     />
+
+
+                    <Typography
+                        text={
+                            position ||
+                            'Должность не указана'
+                        }
+                        className="
+                            mt-1
+                            text-sm
+                            text-slate-500
+                        "
+                    />
+
                 </div>
+
             </div>
 
-            <div className="mt-6 flex items-center gap-3 rounded-xl bg-[#F8FAFC] px-4 py-3">
-                <Icon
-                    icon={BadgeCheck}
-                    size={18}
-                    className="text-[#4F46E5]"
-                />
-
-                <div>
-                    <Typography
-                        text="Исполнитель записи"
-                        className="text-xs text-slate-500"
-                    />
-
-                    <Typography
-                        text={fullName || 'Не назначен'}
-                        className="mt-0.5 text-sm font-medium text-[#111827]"
-                    />
-                </div>
-            </div>
         </div>
     );
 }

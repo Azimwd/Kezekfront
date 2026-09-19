@@ -13,8 +13,7 @@ import {
 } from '@tanstack/react-query';
 
 import {
-    format,
-    intervalToDuration
+    format
 } from 'date-fns';
 
 import {
@@ -22,17 +21,26 @@ import {
 } from 'date-fns/locale';
 
 
-import ClientInfo from '../../../molecules/Crm/Appointments/ClientInfo';
+import ClientInfo
+    from '../../../molecules/Crm/Appointments/ClientInfo';
 
-import AppointmentManagement from '../../../molecules/Crm/Appointments/AppointmentManagement';
+import AppointmentManagement
+    from '../../../molecules/Crm/Appointments/AppointmentManagement';
 
-import AppointmentComment from '../../../molecules/Crm/Appointments/AppointmentComment';
+import AppointmentComment
+    from '../../../molecules/Crm/Appointments/AppointmentComment';
 
-import AppointmentStaff from '../../../molecules/Crm/Appointments/AppointmentStaff';
+import AppointmentStaff
+    from '../../../molecules/Crm/Appointments/AppointmentStaff';
 
-import RescheduleModal from '../../../molecules/Crm/Appointments/RescheduleModal';
+import AppointmentTime
+    from '../../../organisms/Crm/Appointments/AppointmentTime';
 
-import Details from '../../../organisms/Crm/Appointments/Edit/Details';
+import Details
+    from '../../../organisms/Crm/Appointments/Edit/Details';
+
+import RescheduleModal
+    from '../../../molecules/Crm/Appointments/RescheduleModal';
 
 
 import {
@@ -45,6 +53,12 @@ import {
 
 
 export default function AppointmentEditControl() {
+
+    /*
+     * ============================================================
+     * PARAMS
+     * ============================================================
+     */
 
     const {
         id
@@ -60,6 +74,12 @@ export default function AppointmentEditControl() {
     const queryClient =
         useQueryClient();
 
+
+    /*
+     * ============================================================
+     * STATE
+     * ============================================================
+     */
 
     const [
         showReschedule,
@@ -90,7 +110,7 @@ export default function AppointmentEditControl() {
             ),
 
         enabled:
-            Number.isFinite(
+            Number.isInteger(
                 appointmentId
             ) &&
             appointmentId > 0,
@@ -142,8 +162,10 @@ export default function AppointmentEditControl() {
                     appointmentId
                 ),
 
-            onSuccess:
-                refresh
+            onSuccess: () => {
+                refresh();
+            }
+
         });
 
 
@@ -161,8 +183,10 @@ export default function AppointmentEditControl() {
                     appointmentId
                 ),
 
-            onSuccess:
-                refresh
+            onSuccess: () => {
+                refresh();
+            }
+
         });
 
 
@@ -180,8 +204,10 @@ export default function AppointmentEditControl() {
                     appointmentId
                 ),
 
-            onSuccess:
-                refresh
+            onSuccess: () => {
+                refresh();
+            }
+
         });
 
 
@@ -210,6 +236,7 @@ export default function AppointmentEditControl() {
 
                 refresh();
             }
+
         });
 
 
@@ -225,7 +252,7 @@ export default function AppointmentEditControl() {
             <div
                 className="
                     flex
-                    min-h-[300px]
+                    min-h-[400px]
                     items-center
                     justify-center
                     text-sm
@@ -253,7 +280,7 @@ export default function AppointmentEditControl() {
             <div
                 className="
                     flex
-                    min-h-[300px]
+                    min-h-[400px]
                     items-center
                     justify-center
                     text-sm
@@ -268,7 +295,7 @@ export default function AppointmentEditControl() {
 
     /*
      * ============================================================
-     * DATE
+     * DATE / TIME
      * ============================================================
      */
 
@@ -309,30 +336,39 @@ export default function AppointmentEditControl() {
 
 
     /*
-     * Полная продолжительность записи.
+     * Полная длительность записи.
      *
-     * Берётся из start_at / end_at,
-     * поэтому сюда уже входит время
-     * дополнительных услуг.
+     * Например:
+     * 12:30 → 14:37
+     *
+     * = 127 минут
+     *
+     * В эту продолжительность уже входят
+     * выбранные дополнительные услуги.
      */
-    const duration =
-        intervalToDuration({
-            start: startDate,
-            end: endDate
-        });
+    const durationMinutes =
+        Math.max(
+            0,
+            Math.round(
+                (
+                    endDate.getTime() -
+                    startDate.getTime()
+                ) /
+                60000
+            )
+        );
 
 
     /*
      * ============================================================
-     * MUTATION STATE
+     * MUTATIONS STATE
      * ============================================================
      */
 
     const actionPending =
         confirmMutation.isPending ||
         completeMutation.isPending ||
-        cancelMutation.isPending ||
-        rescheduleMutation.isPending;
+        cancelMutation.isPending;
 
 
     /*
@@ -342,136 +378,176 @@ export default function AppointmentEditControl() {
      */
 
     return (
-        <div
-            className="
-                flex
-                w-full
-                flex-col
-                gap-6
-            "
-        >
-
-            {/* ==================================================
-                DETAILS
-            ================================================== */}
-
-            <Details
-                service_name={
-                    appointment.service_name
-                }
-                description={
-                    appointment.service_description
-                }
-                duration={
-                    duration
-                }
-                price={
-                    appointment.price
-                }
-                format_date={
-                    formatDate
-                }
-                format_time_from={
-                    formatTimeFrom
-                }
-                format_time_to={
-                    formatTimeTo
-                }
-                addons={
-                    appointment.addons || []
-                }
-            />
-
-
-            {/* ==================================================
-                APPOINTMENT MANAGEMENT
-            ================================================== */}
-
-            <AppointmentManagement
-                status={
-                    appointment.status
-                }
-                isPending={
-                    actionPending
-                }
-                onConfirm={() =>
-                    confirmMutation.mutate()
-                }
-                onComplete={() =>
-                    completeMutation.mutate()
-                }
-                onCancel={() =>
-                    cancelMutation.mutate()
-                }
-                onReschedule={() =>
-                    setShowReschedule(
-                        true
-                    )
-                }
-            />
-
-
-            {/* ==================================================
-                CLIENT + STAFF
-            ================================================== */}
+        <>
 
             <div
                 className="
                     grid
                     grid-cols-1
-                    gap-6
-                    xl:grid-cols-2
+                    items-start
+                    gap-5
+                    xl:grid-cols-[minmax(0,1fr)_300px]
                 "
             >
 
-                <ClientInfo
-                    name={
-                        appointment.client_first_name
-                    }
-                    last_name={
-                        appointment.client_last_name || ''
-                    }
-                    phone_num={
-                        appointment.client_phone
-                    }
-                    client_ltv={
-                        appointment.client_ltv
-                    }
-                    client_total_visit={
-                        appointment.client_total_visits
-                    }
-                />
+                {/* ==================================================
+                    LEFT COLUMN
+                ================================================== */}
+
+                <div
+                    className="
+                        flex
+                        min-w-0
+                        flex-col
+                        gap-5
+                    "
+                >
+
+                    {/* ==============================================
+                        CLIENT
+                    ============================================== */}
+
+                    <ClientInfo
+                        name={
+                            appointment.client_first_name
+                        }
+                        last_name={
+                            appointment.client_last_name ||
+                            ''
+                        }
+                        phone_num={
+                            appointment.client_phone
+                        }
+                        client_ltv={
+                            appointment.client_ltv
+                        }
+                        client_total_visit={
+                            appointment.client_total_visits
+                        }
+                    />
 
 
-                <AppointmentStaff
-                    firstName={
-                        appointment.staff_first_name
-                    }
-                    lastName={
-                        appointment.staff_last_name
-                    }
-                    position={
-                        appointment.staff_position
-                    }
-                />
+                    {/* ==============================================
+                        SERVICE + ADDONS
+                    ============================================== */}
+
+                    <Details
+                        service_name={
+                            appointment.service_name
+                        }
+                        description={
+                            appointment.service_description
+                        }
+                        duration_minutes={
+                            durationMinutes
+                        }
+                        price={
+                            appointment.price
+                        }
+                        addons={
+                            appointment.addons ||
+                            []
+                        }
+                    />
+
+
+                    {/* ==============================================
+                        TIME + STAFF
+                    ============================================== */}
+
+                    <div
+                        className="
+                            grid
+                            grid-cols-1
+                            gap-5
+                            md:grid-cols-2
+                        "
+                    >
+
+                        <AppointmentTime
+                            date={
+                                formatDate
+                            }
+                            timeFrom={
+                                formatTimeFrom
+                            }
+                            timeTo={
+                                formatTimeTo
+                            }
+                        />
+
+
+                        <AppointmentStaff
+                            firstName={
+                                appointment.staff_first_name
+                            }
+                            lastName={
+                                appointment.staff_last_name
+                            }
+                            position={
+                                appointment.staff_position
+                            }
+                        />
+
+                    </div>
+
+
+                    {/* ==============================================
+                        COMMENT
+                    ============================================== */}
+
+                    <AppointmentComment
+                        comment={
+                            appointment.comment
+                        }
+                    />
+
+                </div>
+
+
+                {/* ==================================================
+                    RIGHT COLUMN
+                ================================================== */}
+
+                <div
+                    className="
+                        flex
+                        flex-col
+                        gap-5
+                    "
+                >
+
+                    <AppointmentManagement
+                        status={
+                            appointment.status
+                        }
+                        isPending={
+                            actionPending
+                        }
+                        onConfirm={() =>
+                            confirmMutation.mutate()
+                        }
+                        onComplete={() =>
+                            completeMutation.mutate()
+                        }
+                        onCancel={() =>
+                            cancelMutation.mutate()
+                        }
+                        onReschedule={() =>
+                            setShowReschedule(
+                                true
+                            )
+                        }
+                    />
+
+                </div>
 
             </div>
 
 
-            {/* ==================================================
-                COMMENT
-            ================================================== */}
-
-            <AppointmentComment
-                comment={
-                    appointment.comment
-                }
-            />
-
-
-            {/* ==================================================
+            {/* ======================================================
                 RESCHEDULE MODAL
-            ================================================== */}
+            ====================================================== */}
 
             {showReschedule && (
 
@@ -508,6 +584,6 @@ export default function AppointmentEditControl() {
 
             )}
 
-        </div>
+        </>
     );
 }
