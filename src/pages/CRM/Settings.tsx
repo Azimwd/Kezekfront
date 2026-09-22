@@ -6,6 +6,7 @@ import {
 } from 'react';
 
 import {
+    Banknote,
     Calendar,
     CalendarX,
     Lightbulb,
@@ -20,6 +21,9 @@ import ConfirmationOfRecords
 
 import CancellationOfClientRecords
     from '../../components/organisms/Crm/Settings/CancellationOfClientRecords';
+
+import PrepaymentSettings
+    from '../../components/organisms/Crm/Settings/PrepaymentSettings';
 
 import {
     getSettings,
@@ -38,7 +42,44 @@ const EMPTY_SETTINGS: BookingSettings = {
     max_booking_days_ahead: 30,
     auto_confirm_bookings: true,
     allow_client_cancel: true,
-    cancel_before_hours: 2
+    cancel_before_hours: 2,
+    prepayment_enabled: false,
+    prepayment_percent: 30,
+    kaspi_payment_url: ''
+};
+
+
+const normalizeSettings = (
+    data: BookingSettings
+): BookingSettings => {
+    return {
+        slot_step_minutes:
+            data.slot_step_minutes,
+
+        min_booking_notice_hours:
+            data.min_booking_notice_hours,
+
+        max_booking_days_ahead:
+            data.max_booking_days_ahead,
+
+        auto_confirm_bookings:
+            data.auto_confirm_bookings,
+
+        allow_client_cancel:
+            data.allow_client_cancel,
+
+        cancel_before_hours:
+            data.cancel_before_hours,
+
+        prepayment_enabled:
+            data.prepayment_enabled ?? false,
+
+        prepayment_percent:
+            data.prepayment_percent ?? 30,
+
+        kaspi_payment_url:
+            data.kaspi_payment_url ?? ''
+    };
 };
 
 
@@ -92,12 +133,6 @@ export default function Settings() {
             : null;
 
 
-    /*
-     * ============================================================
-     * LOAD
-     * ============================================================
-     */
-
     useEffect(() => {
         if (!businessId) {
             return;
@@ -117,27 +152,10 @@ export default function Settings() {
                         );
 
 
-                    const loadedSettings:
-                        BookingSettings = {
-
-                        slot_step_minutes:
-                            response.data.slot_step_minutes,
-
-                        min_booking_notice_hours:
-                            response.data.min_booking_notice_hours,
-
-                        max_booking_days_ahead:
-                            response.data.max_booking_days_ahead,
-
-                        auto_confirm_bookings:
-                            response.data.auto_confirm_bookings,
-
-                        allow_client_cancel:
-                            response.data.allow_client_cancel,
-
-                        cancel_before_hours:
-                            response.data.cancel_before_hours
-                    };
+                    const loadedSettings =
+                        normalizeSettings(
+                            response.data
+                        );
 
 
                     setSettings(
@@ -177,12 +195,6 @@ export default function Settings() {
     ]);
 
 
-    /*
-     * ============================================================
-     * UPDATE FIELD
-     * ============================================================
-     */
-
     const updateField = <
         K extends keyof BookingSettings
     >(
@@ -198,12 +210,6 @@ export default function Settings() {
         );
     };
 
-
-    /*
-     * ============================================================
-     * CHANGES
-     * ============================================================
-     */
 
     const hasChanges =
         useMemo(
@@ -221,12 +227,6 @@ export default function Settings() {
         );
 
 
-    /*
-     * ============================================================
-     * CANCEL
-     * ============================================================
-     */
-
     const handleCancel =
         () => {
 
@@ -241,18 +241,42 @@ export default function Settings() {
         };
 
 
-    /*
-     * ============================================================
-     * SAVE
-     * ============================================================
-     */
-
     const handleSave =
         async () => {
 
+            if (!businessId) {
+                return;
+            }
+
+
             if (
-                !businessId
+                settings.prepayment_enabled
+                &&
+                (
+                    settings.prepayment_percent < 1
+                    ||
+                    settings.prepayment_percent > 100
+                )
             ) {
+
+                setError(
+                    'Процент предоплаты должен быть от 1 до 100.'
+                );
+
+                return;
+            }
+
+
+            if (
+                settings.prepayment_enabled
+                &&
+                !settings.kaspi_payment_url.trim()
+            ) {
+
+                setError(
+                    'Укажите ссылку Kaspi для предоплаты.'
+                );
+
                 return;
             }
 
@@ -276,27 +300,10 @@ export default function Settings() {
                     );
 
 
-                const updatedSettings:
-                    BookingSettings = {
-
-                    slot_step_minutes:
-                        response.data.slot_step_minutes,
-
-                    min_booking_notice_hours:
-                        response.data.min_booking_notice_hours,
-
-                    max_booking_days_ahead:
-                        response.data.max_booking_days_ahead,
-
-                    auto_confirm_bookings:
-                        response.data.auto_confirm_bookings,
-
-                    allow_client_cancel:
-                        response.data.allow_client_cancel,
-
-                    cancel_before_hours:
-                        response.data.cancel_before_hours
-                };
+                const updatedSettings =
+                    normalizeSettings(
+                        response.data
+                    );
 
 
                 setSettings(
@@ -329,16 +336,7 @@ export default function Settings() {
         };
 
 
-    /*
-     * ============================================================
-     * NO BUSINESS
-     * ============================================================
-     */
-
-    if (
-        !businessId
-    ) {
-
+    if (!businessId) {
         return (
             <div
                 className="
@@ -349,8 +347,6 @@ export default function Settings() {
                     px-4
                     py-8
                     text-center
-
-                    sm:px-6
                 "
             >
                 <p
@@ -358,7 +354,6 @@ export default function Settings() {
                         text-sm
                         leading-6
                         text-slate-500
-
                         sm:text-base
                     "
                 >
@@ -369,16 +364,7 @@ export default function Settings() {
     }
 
 
-    /*
-     * ============================================================
-     * LOADING
-     * ============================================================
-     */
-
-    if (
-        isLoading
-    ) {
-
+    if (isLoading) {
         return (
             <div
                 className="
@@ -396,7 +382,6 @@ export default function Settings() {
                         animate-pulse
                         text-sm
                         text-slate-500
-
                         sm:text-base
                     "
                 >
@@ -406,12 +391,6 @@ export default function Settings() {
         );
     }
 
-
-    /*
-     * ============================================================
-     * RENDER
-     * ============================================================
-     */
 
     return (
         <div
@@ -424,10 +403,6 @@ export default function Settings() {
                 bg-[#f8f9ff]
             "
         >
-            {/* =====================================================
-                CONTENT
-            ===================================================== */}
-
             <main
                 className="
                     w-full
@@ -435,13 +410,10 @@ export default function Settings() {
                     flex-1
                     px-4
                     py-5
-
                     sm:px-6
                     sm:py-6
-
                     md:px-8
                     md:py-8
-
                     lg:px-10
                 "
             >
@@ -455,21 +427,16 @@ export default function Settings() {
                         grid-cols-1
                         items-start
                         gap-5
-
                         sm:gap-6
-
                         xl:grid-cols-[minmax(0,730px)_minmax(0,340px)]
                     "
                 >
-                    {/* LEFT */}
-
                     <div
                         className="
                             flex
                             min-w-0
                             flex-col
                             gap-4
-
                             sm:gap-5
                         "
                     >
@@ -482,7 +449,6 @@ export default function Settings() {
                             }
                         />
 
-
                         <ConfirmationOfRecords
                             settings={
                                 settings
@@ -492,6 +458,14 @@ export default function Settings() {
                             }
                         />
 
+                        <PrepaymentSettings
+                            settings={
+                                settings
+                            }
+                            updateField={
+                                updateField
+                            }
+                        />
 
                         <CancellationOfClientRecords
                             settings={
@@ -504,8 +478,6 @@ export default function Settings() {
                     </div>
 
 
-                    {/* RIGHT */}
-
                     <aside
                         className="
                             flex
@@ -514,8 +486,6 @@ export default function Settings() {
                             gap-4
                         "
                     >
-                        {/* HOW IT WORKS */}
-
                         <section
                             className="
                                 min-w-0
@@ -524,7 +494,6 @@ export default function Settings() {
                                 border-[#d0cee3]
                                 bg-white
                                 p-4
-
                                 sm:p-5
                                 md:p-6
                             "
@@ -546,7 +515,6 @@ export default function Settings() {
                                         justify-center
                                         rounded-full
                                         bg-[#f1efff]
-
                                         sm:h-10
                                         sm:w-10
                                     "
@@ -556,13 +524,11 @@ export default function Settings() {
                                             h-4
                                             w-4
                                             text-[#4031d0]
-
                                             sm:h-5
                                             sm:w-5
                                         "
                                     />
                                 </div>
-
 
                                 <h3
                                     className="
@@ -582,7 +548,6 @@ export default function Settings() {
                                     flex
                                     flex-col
                                     gap-4
-
                                     sm:mt-6
                                     sm:gap-5
                                 "
@@ -600,7 +565,6 @@ export default function Settings() {
                                     которые будут доступны клиенту.
                                 </InfoItem>
 
-
                                 <InfoItem>
                                     <strong
                                         className="
@@ -614,6 +578,18 @@ export default function Settings() {
                                     записи клиента.
                                 </InfoItem>
 
+                                <InfoItem>
+                                    <strong
+                                        className="
+                                            font-semibold
+                                            text-slate-800
+                                        "
+                                    >
+                                        Предоплата
+                                    </strong>{' '}
+                                    позволяет подтверждать запись
+                                    только после проверки оплаты.
+                                </InfoItem>
 
                                 <InfoItem>
                                     <strong
@@ -631,8 +607,6 @@ export default function Settings() {
                         </section>
 
 
-                        {/* RESULT */}
-
                         <section
                             className="
                                 min-w-0
@@ -642,7 +616,6 @@ export default function Settings() {
                                 text-white
                                 shadow-lg
                                 shadow-[#4031d0]/15
-
                                 sm:p-5
                                 md:p-6
                             "
@@ -663,7 +636,6 @@ export default function Settings() {
                                     flex
                                     flex-col
                                     gap-4
-
                                     sm:mt-6
                                     sm:gap-5
                                 "
@@ -699,16 +671,68 @@ export default function Settings() {
                                         />
                                     }
                                 >
-                                    Записи подтверждаются{' '}
+                                    {
+                                        settings.prepayment_enabled
+                                            ? (
+                                                <>
+                                                    Запись подтверждается
+                                                    после проверки{' '}
+                                                    <strong>
+                                                        предоплаты
+                                                    </strong>
+                                                    .
+                                                </>
+                                            )
+                                            : (
+                                                <>
+                                                    Записи подтверждаются{' '}
+                                                    <strong>
+                                                        {
+                                                            settings.auto_confirm_bookings
+                                                                ? 'автоматически'
+                                                                : 'вручную'
+                                                        }
+                                                    </strong>
+                                                    .
+                                                </>
+                                            )
+                                    }
+                                </ResultItem>
 
-                                    <strong>
-                                        {
-                                            settings.auto_confirm_bookings
-                                                ? 'автоматически'
-                                                : 'вручную'
-                                        }
-                                    </strong>
-                                    .
+
+                                <ResultItem
+                                    icon={
+                                        <Banknote
+                                            className="
+                                                h-5
+                                                w-5
+                                            "
+                                        />
+                                    }
+                                >
+                                    {
+                                        settings.prepayment_enabled
+                                            ? (
+                                                <>
+                                                    Требуется предоплата{' '}
+                                                    <strong>
+                                                        {
+                                                            settings.prepayment_percent
+                                                        }%
+                                                    </strong>{' '}
+                                                    от стоимости записи.
+                                                </>
+                                            )
+                                            : (
+                                                <>
+                                                    Предоплата{' '}
+                                                    <strong>
+                                                        не требуется
+                                                    </strong>
+                                                    .
+                                                </>
+                                            )
+                                    }
                                 </ResultItem>
 
 
@@ -751,8 +775,6 @@ export default function Settings() {
                 </div>
 
 
-                {/* ERROR */}
-
                 {error && (
                     <div
                         className="
@@ -776,10 +798,6 @@ export default function Settings() {
             </main>
 
 
-            {/* =====================================================
-                ACTION BAR
-            ===================================================== */}
-
             <footer
                 className="
                     mt-auto
@@ -789,11 +807,8 @@ export default function Settings() {
                     bg-white
                     px-4
                     py-4
-
                     sm:px-6
-
                     md:px-8
-
                     lg:px-10
                 "
             >
@@ -805,7 +820,6 @@ export default function Settings() {
                         max-w-[1160px]
                         flex-col-reverse
                         gap-3
-
                         sm:flex-row
                         sm:items-center
                         sm:justify-end
@@ -836,7 +850,6 @@ export default function Settings() {
                             hover:bg-slate-50
                             disabled:cursor-not-allowed
                             disabled:opacity-40
-
                             sm:w-auto
                             sm:min-w-[110px]
                         "
@@ -868,7 +881,6 @@ export default function Settings() {
                             hover:bg-[#3d2fc9]
                             disabled:cursor-not-allowed
                             disabled:bg-slate-400
-
                             sm:w-auto
                             sm:min-w-[205px]
                         "
@@ -885,12 +897,6 @@ export default function Settings() {
     );
 }
 
-
-/*
- * ============================================================
- * INFO ITEM
- * ============================================================
- */
 
 function InfoItem({
     children
@@ -916,14 +922,12 @@ function InfoItem({
                 "
             />
 
-
             <p
                 className="
                     min-w-0
                     text-[12px]
                     leading-5
                     text-slate-600
-
                     sm:text-[13px]
                 "
             >
@@ -933,12 +937,6 @@ function InfoItem({
     );
 }
 
-
-/*
- * ============================================================
- * RESULT ITEM
- * ============================================================
- */
 
 function ResultItem({
     icon,
@@ -971,14 +969,12 @@ function ResultItem({
                 {icon}
             </div>
 
-
             <div
                 className="
                     min-w-0
                     pt-1.5
                     text-[12px]
                     leading-5
-
                     sm:text-[13px]
                 "
             >

@@ -8,6 +8,9 @@ export interface BookingSettings {
     auto_confirm_bookings: boolean;
     allow_client_cancel: boolean;
     cancel_before_hours: number;
+    prepayment_enabled: boolean;
+    prepayment_percent: number;
+    kaspi_payment_url: string;
 }
 
 
@@ -57,7 +60,16 @@ export const patchSettings = async (
                     settings.allow_client_cancel,
 
                 cancel_before_hours:
-                    settings.cancel_before_hours
+                    settings.cancel_before_hours,
+
+                prepayment_enabled:
+                    settings.prepayment_enabled,
+
+                prepayment_percent:
+                    settings.prepayment_percent,
+
+                kaspi_payment_url:
+                    settings.kaspi_payment_url
             }
         );
 

@@ -87,6 +87,72 @@ type BookingServiceWithCategory =
         category_name?: string | null;
     };
 
+const formatPhone = (
+    value: string
+) => {
+    let digits =
+        value.replace(
+            /\D/g,
+            ''
+        );
+
+    if (
+        digits.startsWith('8')
+    ) {
+        digits =
+            '7' +
+            digits.slice(1);
+    }
+
+    if (
+        !digits.startsWith('7')
+    ) {
+        digits =
+            '7' +
+            digits;
+    }
+
+    digits =
+        digits.slice(
+            0,
+            11
+        );
+
+    const number =
+        digits.slice(1);
+
+    let result = '+7';
+
+    if (
+        number.length > 0
+    ) {
+        result +=
+            ` ${number.slice(0, 3)}`;
+    }
+
+    if (
+        number.length > 3
+    ) {
+        result +=
+            ` ${number.slice(3, 6)}`;
+    }
+
+    if (
+        number.length > 6
+    ) {
+        result +=
+            ` ${number.slice(6, 8)}`;
+    }
+
+    if (
+        number.length > 8
+    ) {
+        result +=
+            ` ${number.slice(8, 10)}`;
+    }
+
+    return result;
+};
 
 const getServiceCategoryName = (
     service: BookingService
@@ -3797,9 +3863,7 @@ export default function BookingControl() {
                                     "
                                 >
                                     <Phone
-                                        size={
-                                            17
-                                        }
+                                        size={17}
                                         className="
                                             pointer-events-none
                                             absolute
@@ -3812,14 +3876,16 @@ export default function BookingControl() {
 
                                     <input
                                         type="tel"
-                                        value={
-                                            phone
-                                        }
+                                        inputMode="tel"
+                                        value={phone}
                                         placeholder="+7 777 000 00 00"
+                                        maxLength={16}
                                         onChange={
                                             event =>
                                                 setPhone(
-                                                    event.target.value
+                                                    formatPhone(
+                                                        event.target.value
+                                                    )
                                                 )
                                         }
                                         className="
