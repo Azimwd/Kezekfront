@@ -39,6 +39,7 @@ import {
     cancelAppointment,
     completeAppointment,
     confirmAppointment,
+    confirmAppointmentPrepayment,
     rescheduleAppointment
 } from '../../../../../api/appointments';
 
@@ -153,6 +154,33 @@ export default function EditAppointment() {
 
                 console.error(
                     'Ошибка подтверждения записи:',
+                    error
+                );
+
+            }
+        });
+
+
+    const prepaymentConfirmMutation =
+        useMutation({
+
+            mutationFn: () =>
+                confirmAppointmentPrepayment(
+                    appointmentId
+                ),
+
+            onSuccess: () => {
+
+                refreshAppointment();
+
+            },
+
+            onError: (
+                error
+            ) => {
+
+                console.error(
+                    'Ошибка подтверждения предоплаты:',
                     error
                 );
 
@@ -401,8 +429,28 @@ export default function EditAppointment() {
 
     const actionPending =
         confirmMutation.isPending ||
+        prepaymentConfirmMutation.isPending ||
         completeMutation.isPending ||
         cancelMutation.isPending;
+
+
+    const prepayment =
+        appointment.prepayment ??
+        null;
+
+
+    const handleConfirm = () => {
+
+        if (
+            prepayment?.status ===
+            'pending'
+        ) {
+            prepaymentConfirmMutation.mutate();
+            return;
+        }
+
+        confirmMutation.mutate();
+    };
 
 
     return (
@@ -504,6 +552,55 @@ export default function EditAppointment() {
                     "
                 >
 
+                    {prepayment && (
+                        <div
+                            className="
+                                rounded-2xl
+                                border
+                                border-[#c7c4d8]
+                                bg-white
+                                p-5
+                            "
+                        >
+                            <div
+                                className="
+                                    text-sm
+                                    font-semibold
+                                    text-slate-900
+                                "
+                            >
+                                Предоплата
+                            </div>
+
+                            <div
+                                className="
+                                    mt-3
+                                    grid
+                                    gap-2
+                                    text-sm
+                                    text-slate-600
+                                "
+                            >
+                                <div>
+                                    Код: {prepayment.reference}
+                                </div>
+
+                                <div>
+                                    Сумма: {prepayment.amount} ₸
+                                </div>
+
+                                <div>
+                                    Статус: {prepayment.status === 'pending'
+                                        ? 'Ожидает оплаты'
+                                        : prepayment.status === 'confirmed'
+                                            ? 'Подтверждена'
+                                            : 'Отменена'}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+
                     <ManageAppoinment
                         status={
                             appointment.status
@@ -511,8 +608,8 @@ export default function EditAppointment() {
                         isPending={
                             actionPending
                         }
-                        onConfirm={() =>
-                            confirmMutation.mutate()
+                        onConfirm={
+                            handleConfirm
                         }
                         onComplete={() =>
                             completeMutation.mutate()

@@ -42,6 +42,7 @@ import {
     cancelAppointment,
     completeAppointment,
     confirmAppointment,
+    confirmAppointmentPrepayment,
     filterAppointments
 } from '../../../../api/appointments';
 
@@ -233,6 +234,7 @@ const formatAppointmentDate = (
 
 type StatusAction =
     | 'confirm'
+    | 'confirm_prepayment'
     | 'complete'
     | 'cancel';
 
@@ -241,6 +243,12 @@ interface QuickStatusProps {
     appointmentId: number;
 
     status: string;
+
+    prepayment?: {
+        reference: string;
+        amount: string | number;
+        status: string;
+    } | null;
 
     isLoading: boolean;
 
@@ -254,6 +262,7 @@ interface QuickStatusProps {
 function QuickStatus({
     appointmentId,
     status,
+    prepayment,
     isLoading,
     onAction
 }: QuickStatusProps) {
@@ -350,7 +359,10 @@ function QuickStatus({
 
                         return {
                             label:
-                                'Ожидает',
+                                prepayment?.status ===
+                                    'pending'
+                                    ? 'Ожидает предоплату'
+                                    : 'Ожидает',
 
                             className:
                                 'bg-[#fffbe2] text-[#d97706]',
@@ -448,7 +460,8 @@ function QuickStatus({
 
             },
             [
-                status
+                status,
+                prepayment?.status
             ]
         );
 
@@ -604,7 +617,10 @@ function QuickStatus({
 
                             onClick={() =>
                                 handleAction(
-                                    'confirm'
+                                    prepayment?.status ===
+                                        'pending'
+                                        ? 'confirm_prepayment'
+                                        : 'confirm'
                                 )
                             }
 
@@ -633,7 +649,10 @@ function QuickStatus({
                                 }
                             />
 
-                            Подтвердить
+                            {prepayment?.status ===
+                                'pending'
+                                ? 'Предоплата получена'
+                                : 'Подтвердить'}
 
                         </button>
 
@@ -1306,6 +1325,17 @@ export default function StatsGrid() {
 
                     if (
                         action ===
+                        'confirm_prepayment'
+                    ) {
+
+                        return confirmAppointmentPrepayment(
+                            appointmentId
+                        );
+                    }
+
+
+                    if (
+                        action ===
                         'confirm'
                     ) {
 
@@ -1663,7 +1693,7 @@ export default function StatsGrid() {
 
                     <input
                         type="text"
-                        placeholder="Поиск по клиенту, мастеру или услуге..."
+                        placeholder="Поиск по клиенту, услуге или коду KZK-..."
                         value={
                             search
                         }
@@ -2032,6 +2062,11 @@ export default function StatsGrid() {
 
                                                     status={
                                                         row.status
+                                                    }
+
+                                                    prepayment={
+                                                        row.prepayment ??
+                                                        null
                                                     }
 
                                                     isLoading={
@@ -2697,6 +2732,11 @@ export default function StatsGrid() {
 
                                                     status={
                                                         row.status
+                                                    }
+
+                                                    prepayment={
+                                                        row.prepayment ??
+                                                        null
                                                     }
 
                                                     isLoading={

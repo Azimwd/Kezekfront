@@ -54,7 +54,8 @@ import {
 import {
     cancelAppointment,
     completeAppointment,
-    confirmAppointment
+    confirmAppointment,
+    confirmAppointmentPrepayment
 } from '../../../../api/appointments';
 
 
@@ -425,6 +426,37 @@ export default function DashboardControl() {
         });
 
 
+    const confirmPrepaymentMutation =
+        useMutation({
+
+            mutationFn: (
+                appointmentId: number
+            ) =>
+                confirmAppointmentPrepayment(
+                    appointmentId
+                ),
+
+            onMutate: (
+                appointmentId
+            ) => {
+
+                setActionLoadingId(
+                    appointmentId
+                );
+            },
+
+            onSuccess:
+                refreshDashboard,
+
+            onSettled: () => {
+
+                setActionLoadingId(
+                    null
+                );
+            }
+        });
+
+
     /*
      * ============================================================
      * COMPLETE
@@ -514,6 +546,33 @@ export default function DashboardControl() {
                 dashboardData
             ]
         );
+
+
+    const handleConfirmAppointment = (
+        appointmentId: number
+    ) => {
+
+        const appointment =
+            appointments.find(
+                item =>
+                    item.id ===
+                    appointmentId
+            ) as any;
+
+        if (
+            appointment?.prepayment?.status ===
+            'pending'
+        ) {
+            confirmPrepaymentMutation.mutate(
+                appointmentId
+            );
+            return;
+        }
+
+        confirmMutation.mutate(
+            appointmentId
+        );
+    };
 
 
     /*
@@ -1621,7 +1680,7 @@ export default function DashboardControl() {
                                 onConfirm={(
                                     id
                                 ) =>
-                                    confirmMutation.mutate(
+                                    handleConfirmAppointment(
                                         id
                                     )
                                 }

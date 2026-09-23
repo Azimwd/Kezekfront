@@ -1,6 +1,5 @@
 import { api } from './api';
 
-
 export const getAllAppointments = async (
     businessId: number
 ) => {
@@ -13,7 +12,6 @@ export const getAllAppointments = async (
 
     return response.data;
 };
-
 
 export const filterAppointments = async (
     businessId: number,
@@ -30,7 +28,6 @@ export const filterAppointments = async (
     return response.data;
 };
 
-
 export const getAppointmentDetail = async (
     appointmentId: number
 ) => {
@@ -44,12 +41,6 @@ export const getAppointmentDetail = async (
     return response.data;
 };
 
-
-/*
- * Старое имя функции.
- * Оставляем для компонентов,
- * которые уже используют appointmentById.
- */
 export const appointmentById = async (
     appointmentId: number
 ) => {
@@ -57,7 +48,6 @@ export const appointmentById = async (
         appointmentId
     );
 };
-
 
 export const confirmAppointment = async (
     appointmentId: number
@@ -73,6 +63,19 @@ export const confirmAppointment = async (
     return response.data;
 };
 
+export const confirmAppointmentPrepayment = async (
+    appointmentId: number
+) => {
+    const response = await api.patch(
+        `/api/appointments/${appointmentId}/prepayment/confirm/`,
+        {},
+        {
+            withCredentials: true
+        }
+    );
+
+    return response.data;
+};
 
 export const completeAppointment = async (
     appointmentId: number
@@ -88,25 +91,19 @@ export const completeAppointment = async (
     return response.data;
 };
 
+export const cancelAppointment = async (
+    appointmentId: number
+) => {
+    const response = await api.patch(
+        `/api/appointments/${appointmentId}/business-cancel/`,
+        {},
+        {
+            withCredentials: true
+        }
+    );
 
-export const cancelAppointment =
-    async (
-        appointmentId: number
-    ) => {
-
-        const response =
-            await api.patch(
-                `/api/appointments/${appointmentId}/business-cancel/`,
-                {},
-                {
-                    withCredentials: true
-                }
-            );
-
-
-        return response.data;
-    };
-
+    return response.data;
+};
 
 export const rescheduleAppointment = async (
     appointmentId: number,
