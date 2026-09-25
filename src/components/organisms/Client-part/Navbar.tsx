@@ -415,7 +415,7 @@ export default function Navbar() {
                             >
 
                                 <Typography
-                                    text="Войти"
+                                    text="Начать"
 
                                     className="
                                         select-none
@@ -739,7 +739,7 @@ export default function Navbar() {
                                 >
 
                                     <Typography
-                                        text="Войти"
+                                        text="Начать"
 
                                         className="
                                             text-base
