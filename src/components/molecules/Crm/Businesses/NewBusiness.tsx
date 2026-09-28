@@ -1109,6 +1109,7 @@ export default function NewBusiness() {
                     setErrorMessage('');
                     setIsModalOpen(true);
                 }}
+                data-tour="create-business"
             >
 
                 <Icon
