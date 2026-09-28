@@ -32,6 +32,10 @@ import EditAppointment from '../components/organisms/Crm/Appointments/Edit/EditA
 import { setDefaultOptions } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
+import {
+    BusinessProvider
+} from '../context/BusinessContext';
+
 import BusinessOwnerRoute from '../routes/BusinessOwnerRoute';
 
 const queryClient = new QueryClient();
@@ -92,7 +96,14 @@ function App() {
 
                     {/* Только business_owner */}
                     <Route element={<BusinessOwnerRoute />}>
-                        <Route path="/crm" element={<CrmPage />}>
+                        <Route
+                            path="/crm"
+                            element={
+                                <BusinessProvider>
+                                    <CrmPage />
+                                </BusinessProvider>
+                            }
+                        >
 
                             <Route
                                 path="dashboard"

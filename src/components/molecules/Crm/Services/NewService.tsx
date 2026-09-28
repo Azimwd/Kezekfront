@@ -1490,6 +1490,7 @@ export default function NewService() {
                         true
                     );
                 }}
+                data-tour="create-service"
             >
 
                 <Icon
