@@ -45,7 +45,7 @@ const TOUR_STORAGE_KEY =
 const steps: TourStep[] = [
     {
         id: 'business',
-        route: '/crm/businesses',
+        route: '/crm/my-businesses',
         target: '[data-tour="create-business"]',
         title: 'Создайте бизнес',
         description:
@@ -93,7 +93,7 @@ const steps: TourStep[] = [
     },
     {
         id: 'appointment',
-        route: '/crm/appointments/create',
+        route: '/crm/appointments',
         target: '[data-tour="create-appointment"]',
         title: 'Создайте первую запись',
         description:
