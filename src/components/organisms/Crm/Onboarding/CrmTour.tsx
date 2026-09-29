@@ -1157,6 +1157,10 @@ export default function CrmTour() {
         setStepIndex(previous => previous - 1);
     };
     const handleClose = () => {
+        localStorage.setItem(
+            TOUR_STORAGE_KEY,
+            'true'
+        );
         setIsRunning(false);
         clearTarget();
     };
