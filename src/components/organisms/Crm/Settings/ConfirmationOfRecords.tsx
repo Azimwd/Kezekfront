@@ -25,6 +25,7 @@ export default function ConfirmationOfRecords({
 }: Props) {
     return (
         <section
+            data-tour="settings-confirmation"
             className="
                 w-full
                 min-w-0
@@ -38,8 +39,6 @@ export default function ConfirmationOfRecords({
                 md:p-6
             "
         >
-            {/* HEADER */}
-
             <div
                 className="
                     flex
@@ -75,7 +74,6 @@ export default function ConfirmationOfRecords({
                     />
                 </div>
 
-
                 <h2
                     className="
                         min-w-0
@@ -90,9 +88,6 @@ export default function ConfirmationOfRecords({
                     Подтверждение записей
                 </h2>
             </div>
-
-
-            {/* CONTENT */}
 
             <div
                 className="
@@ -128,7 +123,6 @@ export default function ConfirmationOfRecords({
                         Автоматически подтверждать записи
                     </div>
 
-
                     <p
                         className="
                             mt-1.5
@@ -140,12 +134,9 @@ export default function ConfirmationOfRecords({
                             sm:text-[13px]
                         "
                     >
-                        Если включено, записи клиентов подтверждаются
-                        автоматически. Если выключено — новые записи
-                        требуют ручного подтверждения администратором.
+                        Если включено, записи клиентов подтверждаются автоматически. Если выключено — новые записи требуют ручного подтверждения администратором.
                     </p>
                 </div>
-
 
                 <div
                     className="

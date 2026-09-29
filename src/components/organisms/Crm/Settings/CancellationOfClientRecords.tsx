@@ -25,6 +25,7 @@ export default function CancellationOfClientRecords({
 }: Props) {
     return (
         <section
+            data-tour="settings-cancellation"
             className="
                 w-full
                 min-w-0
@@ -38,8 +39,6 @@ export default function CancellationOfClientRecords({
                 md:p-6
             "
         >
-            {/* HEADER */}
-
             <div
                 className="
                     flex
@@ -75,7 +74,6 @@ export default function CancellationOfClientRecords({
                     />
                 </div>
 
-
                 <h2
                     className="
                         min-w-0
@@ -90,9 +88,6 @@ export default function CancellationOfClientRecords({
                     Отмена записи клиентом
                 </h2>
             </div>
-
-
-            {/* TOGGLE */}
 
             <div
                 className="
@@ -128,7 +123,6 @@ export default function CancellationOfClientRecords({
                         Разрешить клиенту отмену
                     </div>
 
-
                     <p
                         className="
                             mt-1.5
@@ -140,11 +134,9 @@ export default function CancellationOfClientRecords({
                             sm:text-[13px]
                         "
                     >
-                        Если включено, клиент сможет самостоятельно
-                        отменить свою запись через портал.
+                        Если включено, клиент сможет самостоятельно отменить свою запись через портал.
                     </p>
                 </div>
-
 
                 <div
                     className="
@@ -169,9 +161,6 @@ export default function CancellationOfClientRecords({
                 </div>
             </div>
 
-
-            {/* CANCEL HOURS */}
-
             {settings.allow_client_cancel && (
                 <div
                     className="
@@ -194,7 +183,6 @@ export default function CancellationOfClientRecords({
                     >
                         За сколько часов можно отменить
                     </div>
-
 
                     <div
                         className="
@@ -251,7 +239,6 @@ export default function CancellationOfClientRecords({
                             />
                         </div>
 
-
                         <p
                             className="
                                 min-w-0
@@ -262,9 +249,7 @@ export default function CancellationOfClientRecords({
                                 sm:text-[13px]
                             "
                         >
-                            Клиент сможет отменить запись
-                            не позднее указанного времени
-                            до начала услуги.
+                            Клиент сможет отменить запись не позднее указанного времени до начала услуги.
                         </p>
                     </div>
                 </div>

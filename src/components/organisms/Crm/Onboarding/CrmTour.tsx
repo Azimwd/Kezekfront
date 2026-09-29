@@ -14,11 +14,15 @@ interface TourStep {
     action: TourAction;
     optional?: boolean;
     eventName?: string;
+    autoAdvanceEventName?: string;
     waitingText?: string;
     nextLabel?: string;
     allowOutsideInteraction?: boolean;
     hint?: string;
     tooltipPlacement?: 'auto' | 'select';
+    validation?: 'positive-number' | 'addons-valid';
+    validationMessage?: string;
+    errorEventName?: string;
 }
 interface RectState {
     top: number;
@@ -257,8 +261,10 @@ const steps: TourStep[] = [
         stageTitle: 'Услуга',
         target: '[data-tour="service-price"]',
         title: 'Цена',
-        description: 'Укажите стоимость основной услуги в тенге.',
-        action: 'input'
+        description: 'Укажите стоимость основной услуги в тенге. Цена должна быть больше 0 ₸.',
+        action: 'input',
+        validation: 'positive-number',
+        validationMessage: 'Цена услуги должна быть больше 0 ₸.'
     },
     {
         id: 'service-duration',
@@ -267,7 +273,9 @@ const steps: TourStep[] = [
         target: '[data-tour="service-duration"]',
         title: 'Длительность',
         description: 'Укажите длительность услуги в минутах. Это значение используется при расчёте свободного времени для записи.',
-        action: 'input'
+        action: 'input',
+        validation: 'positive-number',
+        validationMessage: 'Длительность услуги должна быть больше 0 минут.'
     },
     {
         id: 'service-buffers',
@@ -288,7 +296,9 @@ const steps: TourStep[] = [
         description: 'Здесь можно добавить опции к основной услуге, например снятие покрытия или дополнительный уход. Сейчас это можно пропустить.',
         action: 'manual',
         optional: true,
-        allowOutsideInteraction: true
+        allowOutsideInteraction: true,
+        validation: 'addons-valid',
+        validationMessage: 'Если добавили дополнительную услугу, заполните её название и укажите цену больше 0 ₸. Либо удалите незаполненную доп. услугу.'
     },
     {
         id: 'service-active',
@@ -319,6 +329,7 @@ const steps: TourStep[] = [
         description: 'Нажмите «Создать». Следующий этап откроется только после успешного создания услуги и привязки мастера.',
         action: 'event',
         eventName: 'kezek:service-created',
+        errorEventName: 'kezek:service-create-error',
         waitingText: 'Ожидаем успешное создание услуги'
     },
     {
@@ -366,14 +377,56 @@ const steps: TourStep[] = [
         waitingText: 'Ожидаем успешное сохранение графика'
     },
     {
-        id: 'settings',
+        id: 'settings-recording-rules',
         stage: 5,
-        stageTitle: 'Онлайн-запись',
+        stageTitle: 'Настройки записи',
         route: '/crm/settings',
-        target: '[data-tour="booking-settings"]',
-        title: 'Настройте онлайн-запись',
-        description: 'Здесь находятся параметры записи, отмены и предоплаты.',
+        target: '[data-tour="settings-recording-rules"]',
+        title: 'Правила онлайн-записи',
+        description: 'Здесь задаются шаг свободных слотов, минимальное время до записи и максимальный период записи вперёд. Проверьте значения и при необходимости измените их.',
+        action: 'manual',
+        hint: 'Не нужно настраивать каждый параметр сейчас. Все правила можно изменить позже в разделе «Настройки».'
+    },
+    {
+        id: 'settings-confirmation',
+        stage: 5,
+        stageTitle: 'Настройки записи',
+        target: '[data-tour="settings-confirmation"]',
+        title: 'Подтверждение записей',
+        description: 'Выберите, будут ли новые записи подтверждаться автоматически или требовать ручного подтверждения.',
         action: 'manual'
+    },
+    {
+        id: 'settings-prepayment',
+        stage: 5,
+        stageTitle: 'Настройки записи',
+        target: '[data-tour="settings-prepayment"]',
+        title: 'Предоплата',
+        description: 'Предоплату можно оставить выключенной. Если включите её, укажите процент предоплаты и ссылку Kaspi для клиента.',
+        action: 'manual',
+        optional: true,
+        hint: 'Предоплата необязательна. Её можно включить позже, когда будете готовы принимать оплату перед записью.'
+    },
+    {
+        id: 'settings-cancellation',
+        stage: 5,
+        stageTitle: 'Настройки записи',
+        target: '[data-tour="settings-cancellation"]',
+        title: 'Отмена записи клиентом',
+        description: 'Решите, сможет ли клиент самостоятельно отменять запись, и при необходимости задайте минимальное время до визита для отмены.',
+        action: 'manual'
+    },
+    {
+        id: 'settings-save',
+        stage: 5,
+        stageTitle: 'Настройки записи',
+        target: '[data-tour="settings-save"]',
+        title: 'Настройки готовы',
+        description: 'Если вы изменили параметры, нажмите «Сохранить настройки». Если текущие значения вас устраивают и кнопка неактивна, нажмите «Настройки готовы» в подсказке.',
+        action: 'manual',
+        nextLabel: 'Настройки готовы',
+        autoAdvanceEventName: 'kezek:settings-saved',
+        hint: 'Любой из этих параметров можно изменить позже. Туториал не будет отдельно показывать процесс редактирования.'
     },
     {
         id: 'appointment',
@@ -421,20 +474,40 @@ const waitForElement = (selector: string, timeout = 15000): Promise<HTMLElement 
         }, 100);
     });
 };
-const hasInputValue = (element: HTMLElement | null) => {
+const getValueElement = (element: HTMLElement | null) => {
     if (!element) {
-        return false;
+        return null;
     }
     if (element instanceof HTMLInputElement ||
         element instanceof HTMLTextAreaElement ||
         element instanceof HTMLSelectElement) {
-        return (element.value.trim().length > 0);
+        return element;
     }
-    const nestedInput = element.querySelector<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>('input, textarea, select');
-    if (!nestedInput) {
+    return element.querySelector<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>('input, textarea, select');
+};
+const hasInputValue = (element: HTMLElement | null) => {
+    const input = getValueElement(element);
+    return Boolean(input && input.value.trim().length > 0);
+};
+const isStepTargetValid = (step: TourStep, element: HTMLElement | null) => {
+    if (!element) {
         return false;
     }
-    return (nestedInput.value.trim().length > 0);
+    if (step.validation === 'positive-number') {
+        const input = getValueElement(element);
+        if (!input) {
+            return false;
+        }
+        const value = Number(input.value.trim().replace(',', '.'));
+        return Number.isFinite(value) && value > 0;
+    }
+    if (step.validation === 'addons-valid') {
+        return element.dataset.tourValid !== 'false';
+    }
+    if (step.action === 'input' && !step.optional) {
+        return hasInputValue(element);
+    }
+    return true;
 };
 export default function CrmTour() {
     const navigate = useNavigate();
@@ -444,6 +517,7 @@ export default function CrmTour() {
     const [rect, setRect] = useState<RectState | null>(null);
     const [targetElement, setTargetElement] = useState<HTMLElement | null>(null);
     const [targetReady, setTargetReady] = useState(false);
+    const [actionError, setActionError] = useState('');
     const handledEventStepRef = useRef<string | null>(null);
     const step = steps[stepIndex];
     const stageSteps = useMemo(() => step
@@ -454,6 +528,9 @@ export default function CrmTour() {
         ? stageSteps.findIndex(item => item.id ===
             step.id)
         : -1, [stageSteps, step]);
+    useEffect(() => {
+        setActionError('');
+    }, [step?.id]);
     const clearTarget = useCallback(() => {
         setTargetElement(null);
         setRect(null);
@@ -605,13 +682,14 @@ export default function CrmTour() {
             inline: 'nearest'
         });
         setTargetElement(element);
-        if (step.action === 'manual') {
-            setTargetReady(true);
-        }
-        else if (step.action === 'input') {
-            setTargetReady(step.optional
-                ? true
-                : hasInputValue(element));
+        if (step.action === 'manual' ||
+            step.action === 'input') {
+            setTargetReady(
+                isStepTargetValid(
+                    step,
+                    element
+                )
+            );
         }
         else {
             setTargetReady(false);
@@ -763,22 +841,70 @@ export default function CrmTour() {
     useEffect(() => {
         if (!targetElement ||
             !step ||
-            step.action !== 'input') {
+            (step.action !== 'input' &&
+                !step.validation)) {
             return;
         }
         const updateReady = () => {
-            setTargetReady(step.optional
-                ? true
-                : hasInputValue(targetElement));
+            const ready = isStepTargetValid(
+                step,
+                targetElement
+            );
+            setTargetReady(ready);
+            if (ready) {
+                setActionError('');
+            }
         };
-        targetElement.addEventListener('input', updateReady);
-        targetElement.addEventListener('change', updateReady);
+        const handleValueChange = () => {
+            window.setTimeout(
+                updateReady,
+                0
+            );
+        };
+        const observer = step.validation === 'addons-valid' &&
+            typeof MutationObserver !== 'undefined'
+            ? new MutationObserver(updateReady)
+            : null;
+        if (observer) {
+            observer.observe(
+                targetElement,
+                {
+                    attributes: true,
+                    attributeFilter: [
+                        'data-tour-valid'
+                    ]
+                }
+            );
+        }
+        targetElement.addEventListener('input', handleValueChange);
+        targetElement.addEventListener('change', handleValueChange);
         updateReady();
         return () => {
-            targetElement.removeEventListener('input', updateReady);
-            targetElement.removeEventListener('change', updateReady);
+            observer?.disconnect();
+            targetElement.removeEventListener('input', handleValueChange);
+            targetElement.removeEventListener('change', handleValueChange);
         };
     }, [targetElement, step]);
+    useEffect(() => {
+        if (!isRunning ||
+            step?.stage !== 3) {
+            return;
+        }
+        const submit = document.querySelector<HTMLElement>('[data-tour="service-submit"]');
+        if (!submit) {
+            return;
+        }
+        const previousPointerEvents = submit.style.pointerEvents;
+        if (step.id !== 'service-submit') {
+            submit.style.pointerEvents = 'none';
+        }
+        else {
+            submit.style.pointerEvents = previousPointerEvents;
+        }
+        return () => {
+            submit.style.pointerEvents = previousPointerEvents;
+        };
+    }, [isRunning, step?.id, step?.stage, targetElement]);
     useEffect(() => {
         handledEventStepRef.current =
             null;
@@ -805,13 +931,69 @@ export default function CrmTour() {
             window.removeEventListener(step.eventName!, handleEvent);
         };
     }, [step, goNext]);
+    useEffect(() => {
+        if (!step?.errorEventName) {
+            return;
+        }
+        const handleErrorEvent = (event: Event) => {
+            if (event instanceof CustomEvent &&
+                typeof event.detail?.message === 'string' &&
+                event.detail.message.trim()) {
+                setActionError(event.detail.message.trim());
+                return;
+            }
+            setActionError('Не удалось выполнить действие. Проверьте введённые данные.');
+        };
+        window.addEventListener(step.errorEventName, handleErrorEvent);
+        return () => {
+            window.removeEventListener(step.errorEventName!, handleErrorEvent);
+        };
+    }, [step]);
+    useEffect(() => {
+        if (!step?.autoAdvanceEventName) {
+            return;
+        }
+        const handleAutoAdvance = () => {
+            if (handledEventStepRef.current ===
+                step.id) {
+                return;
+            }
+            handledEventStepRef.current =
+                step.id;
+            if (stepIndex >=
+                steps.length - 1) {
+                finishTour();
+                return;
+            }
+            goNext();
+        };
+        window.addEventListener(step.autoAdvanceEventName, handleAutoAdvance);
+        return () => {
+            window.removeEventListener(step.autoAdvanceEventName!, handleAutoAdvance);
+        };
+    }, [
+        step,
+        stepIndex,
+        goNext,
+        finishTour
+    ]);
     const handleNext = () => {
         if (!step) {
             return;
         }
-        if (step.action === 'input' &&
-            !step.optional &&
-            !targetReady) {
+        if ((step.action === 'input' &&
+                !step.optional &&
+                !targetReady) ||
+            (step.validation &&
+                !isStepTargetValid(
+                    step,
+                    targetElement
+                ))) {
+            setActionError(
+                step.validationMessage ??
+                    'Проверьте выделенное поле.'
+            );
+            setTargetReady(false);
             return;
         }
         if (stepIndex >=
@@ -832,7 +1014,9 @@ export default function CrmTour() {
             step?.id ===
                 'service-name' ||
             step?.id ===
-                'schedule-specialist') {
+                'schedule-specialist' ||
+            step?.id ===
+                'settings-recording-rules') {
             return;
         }
         clearTarget();
@@ -1019,8 +1203,16 @@ export default function CrmTour() {
                 'Ожидаем успешное завершение действия'}
                     </div>)}
 
-                {step.action === 'input' && !step.optional && !targetReady && (<div className="mt-4 rounded-xl bg-[#FFF7ED] px-3 py-2.5 text-[12px] font-medium text-[#C2410C]">
+                {step.action === 'input' && !step.optional && !targetReady && !step.validation && (<div className="mt-4 rounded-xl bg-[#FFF7ED] px-3 py-2.5 text-[12px] font-medium text-[#C2410C]">
                         Сначала заполните выделенное поле
+                    </div>)}
+
+                {step.validation && !targetReady && !actionError && (<div className="mt-4 rounded-xl bg-[#FFF7ED] px-3 py-2.5 text-[12px] font-medium text-[#C2410C]">
+                        {step.validationMessage ?? 'Проверьте выделенное поле'}
+                    </div>)}
+
+                {actionError && (<div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-[12px] font-medium leading-5 text-red-700">
+                        {actionError}
                     </div>)}
 
                 <div className="mt-5 flex items-center justify-between gap-3">
@@ -1032,14 +1224,19 @@ export default function CrmTour() {
             step.id ===
                 'staff-first-name' ||
             step.id ===
-                'service-name'} className="inline-flex h-10 items-center gap-1 rounded-xl px-3 text-[12px] font-semibold text-[#667085] transition hover:bg-[#F2F4F7] disabled:cursor-not-allowed disabled:opacity-30">
+                'service-name' ||
+            step.id ===
+                'schedule-specialist' ||
+            step.id ===
+                'settings-recording-rules'} className="inline-flex h-10 items-center gap-1 rounded-xl px-3 text-[12px] font-semibold text-[#667085] transition hover:bg-[#F2F4F7] disabled:cursor-not-allowed disabled:opacity-30">
                         <ChevronLeft size={15}/>
                         Назад
                     </button>
 
-                    {showNextButton && (<button type="button" onClick={handleNext} disabled={step.action === 'input' &&
+                    {showNextButton && (<button type="button" onClick={handleNext} disabled={(step.action === 'input' &&
                 !step.optional &&
-                !targetReady} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-[#4F46E5] px-4 text-[12px] font-semibold text-white transition hover:bg-[#4338CA] disabled:cursor-not-allowed disabled:opacity-40">
+                !targetReady) ||
+                Boolean(step.validation && !targetReady)} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-[#4F46E5] px-4 text-[12px] font-semibold text-white transition hover:bg-[#4338CA] disabled:cursor-not-allowed disabled:opacity-40">
                             {nextButtonLabel}
 
                             {stepIndex < steps.length - 1 && (<ChevronRight size={15}/>)}

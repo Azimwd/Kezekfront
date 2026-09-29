@@ -773,13 +773,13 @@ export default function NewService() {
                         );
                     }
                     else if (
-                        numericPrice <
+                        numericPrice <=
                         0
                     ) {
 
                         addError(
                             addon.tempId,
-                            'Цена не может быть отрицательной.'
+                            'Цена дополнительной услуги должна быть больше 0 ₸.'
                         );
                     }
                 }
@@ -1223,11 +1223,27 @@ export default function NewService() {
                         );
 
 
-                        setErrorMessage(
+                        const message =
                             `Не удалось сохранить дополнительную услугу «${
                                 error.addonName.trim() ||
                                 'без названия'
-                            }». Исправьте ошибку ниже.`
+                            }». Исправьте ошибку ниже.`;
+
+
+                        setErrorMessage(
+                            message
+                        );
+
+
+                        window.dispatchEvent(
+                            new CustomEvent(
+                                'kezek:service-create-error',
+                                {
+                                    detail: {
+                                        message
+                                    }
+                                }
+                            )
                         );
 
 
@@ -1235,10 +1251,26 @@ export default function NewService() {
                     }
 
 
-                    setErrorMessage(
+                    const message =
                         getApiErrorMessage(
                             error,
                             'Не удалось создать услугу.'
+                        );
+
+
+                    setErrorMessage(
+                        message
+                    );
+
+
+                    window.dispatchEvent(
+                        new CustomEvent(
+                            'kezek:service-create-error',
+                            {
+                                detail: {
+                                    message
+                                }
+                            }
                         )
                     );
                 }
@@ -1274,8 +1306,22 @@ export default function NewService() {
                 !serviceName.trim()
             ) {
 
+                const message =
+                    'Введите название услуги.';
+
                 setErrorMessage(
-                    'Введите название услуги.'
+                    message
+                );
+
+                window.dispatchEvent(
+                    new CustomEvent(
+                        'kezek:service-create-error',
+                        {
+                            detail: {
+                                message
+                            }
+                        }
+                    )
                 );
 
                 return;
@@ -1292,8 +1338,22 @@ export default function NewService() {
                 price.trim() === ''
             ) {
 
+                const message =
+                    'Введите цену услуги.';
+
                 setErrorMessage(
-                    'Введите цену услуги.'
+                    message
+                );
+
+                window.dispatchEvent(
+                    new CustomEvent(
+                        'kezek:service-create-error',
+                        {
+                            detail: {
+                                message
+                            }
+                        }
+                    )
                 );
 
                 return;
@@ -1301,13 +1361,32 @@ export default function NewService() {
 
 
             if (
+                !Number.isFinite(
+                    Number(
+                        price
+                    )
+                ) ||
                 Number(
                     price
-                ) < 0
+                ) <= 0
             ) {
 
+                const message =
+                    'Цена услуги должна быть больше 0 ₸.';
+
                 setErrorMessage(
-                    'Цена не может быть отрицательной.'
+                    message
+                );
+
+                window.dispatchEvent(
+                    new CustomEvent(
+                        'kezek:service-create-error',
+                        {
+                            detail: {
+                                message
+                            }
+                        }
+                    )
                 );
 
                 return;
@@ -1324,8 +1403,22 @@ export default function NewService() {
                 duration <= 0
             ) {
 
+                const message =
+                    'Длительность услуги должна быть больше 0 минут.';
+
                 setErrorMessage(
-                    'Длительность услуги должна быть больше 0 минут.'
+                    message
+                );
+
+                window.dispatchEvent(
+                    new CustomEvent(
+                        'kezek:service-create-error',
+                        {
+                            detail: {
+                                message
+                            }
+                        }
+                    )
                 );
 
                 return;
@@ -1343,8 +1436,22 @@ export default function NewService() {
                 bufferAfter < 0
             ) {
 
+                const message =
+                    'Буфер услуги не может быть отрицательным.';
+
                 setErrorMessage(
-                    'Буфер услуги не может быть отрицательным.'
+                    message
+                );
+
+                window.dispatchEvent(
+                    new CustomEvent(
+                        'kezek:service-create-error',
+                        {
+                            detail: {
+                                message
+                            }
+                        }
+                    )
                 );
 
                 return;
@@ -1360,6 +1467,46 @@ export default function NewService() {
             if (
                 !validateAddons()
             ) {
+
+                window.dispatchEvent(
+                    new CustomEvent(
+                        'kezek:service-create-error',
+                        {
+                            detail: {
+                                message:
+                                    'Проверьте дополнительные услуги: название обязательно, а цена должна быть больше 0 ₸.'
+                            }
+                        }
+                    )
+                );
+
+                return;
+            }
+
+
+            if (
+                selectedStaffIds.length ===
+                0
+            ) {
+
+                const message =
+                    'Выберите хотя бы одного мастера для услуги.';
+
+                setErrorMessage(
+                    message
+                );
+
+                window.dispatchEvent(
+                    new CustomEvent(
+                        'kezek:service-create-error',
+                        {
+                            detail: {
+                                message
+                            }
+                        }
+                    )
+                );
+
                 return;
             }
 
@@ -1440,6 +1587,67 @@ export default function NewService() {
                 );
             }
         };
+
+
+    const areAddonsValid =
+        addons.every(
+            addon => {
+
+                const addonPrice =
+                    Number(
+                        addon.price
+                    );
+
+
+                return (
+                    addon.name.trim().length > 0 &&
+                    addon.price.trim().length > 0 &&
+                    Number.isFinite(
+                        addonPrice
+                    ) &&
+                    addonPrice > 0 &&
+                    Number.isFinite(
+                        addon.duration_minutes
+                    ) &&
+                    addon.duration_minutes >= 0
+                );
+            }
+        ) &&
+        new Set(
+            addons.map(
+                addon =>
+                    addon.name
+                        .trim()
+                        .toLocaleLowerCase(
+                            'ru'
+                        )
+            )
+        ).size ===
+        addons.length;
+
+
+    const numericServicePrice =
+        Number(
+            price
+        );
+
+
+    const isServicePriceValid =
+        price.trim().length > 0 &&
+        Number.isFinite(
+            numericServicePrice
+        ) &&
+        numericServicePrice > 0;
+
+
+    const canCreateService =
+        serviceName.trim().length > 0 &&
+        isServicePriceValid &&
+        duration > 0 &&
+        bufferBefore >= 0 &&
+        bufferAfter >= 0 &&
+        areAddonsValid &&
+        selectedStaffIds.length > 0;
 
 
     /*
@@ -1939,6 +2147,21 @@ export default function NewService() {
 
                                 </div>
 
+
+                                {price.trim() !== '' &&
+                                    !isServicePriceValid && (
+
+                                    <div
+                                        className="
+                                            text-xs
+                                            font-medium
+                                            text-red-600
+                                        "
+                                    >
+                                        Цена должна быть больше 0 ₸.
+                                    </div>
+                                )}
+
                             </div>
 
 
@@ -2196,6 +2419,11 @@ export default function NewService() {
 
                         <div
                             data-tour="service-addons"
+                            data-tour-valid={
+                                areAddonsValid
+                                    ? 'true'
+                                    : 'false'
+                            }
                             className="
                                 flex
                                 flex-col
@@ -3097,7 +3325,8 @@ export default function NewService() {
                             data-tour="service-submit"
                             type="submit"
                             disabled={
-                                NewServiceMutate.isPending
+                                NewServiceMutate.isPending ||
+                                !canCreateService
                             }
                             className="
                                 cursor-pointer
