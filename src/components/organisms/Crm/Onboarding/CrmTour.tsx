@@ -638,45 +638,40 @@ export default function CrmTour() {
 
     useEffect(
         () => {
-            if (
-                !step ||
-                !step.id.startsWith(
-                    'staff-'
-                ) ||
-                step.id ===
-                    'staff-open'
-            ) {
-                return;
-            }
+            const handleStaffAddCancelled =
+                () => {
+                    const staffOpenIndex =
+                        steps.findIndex(
+                            item =>
+                                item.id ===
+                                'staff-open'
+                        );
 
-            if (
-                location.pathname ===
-                '/crm/staff/add'
-            ) {
-                return;
-            }
+                    if (
+                        staffOpenIndex < 0
+                    ) {
+                        return;
+                    }
 
-            const staffOpenIndex =
-                steps.findIndex(
-                    item =>
-                        item.id ===
-                        'staff-open'
+                    clearTarget();
+                    setStepIndex(
+                        staffOpenIndex
+                    );
+                };
+
+            window.addEventListener(
+                'kezek:staff-add-cancelled',
+                handleStaffAddCancelled
+            );
+
+            return () => {
+                window.removeEventListener(
+                    'kezek:staff-add-cancelled',
+                    handleStaffAddCancelled
                 );
-
-            if (
-                staffOpenIndex >= 0
-            ) {
-                clearTarget();
-                setStepIndex(
-                    staffOpenIndex
-                );
-            }
+            };
         },
-        [
-            step,
-            location.pathname,
-            clearTarget
-        ]
+        [clearTarget]
     );
 
     const updatePosition =
