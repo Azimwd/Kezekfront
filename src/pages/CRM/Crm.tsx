@@ -1,12 +1,8 @@
-import {
-    Outlet
-} from 'react-router-dom';
-
-import HeroSection
-    from '../../components/templates/Crm/HeroSection';
-
 import CrmTour
     from '../../components/organisms/Crm/Onboarding/CrmTour';
+
+import CrmTemplate
+    from '../../components/templates/Crm/CrmTemplate';
 
 import {
     BusinessProvider
@@ -18,11 +14,7 @@ export default function CrmPage() {
         <BusinessProvider>
             <CrmTour />
 
-            <div>
-                <HeroSection />
-
-                <Outlet />
-            </div>
+            <CrmTemplate />
         </BusinessProvider>
     );
 }
