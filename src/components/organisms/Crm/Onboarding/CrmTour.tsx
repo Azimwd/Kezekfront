@@ -41,6 +41,8 @@ interface TourStep {
     waitingText?: string;
     nextLabel?: string;
     allowOutsideInteraction?: boolean;
+    hint?: string;
+    tooltipPlacement?: 'auto' | 'select';
 }
 
 interface RectState {
@@ -63,7 +65,9 @@ const steps: TourStep[] = [
         title: 'Создайте первый бизнес',
         description:
             'Нажмите на выделенную кнопку «Создать бизнес».',
-        action: 'click'
+        action: 'click',
+        hint:
+            'Все данные бизнеса можно будет изменить позже в разделе «Мои бизнесы». Сейчас достаточно заполнить основные настройки.'
     },
     {
         id: 'business-name',
@@ -116,7 +120,8 @@ const steps: TourStep[] = [
         description:
             'Проверьте выбранный город. Если нужно, откройте список и выберите другой.',
         action: 'manual',
-        allowOutsideInteraction: true
+        allowOutsideInteraction: true,
+        tooltipPlacement: 'select'
     },
     {
         id: 'business-address',
@@ -172,7 +177,9 @@ const steps: TourStep[] = [
         title: 'Добавьте первого мастера',
         description:
             'Бизнес готов. Теперь добавьте сотрудника, который будет выполнять услуги.',
-        action: 'click'
+        action: 'click',
+        hint:
+            'Данные мастера, фотографию, должность и статус можно будет изменить позже в разделе «Сотрудники».'
     },
     {
         id: 'staff-first-name',
@@ -1109,6 +1116,27 @@ export default function CrmTour() {
     };
 
     const tooltipWidth = 360;
+    const tooltipEstimatedHeight =
+        step.hint
+            ? 310
+            : 270;
+
+    const maxTooltipLeft =
+        Math.max(
+            16,
+            window.innerWidth -
+            tooltipWidth -
+            16
+        );
+
+    const defaultTooltipLeft =
+        Math.min(
+            Math.max(
+                spotlight.left,
+                16
+            ),
+            maxTooltipLeft
+        );
 
     const spaceBelow =
         window.innerHeight -
@@ -1118,31 +1146,100 @@ export default function CrmTour() {
         );
 
     const showAbove =
-        spaceBelow < 285;
+        spaceBelow <
+        tooltipEstimatedHeight + 15;
 
-    const tooltipTop =
+    let tooltipTop =
         showAbove
             ? Math.max(
-                spotlight.top - 270,
+                spotlight.top -
+                tooltipEstimatedHeight -
+                16,
                 16
             )
             : Math.min(
                 spotlight.top +
                 spotlight.height +
                 16,
-                window.innerHeight - 270
+                Math.max(
+                    16,
+                    window.innerHeight -
+                    tooltipEstimatedHeight -
+                    16
+                )
             );
 
-    const tooltipLeft =
-        Math.min(
-            Math.max(
-                spotlight.left,
-                16
-            ),
-            window.innerWidth -
+    let tooltipLeft =
+        defaultTooltipLeft;
+
+    if (
+        step.tooltipPlacement ===
+        'select'
+    ) {
+        const gap = 20;
+        const rightLeft =
+            spotlight.left +
+            spotlight.width +
+            gap;
+
+        const leftLeft =
+            spotlight.left -
             tooltipWidth -
-            16
-        );
+            gap;
+
+        if (
+            rightLeft +
+            tooltipWidth <=
+            window.innerWidth - 16
+        ) {
+            tooltipLeft =
+                rightLeft;
+
+            tooltipTop =
+                Math.min(
+                    Math.max(
+                        spotlight.top,
+                        16
+                    ),
+                    Math.max(
+                        16,
+                        window.innerHeight -
+                        tooltipEstimatedHeight -
+                        16
+                    )
+                );
+        } else if (
+            leftLeft >= 16
+        ) {
+            tooltipLeft =
+                leftLeft;
+
+            tooltipTop =
+                Math.min(
+                    Math.max(
+                        spotlight.top,
+                        16
+                    ),
+                    Math.max(
+                        16,
+                        window.innerHeight -
+                        tooltipEstimatedHeight -
+                        16
+                    )
+                );
+        } else {
+            tooltipLeft =
+                defaultTooltipLeft;
+
+            tooltipTop =
+                Math.max(
+                    16,
+                    window.innerHeight -
+                    tooltipEstimatedHeight -
+                    16
+                );
+        }
+    }
 
     const overlayPointerClass =
         step.allowOutsideInteraction
@@ -1246,6 +1343,13 @@ export default function CrmTour() {
                 <p className="mt-3 text-[13px] leading-5 text-[#667085]">
                     {step.description}
                 </p>
+
+                {step.hint && (
+                    <div className="mt-4 rounded-xl border border-[#D9DDEC] bg-[#F8F9FF] px-3 py-2.5 text-[12px] leading-5 text-[#475467]">
+                        <span className="font-semibold text-[#344054]">Можно изменить позже. </span>
+                        {step.hint}
+                    </div>
+                )}
 
                 {step.action === 'click' && (
                     <div className="mt-4 rounded-xl bg-[#EEF2FF] px-3 py-2.5 text-[12px] font-medium text-[#4338CA]">
