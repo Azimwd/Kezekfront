@@ -647,18 +647,74 @@ export default function CrmTour() {
         clearTarget
     ]);
     const updatePosition = useCallback(() => {
-        if (!targetElement) {
+        if (!step) {
             return;
         }
-        const targetRect = targetElement
-            .getBoundingClientRect();
+
+        let element = targetElement;
+
+        if (
+            !element ||
+            !element.isConnected
+        ) {
+            element = getVisibleElement(
+                step.target
+            );
+
+            if (!element) {
+                setRect(null);
+                return;
+            }
+
+            if (element !== targetElement) {
+                setTargetElement(element);
+            }
+        }
+
+        let targetRect =
+            element.getBoundingClientRect();
+
+        if (
+            targetRect.width <= 0 ||
+            targetRect.height <= 0
+        ) {
+            const freshElement =
+                getVisibleElement(
+                    step.target
+                );
+
+            if (!freshElement) {
+                setRect(null);
+                return;
+            }
+
+            element = freshElement;
+            targetRect =
+                freshElement.getBoundingClientRect();
+
+            if (freshElement !== targetElement) {
+                setTargetElement(freshElement);
+            }
+        }
+
+        if (
+            targetRect.width <= 0 ||
+            targetRect.height <= 0
+        ) {
+            setRect(null);
+            return;
+        }
+
         setRect({
             top: targetRect.top,
             left: targetRect.left,
             width: targetRect.width,
             height: targetRect.height
         });
-    }, [targetElement]);
+    }, [
+        step,
+        targetElement
+    ]);
     const findTarget = useCallback(async () => {
         if (!isRunning ||
             !step) {
@@ -821,6 +877,63 @@ export default function CrmTour() {
         targetElement,
         location.pathname,
         updatePosition
+    ]);
+    useEffect(() => {
+        if (!isRunning || !step) {
+            return;
+        }
+
+        const sync = () => {
+            const current =
+                getVisibleElement(
+                    step.target
+                );
+
+            if (!current) {
+                return;
+            }
+
+            if (
+                !targetElement ||
+                !targetElement.isConnected ||
+                current !== targetElement
+            ) {
+                setTargetElement(current);
+            }
+
+            const currentRect =
+                current.getBoundingClientRect();
+
+            if (
+                currentRect.width > 0 &&
+                currentRect.height > 0
+            ) {
+                setRect({
+                    top: currentRect.top,
+                    left: currentRect.left,
+                    width: currentRect.width,
+                    height: currentRect.height
+                });
+            }
+        };
+
+        const interval =
+            window.setInterval(
+                sync,
+                250
+            );
+
+        sync();
+
+        return () => {
+            window.clearInterval(
+                interval
+            );
+        };
+    }, [
+        isRunning,
+        step,
+        targetElement
     ]);
     useEffect(() => {
         if (!targetElement ||
