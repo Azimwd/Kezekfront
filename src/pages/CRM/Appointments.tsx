@@ -6,10 +6,19 @@ export default function Appointments() {
     return (
         <div className="flex w-full">
             <div className="w-full flex flex-col gap-10">
-                <Header />
-                <DataTableArea />
-                <StatsGrid />
+                <div data-tour="appointments-header">
+                    <Header />
+                </div>
+
+                <div data-tour="appointments-list">
+                    <DataTableArea />
+                </div>
+
+                <div data-tour="appointments-stats">
+                    <StatsGrid />
+                </div>
             </div>
         </div>
     );
 }
+

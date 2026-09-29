@@ -429,14 +429,33 @@ const steps: TourStep[] = [
         hint: 'Любой из этих параметров можно изменить позже. Туториал не будет отдельно показывать процесс редактирования.'
     },
     {
-        id: 'appointment',
+        id: 'appointments-overview',
         stage: 6,
-        stageTitle: 'Первая запись',
+        stageTitle: 'Записи',
         route: '/crm/appointments',
-        target: '[data-tour="create-appointment"]',
-        title: 'Создайте первую запись',
-        description: 'Создайте тестовую запись клиента и проверьте работу CRM.',
+        target: '[data-tour="appointments-header"]',
+        title: 'Раздел записей',
+        description: 'Здесь вы будете работать со всеми записями клиентов. Записи появляются автоматически после бронирования через Kezek. Если сейчас список пуст — это нормально.',
         action: 'manual'
+    },
+    {
+        id: 'appointments-list',
+        stage: 6,
+        stageTitle: 'Записи',
+        target: '[data-tour="appointments-list"]',
+        title: 'Список и управление записями',
+        description: 'Здесь находятся поиск, фильтры и список записей. Когда появится первая запись, вы сможете открыть её, подтвердить, завершить, перенести или отменить. Сейчас создавать тестовую запись специально не нужно.',
+        action: 'manual'
+    },
+    {
+        id: 'appointments-stats',
+        stage: 6,
+        stageTitle: 'Записи',
+        target: '[data-tour="appointments-stats"]',
+        title: 'Статистика записей',
+        description: 'Этот блок помогает быстро оценивать загрузку и состояние записей. Показатели начнут заполняться автоматически по мере работы с клиентами.',
+        action: 'manual',
+        nextLabel: 'Завершить обучение'
     }
 ];
 const getVisibleElement = (selector: string): HTMLElement | null => {
@@ -1129,7 +1148,9 @@ export default function CrmTour() {
             step?.id ===
                 'schedule-specialist' ||
             step?.id ===
-                'settings-recording-rules') {
+                'settings-recording-rules' ||
+            step?.id ===
+                'appointments-overview') {
             return;
         }
         clearTarget();
@@ -1341,7 +1362,9 @@ export default function CrmTour() {
             step.id ===
                 'schedule-specialist' ||
             step.id ===
-                'settings-recording-rules'} className="inline-flex h-10 items-center gap-1 rounded-xl px-3 text-[12px] font-semibold text-[#667085] transition hover:bg-[#F2F4F7] disabled:cursor-not-allowed disabled:opacity-30">
+                'settings-recording-rules' ||
+            step.id ===
+                'appointments-overview'} className="inline-flex h-10 items-center gap-1 rounded-xl px-3 text-[12px] font-semibold text-[#667085] transition hover:bg-[#F2F4F7] disabled:cursor-not-allowed disabled:opacity-30">
                         <ChevronLeft size={15}/>
                         Назад
                     </button>
