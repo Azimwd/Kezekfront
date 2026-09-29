@@ -48,50 +48,31 @@ import {
     getApiErrorMessage
 } from '../../utils/getApiErrorMessage';
 
-
 export default function AddStaf() {
-
-    /*
-     * ============================================================
-     * FORM
-     * ============================================================
-     */
-
     const [
         isStaffActive,
         setIsStaffActive
     ] = useState(true);
-
 
     const [
         staffFirstName,
         setStaffFirstName
     ] = useState('');
 
-
     const [
         staffLastName,
         setStaffLastName
     ] = useState('');
-
 
     const [
         staffPosition,
         setStaffPosition
     ] = useState('');
 
-
     const [
         staffDescription,
         setStaffDescription
     ] = useState('');
-
-
-    /*
-     * ============================================================
-     * PHOTO
-     * ============================================================
-     */
 
     const [
         staffPhoto,
@@ -100,112 +81,63 @@ export default function AddStaf() {
         null
     );
 
-
-    /*
-     * ============================================================
-     * ERROR
-     * ============================================================
-     */
-
     const [
         errorMessage,
         setErrorMessage
     ] = useState('');
 
-
-    /*
-     * ============================================================
-     * BASIC
-     * ============================================================
-     */
-
     const {
         selectedBusiness
     } = useBusiness();
 
-
     const navigate =
         useNavigate();
-
 
     const queryClient =
         useQueryClient();
 
-
-    /*
-     * ============================================================
-     * CREATE
-     * ============================================================
-     */
-
     const createStaff =
         useMutation({
-
             mutationFn: () => {
-
                 if (
                     !selectedBusiness
                 ) {
-
                     throw new Error(
                         'Бизнес не выбран.'
                     );
                 }
 
-
                 return staffAdd({
-
                     id:
                         Number(
                             selectedBusiness.id
                         ),
-
                     first_name:
                         staffFirstName.trim(),
-
                     last_name:
                         staffLastName.trim(),
-
                     position:
                         staffPosition.trim(),
-
                     is_active:
                         isStaffActive,
-
                     description:
                         staffDescription.trim(),
-
                     photo:
                         staffPhoto
                 });
             },
-
-
             onMutate: () => {
-
-                setErrorMessage(
-                    ''
-                );
+                setErrorMessage('');
             },
-
-
             onSuccess:
                 async (
                     data
                 ) => {
-
-                    console.log(
-                        'Создан мастер:',
-                        data
-                    );
-
-
                     await queryClient.invalidateQueries({
                         queryKey: [
                             'masters'
                         ]
                     });
-
 
                     await queryClient.invalidateQueries({
                         queryKey: [
@@ -213,29 +145,24 @@ export default function AddStaf() {
                         ]
                     });
 
-
-                    /*
-                     * Переходим только после
-                     * успешного ответа backend.
-                     */
+                    window.dispatchEvent(
+                        new CustomEvent(
+                            'kezek:staff-created',
+                            {
+                                detail:
+                                    data
+                            }
+                        )
+                    );
 
                     navigate(
                         '/crm/staff'
                     );
                 },
-
-
             onError:
                 (
                     error
                 ) => {
-
-                    console.error(
-                        'Ошибка создания мастера:',
-                        error
-                    );
-
-
                     setErrorMessage(
                         getApiErrorMessage(
                             error,
@@ -245,33 +172,19 @@ export default function AddStaf() {
                 }
         });
 
-
-    /*
-     * ============================================================
-     * SAVE
-     * ============================================================
-     */
-
     const handleSave =
         () => {
-
             if (
                 createStaff.isPending
             ) {
-
                 return;
             }
 
-
-            setErrorMessage(
-                ''
-            );
-
+            setErrorMessage('');
 
             if (
                 !selectedBusiness
             ) {
-
                 setErrorMessage(
                     'Сначала выберите бизнес.'
                 );
@@ -279,11 +192,9 @@ export default function AddStaf() {
                 return;
             }
 
-
             if (
                 !staffFirstName.trim()
             ) {
-
                 setErrorMessage(
                     'Введите имя мастера.'
                 );
@@ -291,11 +202,9 @@ export default function AddStaf() {
                 return;
             }
 
-
             if (
                 !staffPosition.trim()
             ) {
-
                 setErrorMessage(
                     'Введите должность мастера.'
                 );
@@ -303,16 +212,21 @@ export default function AddStaf() {
                 return;
             }
 
-
             createStaff.mutate();
         };
 
+    const handleCancel =
+        () => {
+            window.dispatchEvent(
+                new Event(
+                    'kezek:staff-add-cancelled'
+                )
+            );
 
-    /*
-     * ============================================================
-     * RENDER
-     * ============================================================
-     */
+            navigate(
+                '/crm/staff'
+            );
+        };
 
     return (
         <div
@@ -321,9 +235,7 @@ export default function AddStaf() {
                 mx-auto
             "
         >
-
             <StaffAddHeader />
-
 
             <div
                 className="
@@ -336,9 +248,6 @@ export default function AddStaf() {
                     w-full
                 "
             >
-
-                {/* LEFT */}
-
                 <div
                     className="
                         flex
@@ -349,30 +258,32 @@ export default function AddStaf() {
                         shrink-0
                     "
                 >
+                    <div
+                        data-tour="staff-photo"
+                    >
+                        <StaffImage
+                            photo={
+                                staffPhoto
+                            }
+                            onChange={
+                                setStaffPhoto
+                            }
+                        />
+                    </div>
 
-                    <StaffImage
-                        photo={
-                            staffPhoto
-                        }
-                        onChange={
-                            setStaffPhoto
-                        }
-                    />
-
-
-                    <StaffActive
-                        isActive={
-                            isStaffActive
-                        }
-                        onChange={
-                            setIsStaffActive
-                        }
-                    />
-
+                    <div
+                        data-tour="staff-active"
+                    >
+                        <StaffActive
+                            isActive={
+                                isStaffActive
+                            }
+                            onChange={
+                                setIsStaffActive
+                            }
+                        />
+                    </div>
                 </div>
-
-
-                {/* RIGHT */}
 
                 <div
                     className="
@@ -383,7 +294,6 @@ export default function AddStaf() {
                         flex-1
                     "
                 >
-
                     <StaffInfo
                         first_name={
                             staffFirstName
@@ -411,11 +321,7 @@ export default function AddStaf() {
                         }
                     />
 
-
-                    {/* ERROR */}
-
                     {errorMessage && (
-
                         <div
                             className="
                                 flex
@@ -431,7 +337,6 @@ export default function AddStaf() {
                                 text-red-700
                             "
                         >
-
                             <Icon
                                 icon={
                                     CircleAlert
@@ -446,7 +351,6 @@ export default function AddStaf() {
                                 "
                             />
 
-
                             <div
                                 className="
                                     whitespace-pre-line
@@ -455,13 +359,8 @@ export default function AddStaf() {
                             >
                                 {errorMessage}
                             </div>
-
                         </div>
-
                     )}
-
-
-                    {/* BUTTONS */}
 
                     <div
                         className="
@@ -471,13 +370,10 @@ export default function AddStaf() {
                             w-full
                         "
                     >
-
                         <Button
                             type="button"
-                            onClick={() =>
-                                navigate(
-                                    '/crm/staff'
-                                )
+                            onClick={
+                                handleCancel
                             }
                             className="
                                 px-7
@@ -489,7 +385,6 @@ export default function AddStaf() {
                                 cursor-pointer
                             "
                         >
-
                             <Typography
                                 text="Отмена"
                                 className="
@@ -498,62 +393,58 @@ export default function AddStaf() {
                                     text-[15px]
                                 "
                             />
-
                         </Button>
 
-
-                        <Button
-                            type="button"
-                            onClick={
-                                handleSave
-                            }
-                            disabled={
-                                createStaff.isPending
-                            }
-                            className={`
-                                px-8
-                                py-3
-                                rounded-xl
-                                bg-[#3B28CC]
-                                text-white
-                                transition-colors
-                                shadow-sm
-
-                                ${
-                                    createStaff.isPending
-                                        ? `
-                                            opacity-60
-                                            cursor-not-allowed
-                                        `
-                                        : `
-                                            cursor-pointer
-                                            hover:bg-[#2b1d96]
-                                        `
-                                }
-                            `}
+                        <div
+                            data-tour="staff-submit"
                         >
-
-                            <Typography
-                                text={
-                                    createStaff.isPending
-                                        ? 'Сохранение...'
-                                        : 'Сохранить'
+                            <Button
+                                type="button"
+                                onClick={
+                                    handleSave
                                 }
-                                className="
+                                disabled={
+                                    createStaff.isPending
+                                }
+                                className={`
+                                    px-8
+                                    py-3
+                                    rounded-xl
+                                    bg-[#3B28CC]
                                     text-white
-                                    font-medium
-                                    text-[15px]
-                                "
-                            />
+                                    transition-colors
+                                    shadow-sm
 
-                        </Button>
-
+                                    ${
+                                        createStaff.isPending
+                                            ? `
+                                                opacity-60
+                                                cursor-not-allowed
+                                            `
+                                            : `
+                                                cursor-pointer
+                                                hover:bg-[#2b1d96]
+                                            `
+                                    }
+                                `}
+                            >
+                                <Typography
+                                    text={
+                                        createStaff.isPending
+                                            ? 'Сохранение...'
+                                            : 'Сохранить'
+                                    }
+                                    className="
+                                        text-white
+                                        font-medium
+                                        text-[15px]
+                                    "
+                                />
+                            </Button>
+                        </div>
                     </div>
-
                 </div>
-
             </div>
-
         </div>
     );
 }

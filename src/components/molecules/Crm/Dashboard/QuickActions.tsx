@@ -10,6 +10,7 @@ import {
 
 
 export default function QuickActions() {
+
     const navigate =
         useNavigate();
 
@@ -25,7 +26,6 @@ export default function QuickActions() {
                 bg-white
                 p-4
                 shadow-sm
-
                 sm:p-5
             "
         >
@@ -35,13 +35,11 @@ export default function QuickActions() {
                     text-[17px]
                     font-semibold
                     text-[#101828]
-
                     sm:text-[18px]
                 "
             >
                 Быстрые действия
             </h2>
-
 
             <div
                 className="
@@ -78,7 +76,6 @@ export default function QuickActions() {
                         transition
                         hover:border-[#AAA5CA]
                         hover:bg-[#F9FAFB]
-
                         sm:min-h-[52px]
                         sm:px-3.5
                     "
@@ -96,7 +93,6 @@ export default function QuickActions() {
                             text-white
                             transition
                             group-hover:bg-[#4338CA]
-
                             sm:h-9
                             sm:w-9
                         "
@@ -105,7 +101,6 @@ export default function QuickActions() {
                             size={18}
                         />
                     </span>
-
 
                     <div
                         className="
@@ -124,7 +119,6 @@ export default function QuickActions() {
                             Создать запись
                         </div>
 
-
                         <div
                             className="
                                 mt-0.5
@@ -132,7 +126,6 @@ export default function QuickActions() {
                                 text-[11px]
                                 leading-4
                                 text-[#98A2B3]
-
                                 sm:text-[10px]
                             "
                         >
@@ -140,7 +133,6 @@ export default function QuickActions() {
                         </div>
                     </div>
                 </button>
-
 
                 <button
                     type="button"
@@ -168,7 +160,6 @@ export default function QuickActions() {
                         transition
                         hover:border-[#AAA5CA]
                         hover:bg-[#F9FAFB]
-
                         sm:min-h-[52px]
                         sm:px-3.5
                     "
@@ -186,7 +177,6 @@ export default function QuickActions() {
                             text-[#4F46E5]
                             transition
                             group-hover:bg-[#E0E7FF]
-
                             sm:h-9
                             sm:w-9
                         "
@@ -195,7 +185,6 @@ export default function QuickActions() {
                             size={18}
                         />
                     </span>
-
 
                     <div
                         className="
@@ -215,7 +204,6 @@ export default function QuickActions() {
                             Управление расписанием
                         </div>
 
-
                         <div
                             className="
                                 mt-0.5
@@ -223,7 +211,6 @@ export default function QuickActions() {
                                 text-[11px]
                                 leading-4
                                 text-[#98A2B3]
-
                                 sm:text-[10px]
                             "
                         >
@@ -232,9 +219,9 @@ export default function QuickActions() {
                     </div>
                 </button>
 
-
                 <button
                     type="button"
+                    data-tour="quick-add-staff"
                     onClick={() =>
                         navigate(
                             '/crm/staff'
@@ -259,7 +246,6 @@ export default function QuickActions() {
                         transition
                         hover:border-[#AAA5CA]
                         hover:bg-[#F9FAFB]
-
                         sm:min-h-[52px]
                         sm:px-3.5
                     "
@@ -277,7 +263,6 @@ export default function QuickActions() {
                             text-[#4F46E5]
                             transition
                             group-hover:bg-[#E0E7FF]
-
                             sm:h-9
                             sm:w-9
                         "
@@ -286,7 +271,6 @@ export default function QuickActions() {
                             size={18}
                         />
                     </span>
-
 
                     <div
                         className="
@@ -305,7 +289,6 @@ export default function QuickActions() {
                             Добавить мастера
                         </div>
 
-
                         <div
                             className="
                                 mt-0.5
@@ -313,7 +296,6 @@ export default function QuickActions() {
                                 text-[11px]
                                 leading-4
                                 text-[#98A2B3]
-
                                 sm:text-[10px]
                             "
                         >

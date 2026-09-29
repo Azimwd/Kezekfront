@@ -2,6 +2,7 @@ import {
     useCallback,
     useEffect,
     useMemo,
+    useRef,
     useState
 } from 'react';
 
@@ -28,6 +29,8 @@ type TourAction =
 
 interface TourStep {
     id: string;
+    stage: number;
+    stageTitle: string;
     route?: string;
     target: string;
     title: string;
@@ -35,6 +38,7 @@ interface TourStep {
     action: TourAction;
     optional?: boolean;
     eventName?: string;
+    waitingText?: string;
     nextLabel?: string;
     allowOutsideInteraction?: boolean;
 }
@@ -52,6 +56,8 @@ const TOUR_STORAGE_KEY =
 const steps: TourStep[] = [
     {
         id: 'business-open',
+        stage: 1,
+        stageTitle: 'Бизнес',
         route: '/crm/my-businesses',
         target: '[data-tour="create-business"]',
         title: 'Создайте первый бизнес',
@@ -61,6 +67,8 @@ const steps: TourStep[] = [
     },
     {
         id: 'business-name',
+        stage: 1,
+        stageTitle: 'Бизнес',
         target: '[data-tour="business-name"]',
         title: 'Название бизнеса',
         description:
@@ -69,6 +77,8 @@ const steps: TourStep[] = [
     },
     {
         id: 'business-description',
+        stage: 1,
+        stageTitle: 'Бизнес',
         target: '[data-tour="business-description"]',
         title: 'Описание бизнеса',
         description:
@@ -78,6 +88,8 @@ const steps: TourStep[] = [
     },
     {
         id: 'business-phone',
+        stage: 1,
+        stageTitle: 'Бизнес',
         target: '[data-tour="business-phone"]',
         title: 'Телефон',
         description:
@@ -86,6 +98,8 @@ const steps: TourStep[] = [
     },
     {
         id: 'business-email',
+        stage: 1,
+        stageTitle: 'Бизнес',
         target: '[data-tour="business-email"]',
         title: 'Email',
         description:
@@ -95,6 +109,8 @@ const steps: TourStep[] = [
     },
     {
         id: 'business-city',
+        stage: 1,
+        stageTitle: 'Бизнес',
         target: '[data-tour="business-city"]',
         title: 'Город',
         description:
@@ -104,6 +120,8 @@ const steps: TourStep[] = [
     },
     {
         id: 'business-address',
+        stage: 1,
+        stageTitle: 'Бизнес',
         target: '[data-tour="business-address"]',
         title: 'Адрес',
         description:
@@ -112,6 +130,8 @@ const steps: TourStep[] = [
     },
     {
         id: 'business-logo',
+        stage: 1,
+        stageTitle: 'Бизнес',
         target: '[data-tour="business-logo"]',
         title: 'Логотип бизнеса',
         description:
@@ -122,6 +142,8 @@ const steps: TourStep[] = [
     },
     {
         id: 'business-status',
+        stage: 1,
+        stageTitle: 'Бизнес',
         target: '[data-tour="business-status"]',
         title: 'Статус публикации',
         description:
@@ -130,42 +152,132 @@ const steps: TourStep[] = [
     },
     {
         id: 'business-submit',
+        stage: 1,
+        stageTitle: 'Бизнес',
         target: '[data-tour="business-submit"]',
         title: 'Создайте бизнес',
         description:
             'Нажмите «Создать бизнес». Следующий этап откроется только после успешного ответа сервера.',
         action: 'event',
-        eventName: 'kezek:business-created'
+        eventName: 'kezek:business-created',
+        waitingText:
+            'Ожидаем успешное создание бизнеса'
     },
     {
-        id: 'service',
-        route: '/crm/services',
-        target: '[data-tour="create-service"]',
-        title: 'Бизнес создан',
+        id: 'staff-open',
+        stage: 2,
+        stageTitle: 'Мастер',
+        route: '/crm/staff',
+        target: '[data-tour="create-staff"]',
+        title: 'Добавьте первого мастера',
         description:
-            'Теперь добавьте первую услугу. На следующем этапе мы так же проведём вас через её настройку.',
+            'Бизнес готов. Теперь добавьте сотрудника, который будет выполнять услуги.',
+        action: 'click'
+    },
+    {
+        id: 'staff-first-name',
+        stage: 2,
+        stageTitle: 'Мастер',
+        route: '/crm/staff/add',
+        target: '[data-tour="staff-first-name"]',
+        title: 'Имя мастера',
+        description:
+            'Введите имя сотрудника. Это обязательное поле.',
+        action: 'input'
+    },
+    {
+        id: 'staff-last-name',
+        stage: 2,
+        stageTitle: 'Мастер',
+        target: '[data-tour="staff-last-name"]',
+        title: 'Фамилия',
+        description:
+            'Укажите фамилию сотрудника. Если не хотите, этот шаг можно пропустить.',
+        action: 'input',
+        optional: true
+    },
+    {
+        id: 'staff-position',
+        stage: 2,
+        stageTitle: 'Мастер',
+        target: '[data-tour="staff-position"]',
+        title: 'Должность',
+        description:
+            'Укажите должность или специализацию мастера, например «Старший барбер».',
+        action: 'input'
+    },
+    {
+        id: 'staff-description',
+        stage: 2,
+        stageTitle: 'Мастер',
+        target: '[data-tour="staff-description"]',
+        title: 'Описание специализации',
+        description:
+            'Кратко опишите опыт и навыки сотрудника. Этот шаг можно пропустить.',
+        action: 'input',
+        optional: true
+    },
+    {
+        id: 'staff-photo',
+        stage: 2,
+        stageTitle: 'Мастер',
+        target: '[data-tour="staff-photo"]',
+        title: 'Фотография мастера',
+        description:
+            'Добавьте фотографию сотрудника, чтобы клиентам было проще выбрать мастера. Этот шаг можно пропустить.',
+        action: 'manual',
+        optional: true,
+        allowOutsideInteraction: true
+    },
+    {
+        id: 'staff-active',
+        stage: 2,
+        stageTitle: 'Мастер',
+        target: '[data-tour="staff-active"]',
+        title: 'Статус мастера',
+        description:
+            'Активный мастер доступен для работы и записи клиентов. При необходимости статус можно изменить.',
         action: 'manual'
     },
     {
-        id: 'staff',
-        route: '/crm/staff',
-        target: '[data-tour="create-staff"]',
-        title: 'Добавьте сотрудника',
+        id: 'staff-submit',
+        stage: 2,
+        stageTitle: 'Мастер',
+        target: '[data-tour="staff-submit"]',
+        title: 'Сохраните мастера',
         description:
-            'После услуг добавьте мастера или другого сотрудника бизнеса.',
+            'Нажмите «Сохранить». Следующий этап откроется только после успешного ответа сервера.',
+        action: 'event',
+        eventName: 'kezek:staff-created',
+        waitingText:
+            'Ожидаем успешное добавление мастера'
+    },
+    {
+        id: 'service',
+        stage: 3,
+        stageTitle: 'Услуга',
+        route: '/crm/services',
+        target: '[data-tour="create-service"]',
+        title: 'Мастер добавлен',
+        description:
+            'Теперь создадим первую услугу и затем назначим её мастеру.',
         action: 'manual'
     },
     {
         id: 'assign-service',
+        stage: 4,
+        stageTitle: 'Назначение услуги',
         route: '/crm/staff',
         target: '[data-tour="assign-service"]',
-        title: 'Назначьте услуги',
+        title: 'Назначьте услугу мастеру',
         description:
-            'Выберите, какие услуги может выполнять сотрудник.',
+            'После создания услуги укажите, какой мастер может её выполнять.',
         action: 'manual'
     },
     {
         id: 'schedule',
+        stage: 5,
+        stageTitle: 'Расписание',
         route: '/crm/schedule',
         target: '[data-tour="schedule"]',
         title: 'Настройте график',
@@ -175,6 +287,8 @@ const steps: TourStep[] = [
     },
     {
         id: 'settings',
+        stage: 6,
+        stageTitle: 'Онлайн-запись',
         route: '/crm/settings',
         target: '[data-tour="booking-settings"]',
         title: 'Настройте онлайн-запись',
@@ -184,6 +298,8 @@ const steps: TourStep[] = [
     },
     {
         id: 'appointment',
+        stage: 7,
+        stageTitle: 'Первая запись',
         route: '/crm/appointments',
         target: '[data-tour="create-appointment"]',
         title: 'Создайте первую запись',
@@ -358,8 +474,39 @@ export default function CrmTour() {
         setTargetReady
     ] = useState(false);
 
+    const handledEventStepRef =
+        useRef<string | null>(
+            null
+        );
+
     const step =
         steps[stepIndex];
+
+    const stageSteps =
+        useMemo(
+            () =>
+                step
+                    ? steps.filter(
+                        item =>
+                            item.stage ===
+                            step.stage
+                    )
+                    : [],
+            [step]
+        );
+
+    const stageStepIndex =
+        useMemo(
+            () =>
+                step
+                    ? stageSteps.findIndex(
+                        item =>
+                            item.id ===
+                            step.id
+                    )
+                    : -1,
+            [stageSteps, step]
+        );
 
     const clearTarget =
         useCallback(
@@ -487,6 +634,49 @@ export default function CrmTour() {
             };
         },
         [stepIndex, clearTarget]
+    );
+
+    useEffect(
+        () => {
+            if (
+                !step ||
+                !step.id.startsWith(
+                    'staff-'
+                ) ||
+                step.id ===
+                    'staff-open'
+            ) {
+                return;
+            }
+
+            if (
+                location.pathname ===
+                '/crm/staff/add'
+            ) {
+                return;
+            }
+
+            const staffOpenIndex =
+                steps.findIndex(
+                    item =>
+                        item.id ===
+                        'staff-open'
+                );
+
+            if (
+                staffOpenIndex >= 0
+            ) {
+                clearTarget();
+                setStepIndex(
+                    staffOpenIndex
+                );
+            }
+        },
+        [
+            step,
+            location.pathname,
+            clearTarget
+        ]
     );
 
     const updatePosition =
@@ -746,6 +936,16 @@ export default function CrmTour() {
 
     useEffect(
         () => {
+            handledEventStepRef.current =
+                null;
+        },
+        [
+            step?.id
+        ]
+    );
+
+    useEffect(
+        () => {
             if (
                 !step ||
                 step.action !== 'event' ||
@@ -756,6 +956,16 @@ export default function CrmTour() {
 
             const handleEvent =
                 () => {
+                    if (
+                        handledEventStepRef.current ===
+                        step.id
+                    ) {
+                        return;
+                    }
+
+                    handledEventStepRef.current =
+                        step.id;
+
                     goNext();
                 };
 
@@ -803,7 +1013,12 @@ export default function CrmTour() {
         () => {
             if (
                 stepIndex === 0 ||
-                stepIndex === 1
+                step?.id ===
+                    'business-name' ||
+                step?.id ===
+                    'staff-open' ||
+                step?.id ===
+                    'staff-first-name'
             ) {
                 return;
             }
@@ -1012,7 +1227,11 @@ export default function CrmTour() {
                 <div className="flex items-start justify-between gap-4">
                     <div>
                         <div className="text-[11px] font-semibold uppercase tracking-wide text-[#6366F1]">
-                            Шаг {stepIndex + 1} из {steps.length}
+                            Этап {step.stage} · {step.stageTitle}
+                            {stageStepIndex >= 0 &&
+                                stageSteps.length > 1
+                                ? ` · ${stageStepIndex + 1}/${stageSteps.length}`
+                                : ''}
                         </div>
 
                         <h3 className="mt-1 text-[17px] font-bold text-[#101828]">
@@ -1041,7 +1260,8 @@ export default function CrmTour() {
 
                 {step.action === 'event' && (
                     <div className="mt-4 rounded-xl bg-[#EEF2FF] px-3 py-2.5 text-[12px] font-medium text-[#4338CA]">
-                        Ожидаем успешное создание бизнеса
+                        {step.waitingText ??
+                            'Ожидаем успешное завершение действия'}
                     </div>
                 )}
 
@@ -1057,7 +1277,12 @@ export default function CrmTour() {
                         onClick={handleBack}
                         disabled={
                             stepIndex === 0 ||
-                            stepIndex === 1
+                            step.id ===
+                                'business-name' ||
+                            step.id ===
+                                'staff-open' ||
+                            step.id ===
+                                'staff-first-name'
                         }
                         className="inline-flex h-10 items-center gap-1 rounded-xl px-3 text-[12px] font-semibold text-[#667085] transition hover:bg-[#F2F4F7] disabled:cursor-not-allowed disabled:opacity-30"
                     >

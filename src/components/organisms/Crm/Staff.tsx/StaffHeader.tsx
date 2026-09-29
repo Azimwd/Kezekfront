@@ -33,29 +33,21 @@ export default function StaffHeader() {
                 min-w-0
                 flex-col
                 gap-3
-
                 sm:flex-row
                 sm:items-center
                 sm:justify-end
                 sm:gap-4
             "
         >
-
-            {/* SELECT */}
-
             <div
                 className="
                     w-full
                     min-w-0
-
                     sm:w-auto
                 "
             >
                 <ServiceSelector />
             </div>
-
-
-            {/* DIVIDER */}
 
             <div
                 className="
@@ -64,16 +56,13 @@ export default function StaffHeader() {
                     w-px
                     shrink-0
                     bg-gray-200
-
                     sm:block
                 "
             />
 
-
-            {/* ADD STAFF */}
-
             <Button
                 type="button"
+                data-tour="create-staff"
                 className="
                     flex
                     w-full
@@ -89,7 +78,6 @@ export default function StaffHeader() {
                     shadow-sm
                     transition-colors
                     hover:bg-indigo-600
-
                     sm:w-auto
                     sm:shrink-0
                     sm:px-6
@@ -100,7 +88,6 @@ export default function StaffHeader() {
                     )
                 }
             >
-
                 <Icon
                     icon={
                         Plus
@@ -109,7 +96,6 @@ export default function StaffHeader() {
                         20
                     }
                 />
-
 
                 <Typography
                     text="Добавить мастера"
@@ -120,9 +106,7 @@ export default function StaffHeader() {
                         text-white
                     "
                 />
-
             </Button>
-
         </div>
     );
 }
