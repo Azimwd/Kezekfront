@@ -1145,11 +1145,9 @@ export default function NewService() {
              */
 
             onSuccess:
-                async () => {
-
-                    /*
-                     * Обновляем список услуг.
-                     */
+                async (
+                    data
+                ) => {
 
                     if (
                         selectedBusiness?.id
@@ -1162,6 +1160,17 @@ export default function NewService() {
                             ]
                         });
                     }
+
+
+                    window.dispatchEvent(
+                        new CustomEvent(
+                            'kezek:service-created',
+                            {
+                                detail:
+                                    data
+                            }
+                        )
+                    );
 
 
                     resetForm();
@@ -1383,6 +1392,56 @@ export default function NewService() {
         );
 
 
+    const handleServicePanelClose =
+        () => {
+
+            setErrorMessage(
+                ''
+            );
+
+
+            setIsOpen(
+                false
+            );
+
+
+            window.dispatchEvent(
+                new Event(
+                    'kezek:service-panel-closed'
+                )
+            );
+        };
+
+
+    const handleSelectedStaffChange =
+        (
+            ids: number[]
+        ) => {
+
+            setSelectedStaffIds(
+                ids
+            );
+
+
+            if (
+                ids.length >
+                0
+            ) {
+
+                window.dispatchEvent(
+                    new CustomEvent(
+                        'kezek:service-staff-selected',
+                        {
+                            detail: {
+                                ids
+                            }
+                        }
+                    )
+                );
+            }
+        };
+
+
     /*
      * ============================================================
      * TOTAL PREVIEW
@@ -1520,16 +1579,9 @@ export default function NewService() {
                     isOpen
                 }
 
-                onClose={() => {
-
-                    setErrorMessage(
-                        ''
-                    );
-
-                    setIsOpen(
-                        false
-                    );
-                }}
+                onClose={
+                    handleServicePanelClose
+                }
 
                 title="Создать услугу"
 
@@ -1692,6 +1744,7 @@ export default function NewService() {
 
 
                             <Input
+                                data-tour="service-name"
                                 type="text"
                                 value={
                                     serviceName
@@ -1727,14 +1780,18 @@ export default function NewService() {
                             CATEGORY
                         ========================================= */}
 
-                        <CategorySelector
-                            value={
-                                selectedCategoryId
-                            }
-                            onChange={
-                                setSelectedCategoryId
-                            }
-                        />
+                        <div
+                            data-tour="service-category"
+                        >
+                            <CategorySelector
+                                value={
+                                    selectedCategoryId
+                                }
+                                onChange={
+                                    setSelectedCategoryId
+                                }
+                            />
+                        </div>
 
 
                         {/* =========================================
@@ -1760,6 +1817,7 @@ export default function NewService() {
 
 
                             <textarea
+                                data-tour="service-description"
                                 rows={3}
                                 value={
                                     serviceDesc
@@ -1835,6 +1893,7 @@ export default function NewService() {
                                 >
 
                                     <Input
+                                        data-tour="service-price"
                                         type="text"
                                         inputMode="decimal"
                                         value={
@@ -1912,6 +1971,7 @@ export default function NewService() {
                                 >
 
                                     <Input
+                                        data-tour="service-duration"
                                         type="text"
                                         inputMode="numeric"
                                         value={
@@ -1990,6 +2050,7 @@ export default function NewService() {
                                 >
 
                                     <Input
+                                        data-tour="service-buffers"
                                         type="text"
                                         inputMode="numeric"
                                         value={
@@ -2134,6 +2195,7 @@ export default function NewService() {
                         ========================================= */}
 
                         <div
+                            data-tour="service-addons"
                             className="
                                 flex
                                 flex-col
@@ -2870,6 +2932,7 @@ export default function NewService() {
                         ========================================= */}
 
                         <div
+                            data-tour="service-active"
                             className="
                                 flex
                                 items-center
@@ -2950,6 +3013,7 @@ export default function NewService() {
                     ============================================= */}
 
                     <div
+                        data-tour="service-staff"
                         className="
                             mt-10
                             flex
@@ -2967,7 +3031,7 @@ export default function NewService() {
                                 selectedStaffIds
                             }
                             onChangeSelected={
-                                setSelectedStaffIds
+                                handleSelectedStaffChange
                             }
                         />
 
@@ -3001,16 +3065,9 @@ export default function NewService() {
 
                         <Button
                             type="button"
-                            onClick={() => {
-
-                                setErrorMessage(
-                                    ''
-                                );
-
-                                setIsOpen(
-                                    false
-                                );
-                            }}
+                            onClick={
+                                handleServicePanelClose
+                            }
                             className="
                                 rounded-xl
                                 border
@@ -3037,6 +3094,7 @@ export default function NewService() {
 
 
                         <Button
+                            data-tour="service-submit"
                             type="submit"
                             disabled={
                                 NewServiceMutate.isPending

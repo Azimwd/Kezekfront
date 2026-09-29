@@ -260,30 +260,134 @@ const steps: TourStep[] = [
             'Ожидаем успешное добавление мастера'
     },
     {
-        id: 'service',
+        id: 'service-open',
         stage: 3,
         stageTitle: 'Услуга',
         route: '/crm/services',
         target: '[data-tour="create-service"]',
-        title: 'Мастер добавлен',
+        title: 'Создайте первую услугу',
         description:
-            'Теперь создадим первую услугу и затем назначим её мастеру.',
+            'Нажмите на выделенную кнопку «Создать услугу».',
+        action: 'click',
+        hint:
+            'Название, описание, цену, длительность, категорию, мастеров и дополнительные услуги можно будет изменить позже в разделе «Услуги».'
+    },
+    {
+        id: 'service-name',
+        stage: 3,
+        stageTitle: 'Услуга',
+        target: '[data-tour="service-name"]',
+        title: 'Название услуги',
+        description:
+            'Введите понятное название услуги, которое увидят клиенты.',
+        action: 'input'
+    },
+    {
+        id: 'service-category',
+        stage: 3,
+        stageTitle: 'Услуга',
+        target: '[data-tour="service-category"]',
+        title: 'Категория',
+        description:
+            'При необходимости выберите категорию услуги. Этот шаг можно пропустить.',
+        action: 'manual',
+        optional: true,
+        allowOutsideInteraction: true,
+        tooltipPlacement: 'select'
+    },
+    {
+        id: 'service-description',
+        stage: 3,
+        stageTitle: 'Услуга',
+        target: '[data-tour="service-description"]',
+        title: 'Описание',
+        description:
+            'Кратко опишите, что входит в услугу. Этот шаг можно пропустить.',
+        action: 'input',
+        optional: true
+    },
+    {
+        id: 'service-price',
+        stage: 3,
+        stageTitle: 'Услуга',
+        target: '[data-tour="service-price"]',
+        title: 'Цена',
+        description:
+            'Укажите стоимость основной услуги в тенге.',
+        action: 'input'
+    },
+    {
+        id: 'service-duration',
+        stage: 3,
+        stageTitle: 'Услуга',
+        target: '[data-tour="service-duration"]',
+        title: 'Длительность',
+        description:
+            'Укажите длительность услуги в минутах. Это значение используется при расчёте свободного времени для записи.',
+        action: 'input'
+    },
+    {
+        id: 'service-buffers',
+        stage: 3,
+        stageTitle: 'Услуга',
+        target: '[data-tour="service-buffers"]',
+        title: 'Буфер времени',
+        description:
+            'Буфер до и после услуги резервирует дополнительное время между записями. Если он не нужен, оставьте 0.',
+        action: 'manual',
+        optional: true
+    },
+    {
+        id: 'service-addons',
+        stage: 3,
+        stageTitle: 'Услуга',
+        target: '[data-tour="service-addons"]',
+        title: 'Дополнительные услуги',
+        description:
+            'Здесь можно добавить опции к основной услуге, например снятие покрытия или дополнительный уход. Сейчас это можно пропустить.',
+        action: 'manual',
+        optional: true,
+        allowOutsideInteraction: true
+    },
+    {
+        id: 'service-active',
+        stage: 3,
+        stageTitle: 'Услуга',
+        target: '[data-tour="service-active"]',
+        title: 'Статус услуги',
+        description:
+            'Активная услуга доступна клиентам для записи. При необходимости её можно отключить позже.',
         action: 'manual'
     },
     {
-        id: 'assign-service',
-        stage: 4,
-        stageTitle: 'Назначение услуги',
-        route: '/crm/staff',
-        target: '[data-tour="assign-service"]',
-        title: 'Назначьте услугу мастеру',
+        id: 'service-staff',
+        stage: 3,
+        stageTitle: 'Услуга',
+        target: '[data-tour="service-staff"]',
+        title: 'Назначьте мастера',
         description:
-            'После создания услуги укажите, какой мастер может её выполнять.',
-        action: 'manual'
+            'Выберите хотя бы одного мастера, который сможет выполнять эту услугу.',
+        action: 'event',
+        eventName: 'kezek:service-staff-selected',
+        waitingText:
+            'Выберите мастера из списка'
+    },
+    {
+        id: 'service-submit',
+        stage: 3,
+        stageTitle: 'Услуга',
+        target: '[data-tour="service-submit"]',
+        title: 'Создайте услугу',
+        description:
+            'Нажмите «Создать». Следующий этап откроется только после успешного создания услуги и привязки мастера.',
+        action: 'event',
+        eventName: 'kezek:service-created',
+        waitingText:
+            'Ожидаем успешное создание услуги'
     },
     {
         id: 'schedule',
-        stage: 5,
+        stage: 4,
         stageTitle: 'Расписание',
         route: '/crm/schedule',
         target: '[data-tour="schedule"]',
@@ -294,7 +398,7 @@ const steps: TourStep[] = [
     },
     {
         id: 'settings',
-        stage: 6,
+        stage: 5,
         stageTitle: 'Онлайн-запись',
         route: '/crm/settings',
         target: '[data-tour="booking-settings"]',
@@ -305,7 +409,7 @@ const steps: TourStep[] = [
     },
     {
         id: 'appointment',
-        stage: 7,
+        stage: 6,
         stageTitle: 'Первая запись',
         route: '/crm/appointments',
         target: '[data-tour="create-appointment"]',
@@ -681,6 +785,61 @@ export default function CrmTour() {
         [clearTarget]
     );
 
+    useEffect(
+        () => {
+            const handleServicePanelClosed =
+                () => {
+                    const currentStep =
+                        steps[stepIndex];
+
+                    if (
+                        !currentStep?.id.startsWith(
+                            'service-'
+                        ) ||
+                        currentStep.id ===
+                            'service-open'
+                    ) {
+                        return;
+                    }
+
+                    const serviceOpenIndex =
+                        steps.findIndex(
+                            item =>
+                                item.id ===
+                                'service-open'
+                        );
+
+                    if (
+                        serviceOpenIndex < 0
+                    ) {
+                        return;
+                    }
+
+                    clearTarget();
+
+                    setStepIndex(
+                        serviceOpenIndex
+                    );
+                };
+
+            window.addEventListener(
+                'kezek:service-panel-closed',
+                handleServicePanelClosed
+            );
+
+            return () => {
+                window.removeEventListener(
+                    'kezek:service-panel-closed',
+                    handleServicePanelClosed
+                );
+            };
+        },
+        [
+            stepIndex,
+            clearTarget
+        ]
+    );
+
     const updatePosition =
         useCallback(
             () => {
@@ -812,6 +971,37 @@ export default function CrmTour() {
             };
         },
         [updatePosition]
+    );
+
+    useEffect(
+        () => {
+            if (
+                !targetElement ||
+                typeof ResizeObserver ===
+                    'undefined'
+            ) {
+                return;
+            }
+
+            const observer =
+                new ResizeObserver(
+                    () => {
+                        updatePosition();
+                    }
+                );
+
+            observer.observe(
+                targetElement
+            );
+
+            return () => {
+                observer.disconnect();
+            };
+        },
+        [
+            targetElement,
+            updatePosition
+        ]
     );
 
     useEffect(
@@ -1020,7 +1210,9 @@ export default function CrmTour() {
                 step?.id ===
                     'staff-open' ||
                 step?.id ===
-                    'staff-first-name'
+                    'staff-first-name' ||
+                step?.id ===
+                    'service-name'
             ) {
                 return;
             }
@@ -1381,7 +1573,9 @@ export default function CrmTour() {
                             step.id ===
                                 'staff-open' ||
                             step.id ===
-                                'staff-first-name'
+                                'staff-first-name' ||
+                            step.id ===
+                                'service-name'
                         }
                         className="inline-flex h-10 items-center gap-1 rounded-xl px-3 text-[12px] font-semibold text-[#667085] transition hover:bg-[#F2F4F7] disabled:cursor-not-allowed disabled:opacity-30"
                     >

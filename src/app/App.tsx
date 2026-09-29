@@ -98,13 +98,8 @@ function App() {
                     <Route element={<BusinessOwnerRoute />}>
                         <Route
                             path="/crm"
-                            element={
-                                <BusinessProvider>
-                                    <CrmPage />
-                                </BusinessProvider>
-                            }
+                            element={<CrmPage />}
                         >
-
                             <Route
                                 path="dashboard"
                                 element={<Dashboard />}
@@ -116,7 +111,6 @@ function App() {
                             />
 
                             <Route path="appointments">
-
                                 <Route
                                     index
                                     element={<Appointments />}
@@ -126,11 +120,9 @@ function App() {
                                     path="edit/:id"
                                     element={<EditAppointment />}
                                 />
-
                             </Route>
 
                             <Route path="staff">
-
                                 <Route
                                     index
                                     element={<Staff />}
@@ -145,7 +137,6 @@ function App() {
                                     path="edit/:id"
                                     element={<EditStaff />}
                                 />
-
                             </Route>
 
                             <Route
@@ -167,7 +158,6 @@ function App() {
                                 path="reviews"
                                 element={<Reviews />}
                             />
-
                         </Route>
                     </Route>
 
