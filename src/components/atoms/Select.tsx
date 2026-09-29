@@ -300,6 +300,7 @@ export default function Select({
                 createPortal(
                     <div
                         ref={dropdownRef}
+                        data-tour-scroll-allowed="true"
                         className="fixed z-[11000] overflow-y-auto rounded-md bg-white p-1 shadow-xl border border-slate-100"
                         style={{
                             top:
