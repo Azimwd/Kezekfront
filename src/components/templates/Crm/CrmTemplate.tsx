@@ -11,7 +11,8 @@ import {
     Users,
     Settings,
     MessageSquareText,
-    CalendarClock
+    CalendarClock,
+    BarChart3
 } from 'lucide-react';
 
 import Sidebar
@@ -41,7 +42,7 @@ const navigationData = [
     {
         id: 1,
         navigator: 'dashboard',
-        label: 'Дашборд',
+        label: 'Панель управления',
         icon: LayoutDashboard
     },
 
@@ -104,6 +105,13 @@ const navigationData = [
         navigator: 'reviews',
         label: 'Отзывы',
         icon: MessageSquareText
+    },
+
+    {
+        id: 9,
+        navigator: 'analytics',
+        label: 'Аналитика',
+        icon: BarChart3,
     }
 ];
 
@@ -131,7 +139,7 @@ export default function Crm() {
     const headerLabel =
         activeItem
             ? activeItem.label
-            : 'Дашборд';
+            : 'Панель управления';
 
 
     const headerRightElement =

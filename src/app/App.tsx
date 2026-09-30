@@ -27,6 +27,7 @@ import { UserProvider } from '../context/UserContext';
 import CrmPage from '../pages/CRM/Crm';
 import EditStaff from '../pages/CRM/EditStaff';
 import Schedule from '../pages/CRM/Schedule';
+import Analytics from '../pages/CRM/Analytics';
 import EditAppointment from '../components/organisms/Crm/Appointments/Edit/EditAppointment';
 
 import { setDefaultOptions } from 'date-fns';
@@ -104,7 +105,10 @@ function App() {
                                 path="dashboard"
                                 element={<Dashboard />}
                             />
-
+                            <Route
+                                path="analytics"
+                                element={<Analytics />}
+                            />
                             <Route
                                 path="my-businesses"
                                 element={<Mybusinesses />}
