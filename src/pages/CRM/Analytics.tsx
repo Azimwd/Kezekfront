@@ -1066,17 +1066,6 @@ export default function Analytics() {
                         rows={report.staff}
                     />
 
-                    <details className="rounded-2xl border border-[#e8e5f3] bg-white p-5 text-sm">
-                        <summary className="cursor-pointer font-semibold">
-                            Как рассчитываются показатели
-                        </summary>
-
-                        <ul className="mt-4 list-disc space-y-2 pl-5 text-gray-500">
-                            {report.notes.map(note => (
-                                <li key={note}>{note}</li>
-                            ))}
-                        </ul>
-                    </details>
                 </>
             )}
         </div>
