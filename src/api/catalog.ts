@@ -1,5 +1,4 @@
-import { api } from './api';
-
+import { api } from "./api";
 
 /*
  * ============================================================
@@ -8,133 +7,110 @@ import { api } from './api';
  */
 
 export interface CatalogCity {
-    id: number;
-    name: string;
-    slug: string;
+  id: number;
+  name: string;
+  slug: string;
 }
-
 
 export interface CatalogCategory {
-    id: number;
-    name: string;
-    slug: string;
+  parent?: number | null;
+  parent_name?: string | null;
+  is_legacy?: boolean;
+  sort_order?: number;
+  id: number;
+  name: string;
+  slug: string;
 
-    is_active?: boolean;
+  is_active?: boolean;
 
-    created_at?: string;
+  created_at?: string;
 }
-
 
 export interface CatalogBusinessImage {
-    id: number;
+  id: number;
 
-    business?: number;
+  business?: number;
 
-    image: string;
+  image: string;
 
-    is_main: boolean;
+  is_main: boolean;
 
-    created_at?: string;
+  created_at?: string;
 }
-
 
 export interface CatalogService {
-    id: number;
+  id: number;
 
-    business: number;
+  business: number;
 
-    category:
-        number | null;
+  category: number | null;
 
-    category_name:
-        string | null;
+  category_name: string | null;
 
-    name: string;
+  name: string;
 
-    description:
-        string | null;
+  description: string | null;
 
-    price:
-        string | number;
+  price: string | number;
 
-    duration_minutes: number;
+  duration_minutes: number;
 
-    buffer_before_minutes: number;
+  buffer_before_minutes: number;
 
-    buffer_after_minutes: number;
+  buffer_after_minutes: number;
 
-    is_active: boolean;
+  is_active: boolean;
 
-    created_at?: string;
+  created_at?: string;
 
-    updated_at?: string;
+  updated_at?: string;
 }
-
 
 export interface CatalogBusiness {
-    id: number;
+  categories?: number[];
+  business_type?: string;
+  id: number;
 
-    owner?: number;
+  owner?: number;
 
-    name: string;
+  name: string;
 
-    description:
-        string | null;
+  description: string | null;
 
-    phone?:
-        string | null;
+  phone?: string | null;
 
-    email?:
-        string | null;
+  email?: string | null;
 
-    city?:
-        number | null;
+  city?: number | null;
 
-    city_name?:
-        string | null;
+  city_name?: string | null;
 
-    address?:
-        string | null;
+  address?: string | null;
 
-    logo?:
-        string | null;
+  logo?: string | null;
 
-    status: string;
+  status: string;
 
-    min_price?:
-        string |
-        number |
-        null;
+  min_price?: string | number | null;
 
-    rating?:
-        string |
-        number |
-        null;
+  rating?: string | number | null;
 
-    reviews_count?: number;
+  reviews_count?: number;
 
-    services_count?: number;
+  services_count?: number;
 
-    staff_count?: number;
+  staff_count?: number;
 
-    created_at?: string;
+  created_at?: string;
 
-    updated_at?: string;
+  updated_at?: string;
 
-    images:
-        CatalogBusinessImage[];
+  images: CatalogBusinessImage[];
 
-    services:
-        CatalogService[];
+  services: CatalogService[];
 }
 
-
-type CatalogBusinessWithoutServices =
-    Omit<
-        CatalogBusiness,
-        'services'
-    >;
-
+type CatalogBusinessWithoutServices = Omit<CatalogBusiness, "services">;
 
 /*
  * ============================================================
@@ -143,21 +119,18 @@ type CatalogBusinessWithoutServices =
  */
 
 interface PaginationResponse {
-    total_pages?: number;
+  total_pages?: number;
 }
-
 
 interface ListResponse<T> {
-    data?: T[];
+  data?: T[];
 
-    results?: T[];
+  results?: T[];
 
-    pagination?:
-        PaginationResponse;
+  pagination?: PaginationResponse;
 
-    count?: number;
+  count?: number;
 }
-
 
 /*
  * ============================================================
@@ -165,74 +138,44 @@ interface ListResponse<T> {
  * ============================================================
  */
 
-const extractArray = <T>(
-    payload: unknown
-): T[] => {
+const extractArray = <T>(payload: unknown): T[] => {
+  /*
+   * [
+   *     {...},
+   *     {...}
+   * ]
+   */
 
-    /*
-     * [
-     *     {...},
-     *     {...}
-     * ]
-     */
+  if (Array.isArray(payload)) {
+    return payload as T[];
+  }
 
-    if (
-        Array.isArray(
-            payload
-        )
-    ) {
+  /*
+   * {
+   *     data: [...]
+   * }
+   *
+   * или
+   *
+   * {
+   *     results: [...]
+   * }
+   */
 
-        return payload as T[];
+  if (payload !== null && typeof payload === "object") {
+    const response = payload as ListResponse<T>;
+
+    if (Array.isArray(response.data)) {
+      return response.data;
     }
 
-
-    /*
-     * {
-     *     data: [...]
-     * }
-     *
-     * или
-     *
-     * {
-     *     results: [...]
-     * }
-     */
-
-    if (
-        payload !== null &&
-        typeof payload ===
-            'object'
-    ) {
-
-        const response =
-            payload as
-                ListResponse<T>;
-
-
-        if (
-            Array.isArray(
-                response.data
-            )
-        ) {
-
-            return response.data;
-        }
-
-
-        if (
-            Array.isArray(
-                response.results
-            )
-        ) {
-
-            return response.results;
-        }
+    if (Array.isArray(response.results)) {
+      return response.results;
     }
+  }
 
-
-    return [];
+  return [];
 };
-
 
 /*
  * ============================================================
@@ -240,48 +183,21 @@ const extractArray = <T>(
  * ============================================================
  */
 
-const extractTotalPages = (
-    payload: unknown
-): number => {
+const extractTotalPages = (payload: unknown): number => {
+  if (payload === null || typeof payload !== "object") {
+    return 1;
+  }
 
-    if (
-        payload === null ||
-        typeof payload !==
-            'object'
-    ) {
+  const response = payload as ListResponse<unknown>;
 
-        return 1;
-    }
+  const totalPages = Number(response.pagination?.total_pages ?? 1);
 
+  if (!Number.isFinite(totalPages) || totalPages < 1) {
+    return 1;
+  }
 
-    const response =
-        payload as
-            ListResponse<unknown>;
-
-
-    const totalPages =
-        Number(
-            response
-                .pagination
-                ?.total_pages ??
-            1
-        );
-
-
-    if (
-        !Number.isFinite(
-            totalPages
-        ) ||
-        totalPages < 1
-    ) {
-
-        return 1;
-    }
-
-
-    return totalPages;
+  return totalPages;
 };
-
 
 /*
  * ============================================================
@@ -289,28 +205,13 @@ const extractTotalPages = (
  * ============================================================
  */
 
-export const getCatalogCities =
-    async (): Promise<
-        CatalogCity[]
-    > => {
+export const getCatalogCities = async (): Promise<CatalogCity[]> => {
+  const response = await api.get("/api/businesses/cities/", {
+    withCredentials: true,
+  });
 
-        const response =
-            await api.get(
-                '/api/businesses/cities/',
-                {
-                    withCredentials:
-                        true
-                }
-            );
-
-
-        return extractArray<
-            CatalogCity
-        >(
-            response.data
-        );
-    };
-
+  return extractArray<CatalogCity>(response.data);
+};
 
 /*
  * ============================================================
@@ -318,36 +219,15 @@ export const getCatalogCities =
  * ============================================================
  */
 
-export const getCatalogCategories =
-    async (): Promise<
-        CatalogCategory[]
-    > => {
+export const getCatalogCategories = async (): Promise<CatalogCategory[]> => {
+  const response = await api.get("/api/businesses/categories/", {
+    withCredentials: true,
+  });
 
-        const response =
-            await api.get(
-                '/api/businesses/categories/',
-                {
-                    withCredentials:
-                        true
-                }
-            );
-
-
-        return extractArray<
-            CatalogCategory
-        >(
-            response.data
-        )
-            .filter(
-                (
-                    category:
-                        CatalogCategory
-                ) =>
-                    category.is_active !==
-                    false
-            );
-    };
-
+  return extractArray<CatalogCategory>(response.data).filter(
+    (category: CatalogCategory) => category.is_active !== false,
+  );
+};
 
 /*
  * ============================================================
@@ -355,89 +235,47 @@ export const getCatalogCategories =
  * ============================================================
  */
 
-export const getPublicBusinesses =
-    async (
-        search: string = ''
-    ): Promise<
-        CatalogBusinessWithoutServices[]
-    > => {
+export const getPublicBusinesses = async (
+  search: string = "",
+): Promise<CatalogBusinessWithoutServices[]> => {
+  let page = 1;
 
-        let page =
-            1;
+  const allBusinesses: CatalogBusinessWithoutServices[] = [];
 
+  const preparedSearch = search.trim();
 
-        const allBusinesses:
-            CatalogBusinessWithoutServices[] =
-            [];
+  while (true) {
+    const response = await api.get("/api/businesses/public/", {
+      params: {
+        page,
 
-
-        const preparedSearch =
-            search.trim();
-
-
-        while (
-            true
-        ) {
-
-            const response =
-                await api.get(
-                    '/api/businesses/public/',
-                    {
-                        params: {
-
-                            page,
-
-                            ...(
-                                preparedSearch
-                                    ? {
-                                          search:
-                                              preparedSearch
-                                      }
-                                    : {}
-                            )
-                        },
-
-                        withCredentials:
-                            true
-                    }
-                );
-
-
-            const businesses =
-                extractArray<
-                    CatalogBusinessWithoutServices
-                >(
-                    response.data
-                );
-
-
-            allBusinesses.push(
-                ...businesses
-            );
-
-
-            const totalPages =
-                extractTotalPages(
-                    response.data
-                );
-
-
-            if (
-                page >=
-                totalPages
-            ) {
-
-                break;
+        ...(preparedSearch
+          ? {
+              search: preparedSearch,
             }
+          : {}),
+      },
 
+      withCredentials: true,
+    });
 
-            page += 1;
-        }
+    const businesses = extractArray<CatalogBusinessWithoutServices>(
+      response.data,
+    );
 
+    allBusinesses.push(...businesses);
 
-        return allBusinesses;
-    };
+    const totalPages = extractTotalPages(response.data);
 
+    if (page >= totalPages) {
+      break;
+    }
+
+    page += 1;
+  }
+
+  return allBusinesses;
+};
 
 /*
  * ============================================================
@@ -445,81 +283,40 @@ export const getPublicBusinesses =
  * ============================================================
  */
 
-export const getPublicBusinessServices =
-    async (
-        businessId: number
-    ): Promise<
-        CatalogService[]
-    > => {
+export const getPublicBusinessServices = async (
+  businessId: number,
+): Promise<CatalogService[]> => {
+  let page = 1;
 
-        let page =
-            1;
+  const allServices: CatalogService[] = [];
 
+  while (true) {
+    const response = await api.get(
+      `/api/businesses/public/${businessId}/services/`,
+      {
+        params: {
+          page,
+        },
 
-        const allServices:
-            CatalogService[] =
-            [];
+        withCredentials: true,
+      },
+    );
 
+    const services = extractArray<CatalogService>(response.data);
 
-        while (
-            true
-        ) {
+    allServices.push(...services);
 
-            const response =
-                await api.get(
-                    `/api/businesses/public/${businessId}/services/`,
-                    {
-                        params: {
-                            page
-                        },
+    const totalPages = extractTotalPages(response.data);
 
-                        withCredentials:
-                            true
-                    }
-                );
+    if (page >= totalPages) {
+      break;
+    }
 
+    page += 1;
+  }
 
-            const services =
-                extractArray<
-                    CatalogService
-                >(
-                    response.data
-                );
-
-
-            allServices.push(
-                ...services
-            );
-
-
-            const totalPages =
-                extractTotalPages(
-                    response.data
-                );
-
-
-            if (
-                page >=
-                totalPages
-            ) {
-
-                break;
-            }
-
-
-            page += 1;
-        }
-
-
-        return allServices.filter(
-            (
-                service:
-                    CatalogService
-            ) =>
-                service.is_active
-        );
-    };
-
+  return allServices.filter((service: CatalogService) => service.is_active);
+};
 
 /*
  * ============================================================
@@ -527,73 +324,75 @@ export const getPublicBusinessServices =
  * ============================================================
  */
 
-export const getCatalogData =
-    async (
-        search: string = ''
-    ): Promise<
-        CatalogBusiness[]
-    > => {
+export const getCatalogData = async (
+  search: string = "",
+): Promise<CatalogBusiness[]> => {
+  /*
+   * Поиск отправляем в backend.
+   */
 
-        /*
-         * Поиск отправляем в backend.
-         */
+  const businesses = await getPublicBusinesses(search);
 
-        const businesses =
-            await getPublicBusinesses(
-                search
-            );
+  /*
+   * Только активные бизнесы.
+   */
 
+  const activeBusinesses = businesses.filter(
+    (business: CatalogBusinessWithoutServices) => business.status === "active",
+  );
 
-        /*
-         * Только активные бизнесы.
-         */
+  /*
+   * Получаем услуги каждого бизнеса.
+   */
 
-        const activeBusinesses =
-            businesses.filter(
-                (
-                    business:
-                        CatalogBusinessWithoutServices
-                ) =>
-                    business.status ===
-                    'active'
-            );
+  const catalog: CatalogBusiness[] = await Promise.all(
+    activeBusinesses.map(
+      async (
+        business: CatalogBusinessWithoutServices,
+      ): Promise<CatalogBusiness> => {
+        const services = await getPublicBusinessServices(business.id);
 
+        return {
+          ...business,
 
-        /*
-         * Получаем услуги каждого бизнеса.
-         */
+          images: business.images ?? [],
 
-        const catalog:
-            CatalogBusiness[] =
-            await Promise.all(
+          services,
+        };
+      },
+    ),
+  );
 
-                activeBusinesses.map(
-                    async (
-                        business:
-                            CatalogBusinessWithoutServices
-                    ): Promise<
-                        CatalogBusiness
-                    > => {
+  return catalog;
+};
 
-                        const services =
-                            await getPublicBusinessServices(
-                                business.id
-                            );
-
-
-                        return {
-                            ...business,
-
-                            images:
-                                business.images ??
-                                [],
-
-                            services
-                        };
-                    }
-                )
-            );
-
-
-        return catalog;
-    };
+export const getCatalogCategoryIds = (
+  selectedId: number,
+  categories: CatalogCategory[],
+): Set<number> => {
+  const ids = new Set([selectedId]);
+  const queue = [selectedId];
+  while (queue.length) {
+    const parentId = queue.pop();
+    for (const category of categories) {
+      if (category.parent === parentId && !ids.has(category.id)) {
+        ids.add(category.id);
+        queue.push(category.id);
+      }
+    }
+  }
+  return ids;
+};
+export const businessHasCategory = (
+  business: CatalogBusiness,
+  selectedId: number,
+  categories: CatalogCategory[],
+): boolean => {
+  const ids = getCatalogCategoryIds(selectedId, categories);
+  return business.services.some(
+    (service) =>
+      service.is_active &&
+      service.category !== null &&
+      ids.has(service.category),
+  );
+};
