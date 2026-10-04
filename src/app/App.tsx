@@ -33,10 +33,7 @@ import EditAppointment from '../components/organisms/Crm/Appointments/Edit/EditA
 import { setDefaultOptions } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
-import {
-    BusinessProvider
-} from '../context/BusinessContext';
-
+import StaffApp from '../pages/Staff/StaffApp';
 import BusinessOwnerRoute from '../routes/BusinessOwnerRoute';
 
 const queryClient = new QueryClient();
@@ -48,7 +45,7 @@ function App() {
         <QueryClientProvider client={queryClient}>
             <UserProvider>
                 <Routes>
-
+                    <Route path="/staff/*" element={<StaffApp />} />
                     {/* Главный сайт + Navbar */}
                     <Route path="/" element={<MainAppLayout />}>
 
@@ -75,7 +72,6 @@ function App() {
                             path="booking/:businessId"
                             element={<Booking />}
                         />
-
                         {/* Авторизация теперь внутри MainAppLayout */}
                         <Route
                             path="auth"
