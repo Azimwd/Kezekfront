@@ -1,22 +1,17 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useBusiness } from "../../context/BusinessContext";
-import { categoryPath, listCategories } from "../../api/categories";
+import { categoryPath } from "../../api/categories";
 import { updateBusinessDirections } from "../../api/businesses";
 import {
-  activateServiceTemplate,
-  configureExistingService,
-  createConfiguredService,
   getServiceLibrary,
   setServiceState,
-  type LibraryResponse,
   type LibraryRow,
-  type ServiceConfiguration,
 } from "../../api/serviceLibrary";
 import BusinessCategoryPicker from "../../components/molecules/Crm/Businesses/BusinessCategoryPicker";
 import { deleteService, type ServiceItem } from "../../api/services";
+import NewService from "../../components/molecules/Crm/Services/NewService";
 import EditService from "../../components/molecules/Crm/Services/EditService";
-
 function apiError(error: unknown): string {
   const collect = (v: unknown): string[] =>
     typeof v === "string"
@@ -36,7 +31,6 @@ const control =
   "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500";
 const button =
   "rounded-lg border border-slate-200 px-4 py-2 text-sm disabled:opacity-50";
-
 export default function Services() {
   const { selectedBusiness } = useBusiness();
   if (!selectedBusiness)
@@ -53,7 +47,6 @@ export default function Services() {
     />
   );
 }
-
 function ServiceLibrary({
   businessId,
   businessKey,
@@ -172,21 +165,6 @@ function ServiceLibrary({
   );
   return (
     <div className="space-y-5 text-slate-800">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold">Услуги бизнеса</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Включайте готовые шаблоны или добавляйте собственные услуги.
-          </p>
-        </div>
-        <button
-          type="button"
-          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm text-white"
-          onClick={() => setConfig("new")}
-        >
-          + Создать услугу
-        </button>
-      </div>
       <div className="rounded-xl border border-slate-200 bg-white p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="text-sm">
@@ -366,7 +344,6 @@ function ServiceLibrary({
                         Удалить
                       </button>
                     )}
-
                     <button
                       type="button"
                       role="switch"
@@ -459,11 +436,12 @@ function ServiceLibrary({
         </div>
       )}
       {config && data && (
-        <ConfigurationModal
+        <NewService
           key={config === "new" ? "new" : config.key}
-          row={config === "new" ? null : config}
-          businessId={businessId}
-          library={data}
+          open
+          showTrigger={false}
+          row={config === "new" ? undefined : config}
+          availableStaffIds={data.staff.map((staff) => staff.id)}
           onClose={() => setConfig(null)}
           onSaved={async () => {
             setConfig(null);
@@ -472,363 +450,6 @@ function ServiceLibrary({
           }}
         />
       )}
-    </div>
-  );
-}
-
-function ConfigurationModal({
-  row,
-  businessId,
-  library,
-  onClose,
-  onSaved,
-}: {
-  row: LibraryRow | null;
-  businessId: number;
-  library: LibraryResponse;
-  onClose: () => void;
-  onSaved: () => Promise<void>;
-}) {
-  const service = row?.service;
-  const template = row?.template;
-  const [existingId, setExistingId] = useState("");
-  const [name, setName] = useState(service?.name ?? template?.name ?? "");
-  const [description, setDescription] = useState(
-    service?.description ?? template?.description ?? "",
-  );
-  const [price, setPrice] = useState(service ? String(service.price) : "");
-  const [duration, setDuration] = useState(
-    service
-      ? String(service.duration_minutes)
-      : template?.suggested_duration_minutes
-        ? String(template.suggested_duration_minutes)
-        : "",
-  );
-  const [before, setBefore] = useState(
-    String(service?.buffer_before_minutes ?? 0),
-  );
-  const [after, setAfter] = useState(
-    String(service?.buffer_after_minutes ?? 0),
-  );
-  const [category, setCategory] = useState(
-    service?.category ?? template?.category ?? null,
-  );
-  const [staff, setStaff] = useState<number[]>(
-    (service?.assigned_staff_ids ?? []).filter((id) =>
-      library.staff.some((s) => s.id === id),
-    ),
-  );
-  const [isActive, setIsActive] = useState(true);
-  const [error, setError] = useState("");
-  const categoryQuery = useQuery({
-    queryKey: ["categories"],
-    queryFn: () => listCategories(),
-  });
-  const save = useMutation({
-    mutationFn: async () => {
-      const payload: ServiceConfiguration = {
-        name: name.trim(),
-        description: description.trim(),
-        price,
-        duration_minutes: Number(duration),
-        buffer_before_minutes: Number(before),
-        buffer_after_minutes: Number(after),
-        assign_staff_ids: staff,
-      };
-      if (template)
-        return activateServiceTemplate(businessId, template.id, {
-          ...payload,
-          ...(existingId ? { existing_service_id: Number(existingId) } : {}),
-        });
-      if (service) return configureExistingService(service.id, payload);
-      return createConfiguredService(businessId, {
-        ...payload,
-        category,
-        is_active: isActive,
-      });
-    },
-    onSuccess: onSaved,
-    onError: (error) => setError(apiError(error)),
-  });
-  const dialog = useRef<HTMLFormElement>(null);
-  const previousFocus = useRef<HTMLElement | null>(
-    document.activeElement as HTMLElement | null,
-  );
-  useEffect(() => {
-    const element = previousFocus.current;
-    return () => {
-      if (element?.isConnected) element.focus();
-    };
-  }, []);
-  const dialogKeys = (event: React.KeyboardEvent<HTMLFormElement>) => {
-    if (event.key === "Escape" && !save.isPending) {
-      event.preventDefault();
-      onClose();
-    }
-    if (event.key === "Tab") {
-      const focusable = Array.from(
-        dialog.current?.querySelectorAll<HTMLElement>(
-          "input:not(:disabled), select:not(:disabled), textarea:not(:disabled), button:not(:disabled)",
-        ) ?? [],
-      );
-      const first = focusable[0],
-        last = focusable[focusable.length - 1];
-      if (!first) {
-        event.preventDefault();
-        return;
-      }
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    }
-  };
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    if (
-      !name.trim() ||
-      price.trim() === "" ||
-      !Number.isFinite(Number(price)) ||
-      Number(price) < 0 ||
-      !/^\d+(\.\d{1,2})?$/.test(price) ||
-      !Number.isInteger(Number(duration)) ||
-      Number(duration) < 1
-    ) {
-      setError(
-        "Укажите название, цену (до двух знаков после точки) и длительность от 1 минуты.",
-      );
-      return;
-    }
-    if ((row || isActive) && !staff.length) {
-      setError("Для включения услуги выберите хотя бы одного мастера.");
-      return;
-    }
-    save.mutate();
-  };
-  return (
-    <div
-      className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-3"
-      role="presentation"
-    >
-      <form
-        ref={dialog}
-        onKeyDown={dialogKeys}
-        onSubmit={submit}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="service-config-title"
-        className="max-h-[90dvh] w-full max-w-xl overflow-y-auto rounded-xl bg-white p-5 shadow-xl"
-      >
-        <h2 id="service-config-title" className="text-lg font-semibold">
-          {row ? "Настроить и включить услугу" : "Создать свою услугу"}
-        </h2>
-        <p className="mb-4 mt-1 text-xs text-slate-500">
-          Цена и длительность задаются вашим бизнесом. Мастеров и дополнительные
-          услуги можно изменить позже.
-        </p>
-        <fieldset disabled={save.isPending} className="space-y-4">
-          {!!row?.matching_services?.length && !service && (
-            <label className="block text-sm">
-              У вас уже есть услуга с таким названием
-              <select
-                className={`${control} mt-1`}
-                value={existingId}
-                onChange={(e) => {
-                  setExistingId(e.target.value);
-                  const candidate = row.matching_services.find(
-                    (s) => s.id === Number(e.target.value),
-                  );
-                  if (candidate) {
-                    setName(candidate.name);
-                    setDescription(candidate.description ?? "");
-                    setPrice(String(candidate.price));
-                    setDuration(String(candidate.duration_minutes));
-                    setBefore(String(candidate.buffer_before_minutes));
-                    setAfter(String(candidate.buffer_after_minutes));
-                    setStaff(
-                      (candidate.assigned_staff_ids ?? []).filter((id) =>
-                        library.staff.some((s) => s.id === id),
-                      ),
-                    );
-                  }
-                }}
-              >
-                <option value="">Создать отдельную услугу</option>
-                {row.matching_services.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    Использовать «{s.name}» (#{s.id})
-                  </option>
-                ))}
-              </select>
-              <span className="mt-1 block text-xs text-slate-500">
-                При выборе существующей услуги сохранятся её записи и
-                дополнения.
-              </span>
-            </label>
-          )}
-          <label className="block text-sm">
-            Название *
-            <input
-              autoFocus
-              required
-              maxLength={255}
-              className={`${control} mt-1`}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </label>
-          {!row && (
-            <label className="block text-sm">
-              Категория
-              <select
-                className={`${control} mt-1`}
-                value={category ?? ""}
-                onChange={(e) =>
-                  setCategory(e.target.value ? Number(e.target.value) : null)
-                }
-              >
-                <option value="">Без категории</option>
-                {categoryQuery.data?.data.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {categoryPath(c, categoryQuery.data.data)}
-                  </option>
-                ))}
-              </select>
-              <span className="mt-1 block text-xs text-slate-500">
-                Новое направление автоматически добавится к бизнесу.
-              </span>
-            </label>
-          )}
-          <div className="grid grid-cols-2 gap-3">
-            <label className="text-sm">
-              Цена, ₸ *
-              <input
-                required
-                type="number"
-                min="0"
-                max="99999999.99"
-                step="0.01"
-                className={`${control} mt-1`}
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-              />
-            </label>
-            <label className="text-sm">
-              Длительность, мин *
-              <input
-                required
-                type="number"
-                min="1"
-                step="1"
-                className={`${control} mt-1`}
-                value={duration}
-                onChange={(e) => setDuration(e.target.value)}
-              />
-            </label>
-            <label className="text-sm">
-              Перерыв до, мин
-              <input
-                required
-                type="number"
-                min="0"
-                step="1"
-                className={`${control} mt-1`}
-                value={before}
-                onChange={(e) => setBefore(e.target.value)}
-              />
-            </label>
-            <label className="text-sm">
-              Перерыв после, мин
-              <input
-                required
-                type="number"
-                min="0"
-                step="1"
-                className={`${control} mt-1`}
-                value={after}
-                onChange={(e) => setAfter(e.target.value)}
-              />
-            </label>
-          </div>
-          <label className="block text-sm">
-            Описание
-            <textarea
-              className={`${control} mt-1`}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-          </label>
-          <div>
-            <h3 className="mb-2 text-sm font-medium">
-              Мастера {row || isActive ? "*" : ""}
-            </h3>
-            {!library.staff.length && (
-              <p className="text-sm text-amber-700">
-                Добавьте активного мастера в разделе «Персонал». Свою услугу
-                можно пока сохранить выключенной.
-              </p>
-            )}
-            <div className="max-h-40 space-y-2 overflow-y-auto">
-              {library.staff.map((s) => (
-                <label key={s.id} className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={staff.includes(s.id)}
-                    onChange={(e) =>
-                      setStaff(
-                        e.target.checked
-                          ? [...staff, s.id]
-                          : staff.filter((id) => id !== s.id),
-                      )
-                    }
-                  />
-                  {s.first_name} {s.last_name}
-                </label>
-              ))}
-            </div>
-          </div>
-          {!row && (
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={isActive}
-                onChange={(e) => setIsActive(e.target.checked)}
-              />
-              Включить услугу сразу
-            </label>
-          )}
-        </fieldset>
-        {error && (
-          <p role="alert" className="mt-3 text-sm text-red-600">
-            {error}
-          </p>
-        )}
-        <div className="mt-5 flex justify-end gap-3">
-          <button
-            type="button"
-            disabled={save.isPending}
-            className={button}
-            onClick={onClose}
-          >
-            Отмена
-          </button>
-          <button
-            type="submit"
-            disabled={save.isPending}
-            className={`${button} bg-indigo-600 text-white`}
-          >
-            {save.isPending
-              ? "Сохраняем…"
-              : row
-                ? "Сохранить и включить"
-                : "Создать услугу"}
-          </button>
-        </div>
-      </form>
     </div>
   );
 }
