@@ -1,4 +1,8 @@
 import { useState } from "react";
+import ConfirmationDialog, {
+  type ConfirmationContent,
+} from "../../../molecules/Feedback/ConfirmationDialog";
+import FeedbackNotice from "../../../molecules/Feedback/FeedbackNotice";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useBusiness } from "../../../../context/BusinessContext";
 import {
@@ -6,6 +10,11 @@ import {
   staffError,
   type OwnerStaff,
 } from "../../../../api/staffAccess";
+type StaffConfirmation = ConfirmationContent & {
+  action: () => Promise<unknown>;
+  successMessage: string;
+};
+
 const button =
   "rounded-xl border border-[#dedbe9] px-4 py-2 text-sm disabled:opacity-50 hover:bg-[#f6f4ff]";
 export default function StaffAccessManager() {
@@ -21,6 +30,19 @@ function AccessPanel({ businessId }: { businessId: number }) {
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [filter, setFilter] = useState("");
+  const [confirmation, setConfirmation] = useState<StaffConfirmation | null>(
+    null,
+  );
+  function ask(action: StaffConfirmation) {
+    setError("");
+    setNotice("");
+    setConfirmation(action);
+  }
+  function dismissConfirmation() {
+    setConfirmation(null);
+    setError("");
+    mutation.reset();
+  }
   const key = ["staff-access-owner", businessId];
   const query = useQuery({
     queryKey: key,
@@ -76,18 +98,38 @@ function AccessPanel({ businessId }: { businessId: number }) {
         value={filter}
         onChange={(e) => setFilter(e.target.value)}
       />
-      {(error || query.isError) && (
-        <p role="alert" className="mb-4 text-sm text-red-700">
-          {error || staffError(query.error)}{" "}
-          <button className="underline" onClick={() => void query.refetch()}>
-            Обновить
-          </button>
-        </p>
+      {(error || query.isError) && !confirmation && (
+        <div className="mb-4">
+          <FeedbackNotice
+            tone="error"
+            title="Не удалось выполнить действие"
+            onClose={error ? () => setError("") : undefined}
+            action={
+              query.isError ? (
+                <button
+                  type="button"
+                  className="underline underline-offset-4"
+                  onClick={() => void query.refetch()}
+                >
+                  Повторить загрузку
+                </button>
+              ) : undefined
+            }
+          >
+            {error || staffError(query.error)}
+          </FeedbackNotice>
+        </div>
       )}
       {notice && (
-        <p role="status" className="mb-4 text-sm text-green-800">
-          {notice}
-        </p>
+        <div className="mb-4">
+          <FeedbackNotice
+            tone="success"
+            title="Готово"
+            onClose={() => setNotice("")}
+          >
+            {notice}
+          </FeedbackNotice>
+        </div>
       )}
       {query.isPending ? (
         <p>Загрузка сотрудников…</p>
@@ -125,17 +167,32 @@ function AccessPanel({ businessId }: { businessId: number }) {
                     <button
                       className={button}
                       disabled={mutation.isPending}
-                      onClick={() => {
-                        if (
-                          window.confirm(
-                            "Отозвать доступ этого аккаунта? Профиль мастера и записи сохранятся.",
-                          )
-                        )
-                          run(async () => {
+                      onClick={() =>
+                        ask({
+                          title: "Отозвать доступ?",
+                          description:
+                            "Сотрудник потеряет доступ к кабинету. Профиль мастера, услуги, график и записи сохранятся.",
+                          confirmLabel: "Отозвать доступ",
+                          tone: "danger",
+                          details: [
+                            {
+                              label: "Мастер",
+                              value:
+                                `${staff.first_name} ${staff.last_name}`.trim(),
+                            },
+                            {
+                              label: "Аккаунт",
+                              value: staff.linked_user?.email || "Не указан",
+                            },
+                          ],
+                          action: async () => {
                             await staffAccess.revoke(staff.id);
                             clearLink(staff.id);
-                          });
-                      }}
+                          },
+                          successMessage:
+                            "Доступ сотрудника отозван. Профиль и записи сохранены.",
+                        })
+                      }
                     >
                       Отозвать доступ
                     </button>
@@ -145,13 +202,26 @@ function AccessPanel({ businessId }: { businessId: number }) {
                         className={button}
                         disabled={mutation.isPending || !staff.is_active}
                         onClick={() => {
-                          if (
-                            !staff.invitation_expires_at ||
-                            window.confirm(
-                              "Создать новую ссылку? Предыдущая ссылка и её заявки будут отозваны.",
-                            )
-                          )
+                          if (!staff.invitation_expires_at) {
                             run(() => invite(staff));
+                            return;
+                          }
+                          ask({
+                            title: "Создать новую ссылку?",
+                            description:
+                              "Предыдущее приглашение перестанет работать. Его ожидающие заявки будут отклонены.",
+                            confirmLabel: "Создать ссылку",
+                            details: [
+                              {
+                                label: "Мастер",
+                                value:
+                                  `${staff.first_name} ${staff.last_name}`.trim(),
+                              },
+                            ],
+                            action: () => invite(staff),
+                            successMessage:
+                              "Новая ссылка готова. Передайте её сотруднику лично. Она действует 3 дня.",
+                          });
                         }}
                       >
                         {staff.invitation_expires_at
@@ -163,9 +233,24 @@ function AccessPanel({ businessId }: { businessId: number }) {
                           className={button}
                           disabled={mutation.isPending}
                           onClick={() =>
-                            run(async () => {
-                              await staffAccess.cancelInvite(staff.id);
-                              clearLink(staff.id);
+                            ask({
+                              title: "Отозвать приглашение?",
+                              description:
+                                "Ссылка перестанет работать, а ожидающие заявки по ней будут отклонены.",
+                              confirmLabel: "Отозвать ссылку",
+                              tone: "danger",
+                              details: [
+                                {
+                                  label: "Мастер",
+                                  value:
+                                    `${staff.first_name} ${staff.last_name}`.trim(),
+                                },
+                              ],
+                              action: async () => {
+                                await staffAccess.cancelInvite(staff.id);
+                                clearLink(staff.id);
+                              },
+                              successMessage: "Приглашение отозвано.",
                             })
                           }
                         >
@@ -250,16 +335,35 @@ function AccessPanel({ businessId }: { businessId: number }) {
                     <button
                       className={button}
                       disabled={mutation.isPending}
-                      onClick={() => {
-                        if (
-                          window.confirm(
-                            `Подтвердить доступ ${claim.user.email} к профилю ${staff.first_name} ${staff.last_name}?`,
-                          )
-                        )
-                          run(() =>
+                      onClick={() =>
+                        ask({
+                          title: "Подтвердить доступ?",
+                          description:
+                            "Этот аккаунт получит доступ к записям, графику и услугам выбранного мастера. Перед подтверждением сверьте данные с сотрудником.",
+                          confirmLabel: "Подтвердить доступ",
+                          details: [
+                            {
+                              label: "Мастер",
+                              value:
+                                `${staff.first_name} ${staff.last_name}`.trim(),
+                            },
+                            {
+                              label: "Аккаунт",
+                              value:
+                                `${claim.user.first_name} ${claim.user.last_name}`.trim(),
+                            },
+                            { label: "Email", value: claim.user.email },
+                            {
+                              label: "Телефон",
+                              value: claim.user.phone || "Не указан",
+                            },
+                          ],
+                          action: () =>
                             staffAccess.review(staff.id, claim.id, "approve"),
-                          );
-                      }}
+                          successMessage:
+                            "Доступ подтверждён. Сотрудник может открыть свой кабинет.",
+                        })
+                      }
                     >
                       Подтвердить
                     </button>
@@ -267,9 +371,24 @@ function AccessPanel({ businessId }: { businessId: number }) {
                       className={button}
                       disabled={mutation.isPending}
                       onClick={() =>
-                        run(() =>
-                          staffAccess.review(staff.id, claim.id, "reject"),
-                        )
+                        ask({
+                          title: "Отклонить заявку?",
+                          description:
+                            "Этот аккаунт не получит доступ к профилю мастера. Для повторной заявки сотруднику понадобится новое приглашение.",
+                          confirmLabel: "Отклонить заявку",
+                          tone: "danger",
+                          details: [
+                            { label: "Аккаунт", value: claim.user.email },
+                            {
+                              label: "Мастер",
+                              value:
+                                `${staff.first_name} ${staff.last_name}`.trim(),
+                            },
+                          ],
+                          action: () =>
+                            staffAccess.review(staff.id, claim.id, "reject"),
+                          successMessage: "Заявка отклонена.",
+                        })
                       }
                     >
                       Отклонить
@@ -280,6 +399,20 @@ function AccessPanel({ businessId }: { businessId: number }) {
             </article>
           ))}
       </div>
+      {confirmation && (
+        <ConfirmationDialog
+          {...confirmation}
+          formatError={staffError}
+          onClose={dismissConfirmation}
+          onConfirm={async () => {
+            setError("");
+            setNotice("");
+            await mutation.mutateAsync(confirmation.action);
+            setNotice(confirmation.successMessage);
+            setConfirmation(null);
+          }}
+        />
+      )}
     </section>
   );
 }

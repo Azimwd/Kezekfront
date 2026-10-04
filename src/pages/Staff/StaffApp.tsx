@@ -2,13 +2,15 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, Route, Routes, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../api/api";
+import ConfirmationDialog from "../../components/molecules/Feedback/ConfirmationDialog";
+import FeedbackNotice from "../../components/molecules/Feedback/FeedbackNotice";
 import {
   staffAccess,
   staffError,
   type StaffAccount,
   type StaffMembership,
+  type StaffAppointment,
 } from "../../api/staffAccess";
-
 const button =
   "rounded-xl border border-[#dedbe9] bg-white px-4 py-2.5 text-sm font-medium hover:bg-[#f7f5ff] disabled:opacity-50";
 const primary = `${button} !bg-[#7655bb] !text-white`;
@@ -31,7 +33,8 @@ const statuses: Record<string, string> = {
   cancelled_by_business: "Отменена бизнесом",
   no_show: "Клиент не пришёл",
 };
-const money = (value: string | number) => `${Number(value).toLocaleString("ru-RU")} ₸`;
+const money = (value: string | number) =>
+  `${Number(value).toLocaleString("ru-RU")} ₸`;
 const time = (value: string) =>
   new Date(value).toLocaleTimeString("ru-RU", {
     hour: "2-digit",
@@ -41,7 +44,6 @@ const today = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
-
 async function currentAccount(): Promise<StaffAccount | null> {
   try {
     return (
@@ -55,17 +57,23 @@ async function currentAccount(): Promise<StaffAccount | null> {
 }
 function ErrorBox({ error, retry }: { error: unknown; retry?: () => void }) {
   return (
-    <div
-      role="alert"
-      className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"
+    <FeedbackNotice
+      tone="error"
+      title="Не удалось выполнить действие"
+      action={
+        retry ? (
+          <button
+            type="button"
+            className="underline underline-offset-4"
+            onClick={retry}
+          >
+            Повторить
+          </button>
+        ) : undefined
+      }
     >
-      {staffError(error)}{" "}
-      {retry && (
-        <button className="underline" onClick={retry}>
-          Повторить
-        </button>
-      )}
-    </div>
+      {staffError(error)}
+    </FeedbackNotice>
   );
 }
 function useAccount() {
@@ -75,7 +83,6 @@ function useAccount() {
     retry: false,
   });
 }
-
 export default function StaffApp() {
   useEffect(() => {
     // Invitation secrets must not be included in Referer headers.
@@ -124,7 +131,6 @@ export default function StaffApp() {
     </main>
   );
 }
-
 function LoginForm() {
   const [register, setRegister] = useState(false);
   const [email, setEmail] = useState("");
@@ -486,6 +492,9 @@ function StaffWorkspace({ staff }: { staff: StaffMembership }) {
 function Appointments({ staff }: { staff: StaffMembership }) {
   const [date, setDate] = useState(today);
   const [page, setPage] = useState(1);
+  const [selectedAppointment, setSelectedAppointment] =
+    useState<StaffAppointment | null>(null);
+  const [notice, setNotice] = useState("");
   const client = useQueryClient();
   const key = ["staff-appointments", staff.id, date, page];
   const query = useQuery({
@@ -519,9 +528,20 @@ function Appointments({ staff }: { staff: StaffMembership }) {
           />
         </label>
       </div>
-      {complete.isError && (
+      {complete.isError && !selectedAppointment && (
         <div className="mb-4">
           <ErrorBox error={complete.error} />
+        </div>
+      )}
+      {notice && (
+        <div className="mb-4">
+          <FeedbackNotice
+            tone="success"
+            title="Запись завершена"
+            onClose={() => setNotice("")}
+          >
+            {notice}
+          </FeedbackNotice>
         </div>
       )}
       {query.isError ? (
@@ -571,8 +591,9 @@ function Appointments({ staff }: { staff: StaffMembership }) {
                       className={button}
                       disabled={complete.isPending}
                       onClick={() => {
-                        if (window.confirm("Завершить эту запись?"))
-                          complete.mutate(a.id);
+                        complete.reset();
+                        setNotice("");
+                        setSelectedAppointment(a);
                       }}
                     >
                       Завершить запись
@@ -602,6 +623,39 @@ function Appointments({ staff }: { staff: StaffMembership }) {
             </button>
           </div>
         </>
+      )}
+      {selectedAppointment && (
+        <ConfirmationDialog
+          title="Завершить запись?"
+          description="После подтверждения статус записи изменится на «Завершена»."
+          confirmLabel="Завершить запись"
+          details={[
+            {
+              label: "Клиент",
+              value:
+                `${selectedAppointment.client_first_name} ${selectedAppointment.client_last_name || ""}`.trim(),
+            },
+            { label: "Услуга", value: selectedAppointment.service_name },
+            {
+              label: "Начало записи",
+              value: new Date(selectedAppointment.start_at).toLocaleString(
+                "ru-RU",
+              ),
+            },
+          ]}
+          formatError={staffError}
+          onClose={() => {
+            setSelectedAppointment(null);
+            complete.reset();
+          }}
+          onConfirm={async () => {
+            await complete.mutateAsync(selectedAppointment.id);
+            setNotice(
+              `${selectedAppointment.service_name} · ${selectedAppointment.client_first_name} ${selectedAppointment.client_last_name || ""}`.trim(),
+            );
+            setSelectedAppointment(null);
+          }}
+        />
       )}
     </section>
   );
