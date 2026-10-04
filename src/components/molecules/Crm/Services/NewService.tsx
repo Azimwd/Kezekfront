@@ -421,6 +421,13 @@ export default function NewService({
     if (isOpen) {
       resetForm();
       loadService(row?.service);
+      window.dispatchEvent(
+        new CustomEvent("kezek:service-panel-opened", {
+          detail: {
+            mode: row ? (row.template ? "template" : "existing") : "manual",
+          },
+        }),
+      );
     }
     // Reset only when opening or changing the selected row; edits remain local.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -847,6 +854,7 @@ export default function NewService({
         description={"Добавьте новую услугу для выбранного бизнеса"}
       >
         <form
+          data-tour-scroll-allowed="true"
           className="
                         flex
                         h-full
@@ -955,7 +963,10 @@ export default function NewService({
                 </p>
               )}
               {!!row?.matching_services?.length && !row.service && (
-                <label className="block text-sm text-slate-700">
+                <label
+                  data-tour="service-existing"
+                  className="block text-sm text-slate-700"
+                >
                   У вас уже есть услуга с таким названием
                   <select
                     className="mt-2 w-full rounded-lg border border-slate-200 p-3"
@@ -1973,6 +1984,11 @@ export default function NewService({
                     ============================================= */}
             <div
               data-tour="service-staff"
+              data-tour-valid={
+                !(row || isActive) || selectedStaffIds.length > 0
+                  ? "true"
+                  : "false"
+              }
               className="
                             mt-10
                             flex

@@ -35,7 +35,11 @@ export default function Services() {
   const { selectedBusiness } = useBusiness();
   if (!selectedBusiness)
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-6 text-slate-600">
+      <div
+        data-tour="service-library"
+        data-tour-valid="false"
+        className="rounded-xl border border-slate-200 bg-white p-6 text-slate-600"
+      >
         Выберите бизнес, чтобы настроить услуги.
       </div>
     );
@@ -102,17 +106,26 @@ function ServiceLibrary({
       cache.invalidateQueries({ queryKey: ["booking-services", businessId] }),
     ]);
   };
+  const reportLibraryError = (error: unknown) => {
+    const message = apiError(error);
+    setError(message);
+    window.dispatchEvent(
+      new CustomEvent("kezek:service-library-error", { detail: { message } }),
+    );
+  };
   const toggle = useMutation({
     mutationFn: (row: LibraryRow) => {
       if (!row.service) throw new Error("Нужны настройки услуги");
       return setServiceState(row.service.id, !row.is_active);
     },
     onMutate: () => setError(""),
-    onSuccess: async () => {
+    onSuccess: async (_response, row) => {
       setPage(1);
       await refresh();
+      if (!row.is_active)
+        window.dispatchEvent(new Event("kezek:service-enabled"));
     },
-    onError: (error) => setError(apiError(error)),
+    onError: reportLibraryError,
   });
   const remove = useMutation({
     mutationFn: (id: number) => deleteService(id),
@@ -164,8 +177,25 @@ function ServiceLibrary({
     ]),
   );
   return (
-    <div className="space-y-5 text-slate-800">
-      <div className="rounded-xl border border-slate-200 bg-white p-4">
+    <div
+      data-tour="service-library"
+      data-tour-valid={query.isSuccess ? "true" : "false"}
+      data-tour-scroll-allowed="true"
+      className="space-y-5 text-slate-800"
+    >
+      <div className="flex justify-end">
+        <button
+          type="button"
+          className={button}
+          onClick={() => window.dispatchEvent(new Event("kezek:tour:services"))}
+        >
+          Обучение по услугам
+        </button>
+      </div>
+      <div
+        data-tour="service-directions"
+        className="rounded-xl border border-slate-200 bg-white p-4"
+      >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="text-sm">
             <span className="font-medium">Направления бизнеса</span>
@@ -216,6 +246,7 @@ function ServiceLibrary({
       </div>
       <div className="flex flex-wrap gap-3">
         <input
+          data-tour="service-search"
           type="search"
           aria-label="Поиск услуг"
           className={`${control} min-w-48 flex-1`}
@@ -224,6 +255,7 @@ function ServiceLibrary({
           placeholder="Название услуги или ключевое слово"
         />
         <select
+          data-tour="service-category-filter"
           aria-label="Категория услуг"
           className={`${control} sm:max-w-xs`}
           value={category}
@@ -240,6 +272,7 @@ function ServiceLibrary({
           ))}
         </select>
         <select
+          data-tour="service-status-filter"
           aria-label="Статус услуг"
           className={`${control} sm:max-w-48`}
           value={active}
@@ -295,74 +328,77 @@ function ServiceLibrary({
             Включено: {data.counts.active} · Найдено: {data.pagination.count}
             {query.isFetching ? " · Обновляем…" : ""}
           </p>
-          {!data.data.length && (
-            <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
-              {data.business_categories.length
-                ? "Услуг по выбранным фильтрам нет. Измените поиск или создайте свою услугу."
-                : "Настройте направления выше или создайте первую услугу самостоятельно."}
-            </div>
-          )}
-          {[...groups].map(([name, rows]) => (
-            <section
-              key={name}
-              className="overflow-hidden rounded-xl border border-slate-200 bg-white"
-            >
-              <h2 className="bg-slate-50 px-4 py-3 text-sm font-semibold">
-                {name}
-              </h2>
-              <div className="divide-y divide-slate-100">
-                {rows.map((row) => (
-                  <div
-                    key={row.key}
-                    className="flex flex-wrap items-center gap-3 p-4"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <h3 className="break-words text-sm font-medium">
-                        {(row.service ?? row.template)?.name}
-                      </h3>
-                      <p className="mt-1 text-xs text-slate-500">
-                        {row.service
-                          ? `${Number(row.service.price).toLocaleString("ru-KZ")} ₸ · ${row.service.duration_minutes} мин · ${row.is_active ? "Включена" : "Выключена"}`
-                          : "Шаблон · настройте цену, время и мастеров"}
-                      </p>
-                      <span className="mt-1 block text-xs text-slate-400">
-                        {row.template ? "Из библиотеки" : "Своя услуга"}
-                      </span>
-                    </div>
-                    {row.service && <EditService service={row.service} />}
-                    {row.service && (
+          <div data-tour="service-library-choices" className="space-y-4">
+            {!data.data.length && (
+              <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
+                {data.business_categories.length
+                  ? "Услуг по выбранным фильтрам нет. Измените поиск или создайте свою услугу."
+                  : "Настройте направления выше или создайте первую услугу самостоятельно."}
+              </div>
+            )}
+            {[...groups].map(([name, rows]) => (
+              <section
+                key={name}
+                className="overflow-hidden rounded-xl border border-slate-200 bg-white"
+              >
+                <h2 className="bg-slate-50 px-4 py-3 text-sm font-semibold">
+                  {name}
+                </h2>
+                <div className="divide-y divide-slate-100">
+                  {rows.map((row) => (
+                    <div
+                      key={row.key}
+                      className="flex flex-wrap items-center gap-3 p-4"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <h3 className="break-words text-sm font-medium">
+                          {(row.service ?? row.template)?.name}
+                        </h3>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {row.service
+                            ? `${Number(row.service.price).toLocaleString("ru-KZ")} ₸ · ${row.service.duration_minutes} мин · ${row.is_active ? "Включена" : "Выключена"}`
+                            : "Шаблон · настройте цену, время и мастеров"}
+                        </p>
+                        <span className="mt-1 block text-xs text-slate-400">
+                          {row.template ? "Из библиотеки" : "Своя услуга"}
+                        </span>
+                      </div>
+                      {row.service && <EditService service={row.service} />}
+                      {row.service && (
+                        <button
+                          type="button"
+                          className="text-xs text-red-600 disabled:opacity-50"
+                          aria-label={`Удалить ${row.service.name}`}
+                          disabled={remove.isPending || toggle.isPending}
+                          onClick={() => {
+                            setDeleteTarget(row.service);
+                            setError("");
+                          }}
+                        >
+                          Удалить
+                        </button>
+                      )}
                       <button
                         type="button"
-                        className="text-xs text-red-600 disabled:opacity-50"
-                        aria-label={`Удалить ${row.service.name}`}
-                        disabled={remove.isPending || toggle.isPending}
-                        onClick={() => {
-                          setDeleteTarget(row.service);
-                          setError("");
-                        }}
+                        role="switch"
+                        aria-checked={row.is_active}
+                        aria-label={`${row.is_active ? "Выключить" : "Включить"} ${(row.service ?? row.template)?.name}`}
+                        disabled={toggle.isPending || query.isFetching}
+                        onClick={() => onToggle(row)}
+                        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-50 ${row.is_active ? "bg-indigo-600" : "bg-slate-300"}`}
                       >
-                        Удалить
+                        <span
+                          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${row.is_active ? "left-0.5 translate-x-5" : "left-0.5"}`}
+                        />
                       </button>
-                    )}
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={row.is_active}
-                      aria-label={`${row.is_active ? "Выключить" : "Включить"} ${(row.service ?? row.template)?.name}`}
-                      disabled={toggle.isPending || query.isFetching}
-                      onClick={() => onToggle(row)}
-                      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-50 ${row.is_active ? "bg-indigo-600" : "bg-slate-300"}`}
-                    >
-                      <span
-                        className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${row.is_active ? "left-0.5 translate-x-5" : "left-0.5"}`}
-                      />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </section>
-          ))}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
           <nav
+            data-tour="service-pagination"
             aria-label="Страницы библиотеки"
             className="flex items-center justify-end gap-3"
           >

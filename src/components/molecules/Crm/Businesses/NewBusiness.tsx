@@ -1,3 +1,4 @@
+import { useBusiness } from "../../../../context/BusinessContext";
 import BusinessCategoryPicker from "./BusinessCategoryPicker";
 import { BUSINESS_TYPES, type BusinessType } from "../../../../api/businesses";
 import { useCallback, useEffect, useState } from "react";
@@ -184,6 +185,7 @@ const CITY_OPTIONS: SelectOption[] = [
 ];
 export default function NewBusiness() {
   const queryClient = useQueryClient();
+  const { setSelectedBusiness } = useBusiness();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [name, setName] = useState("");
   const [categoryIds, setCategoryIds] = useState<number[]>([]);
@@ -235,6 +237,17 @@ export default function NewBusiness() {
     setIsActiveStatus(false);
     setErrorMessage("");
   };
+  const reportError = (message: string) => {
+    setErrorMessage(message);
+    if (message)
+      window.dispatchEvent(
+        new CustomEvent("kezek:business-create-error", { detail: { message } }),
+      );
+  };
+  useEffect(() => {
+    if (isModalOpen)
+      window.dispatchEvent(new Event("kezek:business-modal-opened"));
+  }, [isModalOpen]);
   const NewBusinessMutation = useMutation({
     mutationFn: () =>
       createBusinesses(
@@ -252,7 +265,7 @@ export default function NewBusiness() {
       setErrorMessage("");
     },
     onSuccess: (data) => {
-      console.log("Успешно создан бизнес:", data);
+      setSelectedBusiness({ id: String(data.data.id), label: data.data.name });
       window.dispatchEvent(
         new CustomEvent("kezek:business-created", {
           detail: data,
@@ -269,38 +282,38 @@ export default function NewBusiness() {
     },
     onError: (error) => {
       console.error("Ошибка создания бизнеса:", error);
-      setErrorMessage(getApiErrorMessage(error, "Не удалось создать бизнес."));
+      reportError(getApiErrorMessage(error, "Не удалось создать бизнес."));
     },
   });
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!categoryIds.length) {
-      setErrorMessage("Выберите хотя бы одно направление услуг.");
+      reportError("Выберите хотя бы одно направление услуг.");
       return;
     }
-    setErrorMessage("");
+    reportError("");
     if (rawImage) {
-      setErrorMessage("Сначала сохраните обрезанное изображение.");
+      reportError("Сначала сохраните обрезанное изображение.");
       return;
     }
     if (!name.trim()) {
-      setErrorMessage("Введите название бизнеса.");
+      reportError("Введите название бизнеса.");
       return;
     }
     if (!phone.trim()) {
-      setErrorMessage("Введите номер телефона.");
+      reportError("Введите номер телефона.");
       return;
     }
     if (!city?.id) {
-      setErrorMessage("Выберите город.");
+      reportError("Выберите город.");
       return;
     }
     if (!address.trim()) {
-      setErrorMessage("Введите адрес бизнеса.");
+      reportError("Введите адрес бизнеса.");
       return;
     }
     if (mail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail.trim())) {
-      setErrorMessage("Введите корректный Email.");
+      reportError("Введите корректный Email.");
       return;
     }
     NewBusinessMutation.mutate();
@@ -372,6 +385,7 @@ export default function NewBusiness() {
     setLogoPreview(null);
   };
   const handleClose = () => {
+    if (NewBusinessMutation.isPending) return;
     window.dispatchEvent(new CustomEvent("kezek:business-modal-closed"));
     setIsModalOpen(false);
     resetForm();
@@ -406,8 +420,16 @@ export default function NewBusiness() {
         <Icon icon={Plus} size={20} />
         <Typography text="Создать бизнес" className="font-semibold text-sm" />
       </Button>
+      <button
+        type="button"
+        className="shrink-0 rounded-lg px-3 py-2 text-sm text-indigo-600 hover:bg-indigo-50"
+        onClick={() => window.dispatchEvent(new Event("kezek:tour:business"))}
+      >
+        Как создать бизнес
+      </button>
       <Modal isOpen={isModalOpen} onClose={handleClose}>
         <form
+          data-tour-scroll-allowed="true"
           className="w-full max-w-3xl bg-white p-2 text-left"
           onSubmit={handleSubmit}
         >
@@ -455,7 +477,10 @@ export default function NewBusiness() {
             </div>
           </div>
           <div className="mb-8 space-y-4">
-            <label className="block text-sm font-semibold text-slate-700">
+            <label
+              data-tour="business-type"
+              className="block text-sm font-semibold text-slate-700"
+            >
               Тип заведения
               <select
                 className="mt-2 block w-full rounded-lg border border-gray-200 p-3 font-normal"
@@ -471,10 +496,15 @@ export default function NewBusiness() {
                 ))}
               </select>
             </label>
-            <BusinessCategoryPicker
-              value={categoryIds}
-              onChange={setCategoryIds}
-            />
+            <div
+              data-tour="business-categories"
+              data-tour-valid={categoryIds.length > 0 ? "true" : "false"}
+            >
+              <BusinessCategoryPicker
+                value={categoryIds}
+                onChange={setCategoryIds}
+              />
+            </div>
           </div>
           <div className="mb-8">
             <Typography
@@ -518,7 +548,7 @@ export default function NewBusiness() {
                     data-tour="business-email"
                     type="email"
                     className="w-full pl-9 pr-3 py-3 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-1 focus:ring-[#4F46E5] focus:bg-white text-sm"
-                    placeholder="info@example.com"
+                    placeholder="info\@example.com"
                     value={mail}
                     onChange={(e) => setMail(e.target.value)}
                   />
