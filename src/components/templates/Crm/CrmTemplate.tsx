@@ -38,7 +38,7 @@ export default function CrmTemplate() {
   const { selectedBusiness } = useBusiness();
   const section = location.pathname.split("/")[4];
   const activeItem = sections.find((item) => item.navigator === section);
-  const isList = location.pathname === BUSINESS_LIST_PATH;
+  const isList = location.pathname.replace(/\/+$/, "") === BUSINESS_LIST_PATH;
   const navigation = selectedBusiness
     ? sections.map((item) => ({
         ...item,
@@ -66,12 +66,15 @@ export default function CrmTemplate() {
   ) : undefined;
   return (
     <main className="relative flex h-dvh min-h-dvh w-full min-w-0 overflow-hidden bg-[#f8f9ff]">
-      <aside className="contents md:block md:h-full md:flex-none md:border-r md:border-[#c7c4d8]">
-        <Sidebar navigationItems={navigation} />
-      </aside>
+      {!isList && (
+        <aside className="contents md:block md:h-full md:flex-none md:border-r md:border-[#c7c4d8]">
+          <Sidebar navigationItems={navigation} />
+        </aside>
+      )}
       <div className="flex h-full w-full min-w-0 flex-1 flex-col overflow-hidden md:w-auto">
         <header className="relative z-20 w-full min-w-0 shrink-0 bg-white">
           <Header
+            showSidebar={!isList}
             label={
               isList
                 ? "Мои бизнесы"

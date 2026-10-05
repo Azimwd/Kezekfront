@@ -257,7 +257,7 @@ export default function Navbar() {
               {/* BUSINESS OWNER */}
               {user?.role === "business_owner" && (
                 <NavLink
-                  to="/crm"
+                  to="/crm/my-businesses"
                   onClick={closeMenu}
                   className={({ isActive }) => `
                                         flex
