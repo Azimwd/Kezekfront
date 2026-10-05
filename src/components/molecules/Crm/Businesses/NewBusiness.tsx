@@ -6,6 +6,8 @@ import { BUSINESS_TYPES, type BusinessType } from "../../../../api/businesses";
 import { useCallback, useEffect, useState } from "react";
 import {
   Check,
+  Store,
+  ArrowRight,
   CircleAlert,
   Mail,
   MapPin,
@@ -185,7 +187,13 @@ const CITY_OPTIONS: SelectOption[] = [
     eng: "taldykorgan",
   },
 ];
-export default function NewBusiness() {
+export default function NewBusiness({
+  appearance = "button",
+  showHelpLink = true,
+}: {
+  appearance?: "button" | "card";
+  showHelpLink?: boolean;
+}) {
   const queryClient = useQueryClient();
   const { setSelectedBusiness } = useBusiness();
   const { user } = useUser();
@@ -403,23 +411,66 @@ export default function NewBusiness() {
   return (
     <>
       <Button
-        className="transition-colors duration-200 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#4F46E5] px-5 py-3 text-white shadow-sm transition-colors hover:bg-indigo-600 sm:w-auto sm:shrink-0 sm:px-6"
+        aria-label={
+          appearance === "card" ? "Подключить бизнес" : "Добавить бизнес"
+        }
+        className={
+          appearance === "card"
+            ? "group flex min-h-[380px] w-full cursor-pointer flex-col items-center justify-center rounded-[20px] border border-dashed border-[#ddd8f5] bg-[#f4f3fc] px-6 py-8 text-center transition hover:border-[#a59aef] hover:bg-[#eeebfc]"
+            : "flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#4F46E5] px-5 text-sm text-white shadow-[0_4px_10px_-4px_rgba(79,70,229,0.5)] hover:bg-indigo-600 sm:w-auto sm:shrink-0"
+        }
         onClick={() => {
           setErrorMessage("");
           setIsModalOpen(true);
         }}
         data-tour="create-business"
       >
-        <Icon icon={Plus} size={20} />
-        <Typography text="Создать бизнес" className="font-semibold text-sm" />
+        {appearance === "card" ? (
+          <>
+            <span className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#eae5ff] text-[#6554ed]">
+              <Store size={27} strokeWidth={1.5} aria-hidden="true" />
+            </span>
+            <span className="text-base font-semibold text-[#28354f]">
+              Подключите бизнес
+            </span>
+            <span className="mt-3 max-w-[245px] text-sm leading-6 text-[#8690a7]">
+              Добавьте новую точку, настройте услуги и расписание команды, чтобы
+              начать принимать записи
+            </span>
+            <span className="my-6 flex flex-wrap justify-center gap-2 text-xs text-[#8892a7]">
+              {["Услуги", "Команда", "Расписание"].map((label) => (
+                <span
+                  key={label}
+                  className="rounded-lg bg-white/60 px-3 py-1.5"
+                >
+                  {label}
+                </span>
+              ))}
+            </span>
+            <span className="flex items-center gap-2 rounded-xl border border-[#e0dbf8] bg-white/70 px-5 py-3 text-sm font-medium text-[#6554ed] group-hover:bg-white">
+              Создать бизнес
+              <ArrowRight size={16} aria-hidden="true" />
+            </span>
+          </>
+        ) : (
+          <>
+            <Icon icon={Plus} size={18} />
+            <Typography
+              text="Добавить бизнес"
+              className="font-semibold text-sm"
+            />
+          </>
+        )}
       </Button>
-      <button
-        type="button"
-        className="shrink-0 rounded-lg px-3 py-2 text-sm text-indigo-600 hover:bg-indigo-50"
-        onClick={() => window.dispatchEvent(new Event("kezek:tour:business"))}
-      >
-        Как создать бизнес
-      </button>
+      {showHelpLink && (
+        <button
+          type="button"
+          className="shrink-0 rounded-lg px-3 py-2 text-sm text-indigo-600 hover:bg-indigo-50"
+          onClick={() => window.dispatchEvent(new Event("kezek:tour:business"))}
+        >
+          Как создать бизнес
+        </button>
+      )}
       <Modal isOpen={isModalOpen} onClose={handleClose}>
         <form
           data-tour-scroll-allowed="true"

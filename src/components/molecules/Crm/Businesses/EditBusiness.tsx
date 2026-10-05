@@ -7,6 +7,7 @@ import {
   Mail,
   MapPin,
   Phone,
+  Pencil,
   UploadCloud,
   X,
 } from "lucide-react";
@@ -482,8 +483,9 @@ export default function EditBusiness({ business }: EditBusinessProps) {
           setErrorMessage("");
           setIsModalOpen(true);
         }}
-        className="flex-1 h-[46px] flex items-center justify-center bg-[#f4f6f9] hover:bg-slate-200 text-slate-800 font-medium rounded-xl text-[14px] transition-colors cursor-pointer"
+        className="flex h-10 min-w-0 flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#f1f3f9] px-3 text-xs font-medium text-[#61718c] transition-colors hover:bg-[#e9eaf5]"
       >
+        <Pencil size={13} aria-hidden="true" />
         <Typography text="Редактировать" />
       </Button>
       <Modal isOpen={isModalOpen} onClose={handleClose}>

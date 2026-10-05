@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import Sidebar from "../../organisms/Crm/Sidebar";
 import Header from "../../organisms/Crm/Header";
-import BusinessHeader from "../../organisms/Crm/Businesses/BusinessHeader";
 import ServicesHeader from "../../organisms/Crm/Services/ServicesHeader";
 import StaffHeader from "../../organisms/Crm/Staff.tsx/StaffHeader";
 import { useBusiness } from "../../../context/BusinessContext";
@@ -55,15 +54,14 @@ export default function CrmTemplate() {
   const isSectionRoot =
     location.pathname ===
     (selectedBusiness ? businessPath(selectedBusiness.id, section) : "");
-  const rightElement = isList ? (
-    <BusinessHeader />
-  ) : selectedBusiness && isSectionRoot ? (
-    section === "staff" ? (
-      <StaffHeader />
-    ) : section === "services" ? (
-      <ServicesHeader />
-    ) : undefined
-  ) : undefined;
+  const rightElement =
+    selectedBusiness && isSectionRoot ? (
+      section === "staff" ? (
+        <StaffHeader />
+      ) : section === "services" ? (
+        <ServicesHeader />
+      ) : undefined
+    ) : undefined;
   return (
     <main className="relative flex h-dvh min-h-dvh w-full min-w-0 overflow-hidden bg-[#f8f9ff]">
       {!isList && (
@@ -72,19 +70,21 @@ export default function CrmTemplate() {
         </aside>
       )}
       <div className="flex h-full w-full min-w-0 flex-1 flex-col overflow-hidden md:w-auto">
-        <header className="relative z-20 w-full min-w-0 shrink-0 bg-white">
-          <Header
-            showSidebar={!isList}
-            label={
-              isList
-                ? "Мои бизнесы"
-                : selectedBusiness
-                  ? (activeItem?.label ?? "Кабинет бизнеса")
-                  : "CRM"
-            }
-            rightElement={rightElement}
-          />
-        </header>
+        {!isList && (
+          <header className="relative z-20 w-full min-w-0 shrink-0 bg-white">
+            <Header
+              showSidebar={!isList}
+              label={
+                isList
+                  ? "Мои бизнесы"
+                  : selectedBusiness
+                    ? (activeItem?.label ?? "Кабинет бизнеса")
+                    : "CRM"
+              }
+              rightElement={rightElement}
+            />
+          </header>
+        )}
         <section
           data-crm-scroll
           className={`min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto ${section === "settings" && selectedBusiness ? "p-0" : "px-4 py-5 sm:px-5 sm:py-6 md:px-7 md:py-7 lg:px-10 lg:py-9"}`}

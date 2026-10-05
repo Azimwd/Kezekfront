@@ -84,17 +84,19 @@ export default function DeleteBusiness({ businessId }: DeleteBusinessProps) {
       <div className="relative">
         <Button
           type="button"
+          aria-label="Удалить бизнес"
+          title="Удалить бизнес"
           onClick={() => setIsPopoverOpen((current) => !current)}
           disabled={deleteMutation.isPending}
           className={`
                         flex
-                        h-[46px]
-                        w-[46px]
+                        h-10
+                        w-10
                         shrink-0
                         items-center
                         justify-center
                         rounded-xl
-                        bg-[#fff0f0]
+                        bg-transparent
                         text-red-500
                         transition-colors
 
@@ -112,7 +114,7 @@ export default function DeleteBusiness({ businessId }: DeleteBusinessProps) {
                         }
                     `}
         >
-          <Icon icon={Trash} className="h-5 w-5" />
+          <Icon icon={Trash} className="h-4 w-4" />
         </Button>
 
         <Popover isOpen={isPopoverOpen} onClose={() => setIsPopoverOpen(false)}>
