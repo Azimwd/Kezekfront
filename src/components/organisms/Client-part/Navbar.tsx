@@ -136,7 +136,7 @@ export default function Navbar() {
               {/* BUSINESS OWNER */}
               {user?.role === "business_owner" && (
                 <NavLink
-                  to="/crm"
+                  to="/crm/my-businesses"
                   className={({ isActive }) => `
                                         border-b-2
                                         pb-1

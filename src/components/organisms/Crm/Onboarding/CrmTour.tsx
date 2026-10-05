@@ -1,4 +1,5 @@
 import { useBusiness } from "../../../../context/BusinessContext";
+import { useUser } from "../../../../context/UserContext";
 import { businessPath } from "../../../../utils/crmPaths";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -44,6 +45,18 @@ interface RectState {
 }
 const TOUR_STORAGE_KEY = "kezek_business_owner_tour_completed";
 const allSteps: TourStep[] = [
+  {
+    id: "business-select",
+    stage: 1,
+    stageTitle: "Бизнес",
+    route: "/crm/my-businesses",
+    target: 'a[aria-label^="Открыть кабинет"]',
+    title: "Откройте кабинет бизнеса",
+    description:
+      "Нажмите «Открыть кабинет», чтобы перейти к управлению бизнесом. Все его разделы находятся внутри кабинета.",
+    action: "click",
+    noBack: true,
+  },
   {
     id: "business-open",
     stage: 1,
@@ -701,7 +714,10 @@ const allSteps: TourStep[] = [
 ];
 const scopeSteps = (scope: TourScope) =>
   allSteps.filter(
-    (step) => scope === "all" || step.stage === (scope === "business" ? 1 : 3),
+    (step) =>
+      scope === "all" ||
+      (step.id !== "business-select" &&
+        step.stage === (scope === "business" ? 1 : 3)),
   );
 const visibleElement = (selector: string): HTMLElement | null => {
   return (
@@ -757,9 +773,10 @@ const isValid = (step: TourStep, element: HTMLElement | null) => {
   if (step.action === "input" && !step.optional) return !!input?.value.trim();
   return true;
 };
-const tourWasCompleted = () => {
+const tourStorageKey = (userId: number) => `${TOUR_STORAGE_KEY}:${userId}`;
+const tourWasCompleted = (userId: number) => {
   try {
-    return localStorage.getItem(TOUR_STORAGE_KEY) === "true";
+    return localStorage.getItem(tourStorageKey(userId)) === "true";
   } catch {
     return false;
   }
@@ -768,9 +785,15 @@ const tourWasCompleted = () => {
 export default function CrmTour() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { selectedBusiness, businesses, isBusinessesPending, businessesError } =
-    useBusiness();
-  const autoStarted = useRef(false);
+  const { user, isLoadingUser } = useUser();
+  const {
+    selectedBusiness,
+    businesses,
+    isBusinessesPending,
+    isBusinessesFetching,
+    businessesError,
+  } = useBusiness();
+  const autoStarted = useRef<number | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [scope, setScope] = useState<TourScope>("all");
   const [stepIndex, setStepIndex] = useState(0);
@@ -786,12 +809,6 @@ export default function CrmTour() {
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [tooltipHeight, setTooltipHeight] = useState(290);
   const [collapsed, setCollapsed] = useState(false);
-  useEffect(() => {
-    if (autoStarted.current || isBusinessesPending || businessesError) return;
-    autoStarted.current = true;
-    // Existing businesses and direct links must never force creation of another business.
-    if (!businesses.length && !tourWasCompleted()) setIsRunning(true);
-  }, [businesses.length, isBusinessesPending, businessesError]);
   const steps = useMemo(() => scopeSteps(scope), [scope]);
   const step = steps[stepIndex];
   const handledEventRef = useRef(false);
@@ -803,16 +820,16 @@ export default function CrmTour() {
     setWaitingTooLong(false);
   }, []);
   const stopTour = useCallback(() => {
-    if (scope === "all") {
+    if (scope === "all" && user) {
       try {
-        localStorage.setItem(TOUR_STORAGE_KEY, "true");
+        localStorage.setItem(tourStorageKey(user.id), "true");
       } catch {
         /* Private storage can be disabled. */
       }
     }
     setIsRunning(false);
     clearTarget();
-  }, [scope, clearTarget]);
+  }, [scope, clearTarget, user?.id]);
   const tourBusiness = useRef<string | null>(null);
   useEffect(() => {
     if (!isRunning) {
@@ -856,18 +873,60 @@ export default function CrmTour() {
             ? "service-name"
             : null;
       clearTarget();
+      autoStarted.current = user?.id ?? null;
       setScope(nextScope);
       setStepIndex(
         openForm
           ? nextSteps.findIndex((item) => item.id === openForm)
           : nextScope === "all" && selectedBusiness
             ? nextSteps.findIndex((item) => item.id === "workspace-menu")
-            : 0,
+            : nextScope === "all" && businesses.length
+              ? nextSteps.findIndex((item) => item.id === "business-select")
+              : nextSteps.findIndex(
+                  (item) =>
+                    item.id ===
+                    (nextScope === "services"
+                      ? "service-open"
+                      : "business-open"),
+                ),
       );
       setIsRunning(true);
     },
-    [clearTarget, selectedBusiness],
+    [clearTarget, selectedBusiness, businesses.length, user?.id],
   );
+  useEffect(() => {
+    if (isRunning && step?.id === "business-select" && selectedBusiness) {
+      goTo("workspace-menu");
+    }
+  }, [isRunning, step?.id, selectedBusiness, goTo]);
+  useEffect(() => {
+    if (
+      !user ||
+      isLoadingUser ||
+      isBusinessesPending ||
+      isBusinessesFetching ||
+      businessesError ||
+      isRunning ||
+      autoStarted.current === user.id
+    )
+      return;
+    // Wait until entry/legacy redirects resolve, then start on the visible page.
+    const isList =
+      location.pathname.replace(/\/+$/, "") === "/crm/my-businesses";
+    if (!isList && !selectedBusiness) return;
+    autoStarted.current = user.id;
+    if (!tourWasCompleted(user.id)) startTour("all");
+  }, [
+    user?.id,
+    isLoadingUser,
+    isBusinessesPending,
+    isBusinessesFetching,
+    businessesError,
+    isRunning,
+    location.pathname,
+    selectedBusiness,
+    startTour,
+  ]);
   useEffect(() => {
     const all = () => startTour("all"),
       business = () => startTour("business"),
@@ -959,6 +1018,9 @@ export default function CrmTour() {
   }, [isRunning, step]);
   useEffect(() => {
     if (!isRunning || !step) return;
+    // The selected-business effect advances this step after the link changes the URL.
+    // Do not send the user back to the list during that transition.
+    if (step.id === "business-select" && selectedBusiness) return;
     clearTarget();
     const route = !step.route
       ? null
@@ -1042,7 +1104,7 @@ export default function CrmTour() {
         )
       )
         return;
-      timer = window.setTimeout(goNext, 0);
+      if (step.id !== "business-select") timer = window.setTimeout(goNext, 0);
     };
     target.addEventListener("click", click);
     return () => {
