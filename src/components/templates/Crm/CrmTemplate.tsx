@@ -1,304 +1,96 @@
+import { Outlet, useLocation } from "react-router-dom";
 import {
-    Outlet,
-    useLocation
-} from 'react-router-dom';
+  LayoutDashboard,
+  Building2,
+  CalendarDays,
+  Layers,
+  Users,
+  Settings,
+  MessageSquareText,
+  CalendarClock,
+  BarChart3,
+} from "lucide-react";
+import Sidebar from "../../organisms/Crm/Sidebar";
+import Header from "../../organisms/Crm/Header";
+import BusinessHeader from "../../organisms/Crm/Businesses/BusinessHeader";
+import ServicesHeader from "../../organisms/Crm/Services/ServicesHeader";
+import StaffHeader from "../../organisms/Crm/Staff.tsx/StaffHeader";
+import { useBusiness } from "../../../context/BusinessContext";
+import { businessPath, BUSINESS_LIST_PATH } from "../../../utils/crmPaths";
 
-import {
-    LayoutDashboard,
-    Building2,
-    CalendarDays,
-    Layers,
-    Users,
-    Settings,
-    MessageSquareText,
-    CalendarClock,
-    BarChart3
-} from 'lucide-react';
-
-import Sidebar
-    from '../../organisms/Crm/Sidebar';
-
-import Header
-    from '../../organisms/Crm/Header';
-
-import BusinessHeader
-    from '../../organisms/Crm/Businesses/BusinessHeader';
-
-import ServicesHeader
-    from '../../organisms/Crm/Services/ServicesHeader';
-
-import StaffHeader
-    from '../../organisms/Crm/Staff.tsx/StaffHeader';
-
-import SettingsHeaderControls
-    from '../../organisms/Crm/Settings/SettingsHeaderControls';
-
-import {
-    BusinessProvider
-} from '../../../context/BusinessContext';
-
-
-const navigationData = [
-    {
-        id: 1,
-        navigator: 'dashboard',
-        label: 'Панель управления',
-        icon: LayoutDashboard
-    },
-
-    {
-        id: 2,
-        navigator: 'appointments',
-        label: 'Записи',
-        icon: CalendarDays
-    },
-
-    {
-        id: 3,
-        navigator: 'my-businesses',
-        label: 'Мои бизнесы',
-        icon: Building2,
-        rightElement: (
-            <BusinessHeader />
-        )
-    },
-
-    {
-        id: 4,
-        navigator: 'staff',
-        label: 'Персонал',
-        icon: Users,
-        rightElement: (
-            <StaffHeader />
-        )
-    },
-
-    {
-        id: 5,
-        navigator: 'services',
-        label: 'Услуги',
-        icon: Layers,
-        rightElement: (
-            <ServicesHeader />
-        )
-    },
-
-    {
-        id: 6,
-        navigator: 'schedule',
-        label: 'График работы',
-        icon: CalendarClock
-    },
-
-    {
-        id: 7,
-        navigator: 'settings',
-        label: 'Настройки',
-        icon: Settings,
-        rightElement: (
-            <SettingsHeaderControls />
-        )
-    },
-
-    {
-        id: 8,
-        navigator: 'reviews',
-        label: 'Отзывы',
-        icon: MessageSquareText
-    },
-
-    {
-        id: 9,
-        navigator: 'analytics',
-        label: 'Аналитика',
-        icon: BarChart3,
-    }
+const sections = [
+  {
+    id: 1,
+    navigator: "dashboard",
+    label: "Панель управления",
+    icon: LayoutDashboard,
+  },
+  { id: 2, navigator: "appointments", label: "Записи", icon: CalendarDays },
+  { id: 4, navigator: "staff", label: "Персонал", icon: Users },
+  { id: 5, navigator: "services", label: "Услуги", icon: Layers },
+  { id: 6, navigator: "schedule", label: "График работы", icon: CalendarClock },
+  { id: 7, navigator: "settings", label: "Настройки бизнеса", icon: Settings },
+  { id: 8, navigator: "reviews", label: "Отзывы", icon: MessageSquareText },
+  { id: 9, navigator: "analytics", label: "Аналитика", icon: BarChart3 },
 ];
-
-
-export default function Crm() {
-    const location =
-        useLocation();
-
-
-    /*
-     * ============================================================
-     * ACTIVE PAGE
-     * ============================================================
-     */
-
-    const activeItem =
-        navigationData.find(
-            item =>
-                location.pathname.includes(
-                    item.navigator
-                )
-        );
-
-
-    const headerLabel =
-        activeItem
-            ? activeItem.label
-            : 'Панель управления';
-
-
-    const headerRightElement =
-        activeItem?.rightElement;
-
-
-    /*
-     * ============================================================
-     * PAGE TYPES
-     * ============================================================
-     */
-
-    const isSettingsPage =
-        location.pathname.includes(
-            'settings'
-        );
-
-
-    /*
-     * ============================================================
-     * RENDER
-     * ============================================================
-     */
-
-    return (
-        <BusinessProvider>
-
-            <main
-                className="
-                    relative
-                    flex
-                    h-dvh
-                    min-h-dvh
-                    w-full
-                    min-w-0
-                    overflow-hidden
-                    bg-[#f8f9ff]
-                "
-            >
-
-                {/* =================================================
-                    SIDEBAR
-                ================================================= */}
-
-                <aside
-                    className="
-                        fixed
-                        inset-y-0
-                        left-0
-                        z-50
-                        h-dvh
-                        max-h-dvh
-
-                        md:static
-                        md:z-auto
-                        md:h-full
-                        md:flex-none
-                        md:overflow-y-auto
-                        md:border-r
-                        md:border-[#c7c4d8]
-                    "
-                >
-                    <Sidebar
-                        navigationItems={
-                            navigationData
-                        }
-                    />
-                </aside>
-
-
-                {/* =================================================
-                    RIGHT SIDE
-                ================================================= */}
-
-                <div
-                    className="
-                        flex
-                        h-full
-                        w-full
-                        min-w-0
-                        flex-1
-                        flex-col
-                        overflow-hidden
-
-                        md:w-auto
-                    "
-                >
-
-                    {/* =============================================
-                        HEADER
-                    ============================================= */}
-
-                    <header
-                        className="
-                            relative
-                            z-20
-                            w-full
-                            min-w-0
-                            shrink-0
-                            bg-white
-                        "
-                    >
-                        <Header
-                            label={
-                                headerLabel
-                            }
-                            rightElement={
-                                headerRightElement
-                            }
-                        />
-                    </header>
-
-
-                    {/* =============================================
-                        PAGE CONTENT
-                    ============================================= */}
-
-                    <section
-                        className={`
-                            min-w-0
-                            flex-1
-                            overflow-x-hidden
-                            overflow-y-auto
-
-                            ${
-                                isSettingsPage
-                                    ? `
-                                        p-0
-                                    `
-                                    : `
-                                        px-4
-                                        py-5
-
-                                        sm:px-5
-                                        sm:py-6
-
-                                        md:px-7
-                                        md:py-7
-
-                                        lg:px-10
-                                        lg:py-9
-                                    `
-                            }
-                        `}
-                    >
-                        <div
-                            className="
-                                w-full
-                                min-w-0
-                                max-w-full
-                            "
-                        >
-                            <Outlet />
-                        </div>
-                    </section>
-
-                </div>
-
-            </main>
-        </BusinessProvider>
-    );
+export default function CrmTemplate() {
+  const location = useLocation();
+  const { selectedBusiness } = useBusiness();
+  const section = location.pathname.split("/")[4];
+  const activeItem = sections.find((item) => item.navigator === section);
+  const isList = location.pathname === BUSINESS_LIST_PATH;
+  const navigation = selectedBusiness
+    ? sections.map((item) => ({
+        ...item,
+        navigator: businessPath(selectedBusiness.id, item.navigator),
+      }))
+    : [
+        {
+          id: 3,
+          navigator: BUSINESS_LIST_PATH,
+          label: "Мои бизнесы",
+          icon: Building2,
+        },
+      ];
+  const isSectionRoot =
+    location.pathname ===
+    (selectedBusiness ? businessPath(selectedBusiness.id, section) : "");
+  const rightElement = isList ? (
+    <BusinessHeader />
+  ) : selectedBusiness && isSectionRoot ? (
+    section === "staff" ? (
+      <StaffHeader />
+    ) : section === "services" ? (
+      <ServicesHeader />
+    ) : undefined
+  ) : undefined;
+  return (
+    <main className="relative flex h-dvh min-h-dvh w-full min-w-0 overflow-hidden bg-[#f8f9ff]">
+      <aside className="contents md:block md:h-full md:flex-none md:border-r md:border-[#c7c4d8]">
+        <Sidebar navigationItems={navigation} />
+      </aside>
+      <div className="flex h-full w-full min-w-0 flex-1 flex-col overflow-hidden md:w-auto">
+        <header className="relative z-20 w-full min-w-0 shrink-0 bg-white">
+          <Header
+            label={
+              isList
+                ? "Мои бизнесы"
+                : selectedBusiness
+                  ? (activeItem?.label ?? "Кабинет бизнеса")
+                  : "CRM"
+            }
+            rightElement={rightElement}
+          />
+        </header>
+        <section
+          data-crm-scroll
+          className={`min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto ${section === "settings" && selectedBusiness ? "p-0" : "px-4 py-5 sm:px-5 sm:py-6 md:px-7 md:py-7 lg:px-10 lg:py-9"}`}
+        >
+          <div className="w-full min-w-0 max-w-full">
+            <Outlet key={selectedBusiness?.id ?? "business-list"} />
+          </div>
+        </section>
+      </div>
+    </main>
+  );
 }

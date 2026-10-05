@@ -1,3 +1,5 @@
+import { useUser } from "../../../../context/UserContext";
+import type { Business } from "../../../../api/businesses";
 import { useBusiness } from "../../../../context/BusinessContext";
 import BusinessCategoryPicker from "./BusinessCategoryPicker";
 import { BUSINESS_TYPES, type BusinessType } from "../../../../api/businesses";
@@ -186,6 +188,7 @@ const CITY_OPTIONS: SelectOption[] = [
 export default function NewBusiness() {
   const queryClient = useQueryClient();
   const { setSelectedBusiness } = useBusiness();
+  const { user } = useUser();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [name, setName] = useState("");
   const [categoryIds, setCategoryIds] = useState<number[]>([]);
@@ -265,6 +268,13 @@ export default function NewBusiness() {
       setErrorMessage("");
     },
     onSuccess: (data) => {
+      queryClient.setQueryData<Business[]>(
+        ["all-businesses", user?.id],
+        (previous) => [
+          ...(previous ?? []).filter((item) => item.id !== data.data.id),
+          data.data,
+        ],
+      );
       setSelectedBusiness({ id: String(data.data.id), label: data.data.name });
       window.dispatchEvent(
         new CustomEvent("kezek:business-created", {
@@ -393,24 +403,7 @@ export default function NewBusiness() {
   return (
     <>
       <Button
-        className="transition-colors duration-200 
-                    flex
-                    w-full
-                    cursor-pointer
-                    items-center
-                    justify-center
-                    gap-2
-                    rounded-xl
-                    bg-[#4F46E5]
-                    px-5
-                    py-3
-                    text-white
-                    shadow-sm
-                    transition-colors
-                    hover:bg-indigo-600
-                    sm:w-auto
-                    sm:shrink-0
-                    sm:px-6"
+        className="transition-colors duration-200 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#4F46E5] px-5 py-3 text-white shadow-sm transition-colors hover:bg-indigo-600 sm:w-auto sm:shrink-0 sm:px-6"
         onClick={() => {
           setErrorMessage("");
           setIsModalOpen(true);

@@ -1,49 +1,24 @@
-import { useEffect, useState } from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
-
-import { getCurrentUser } from '../api/auth';
-
+import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { useUser } from "../context/UserContext";
 export default function BusinessOwnerRoute() {
-    const [isLoading, setIsLoading] = useState(true);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [role, setRole] = useState<string | null>(null);
-
-    useEffect(() => {
-        const checkUser = async () => {
-            try {
-                const response = await getCurrentUser();
-
-                const userRole =
-                    response?.data?.role ??
-                    response?.role;
-
-                setIsAuthenticated(true);
-                setRole(userRole);
-            } catch {
-                setIsAuthenticated(false);
-                setRole(null);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        checkUser();
-    }, []);
-
-    if (isLoading) {
-        return <div>Загрузка...</div>;
-    }
-
-    // Не авторизован
-    if (!isAuthenticated) {
-        return <Navigate to="/auth/login" replace />;
-    }
-
-    // Авторизован, но не владелец бизнеса
-    if (role !== 'business_owner') {
-        return <Navigate to="/" replace />;
-    }
-
-    // business_owner
-    return <Outlet />;
+  const { user, isLoadingUser } = useUser();
+  const location = useLocation();
+  if (isLoadingUser)
+    return (
+      <div role="status" className="p-6 text-slate-500">
+        Загрузка…
+      </div>
+    );
+  if (!user)
+    return (
+      <Navigate
+        to="/auth/login"
+        replace
+        state={{
+          from: `${location.pathname}${location.search}${location.hash}`,
+        }}
+      />
+    );
+  if (user.role !== "business_owner") return <Navigate to="/" replace />;
+  return <Outlet />;
 }

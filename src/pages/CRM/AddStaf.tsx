@@ -1,412 +1,189 @@
-import {
-    useState
-} from 'react';
+import { useCrmPath } from "../../hooks/useCrmPath";
+import { useState } from "react";
 
-import {
-    useMutation,
-    useQueryClient
-} from '@tanstack/react-query';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import {
-    CircleAlert
-} from 'lucide-react';
+import { CircleAlert } from "lucide-react";
 
-import {
-    useNavigate
-} from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 
-import StaffActive
-    from '../../components/molecules/Crm/Staff/StaffAdd/StaffActive';
+import StaffActive from "../../components/molecules/Crm/Staff/StaffAdd/StaffActive";
 
-import StaffImage
-    from '../../components/molecules/Crm/Staff/StaffAdd/StaffImage';
+import StaffImage from "../../components/molecules/Crm/Staff/StaffAdd/StaffImage";
 
-import StaffInfo
-    from '../../components/molecules/Crm/Staff/StaffAdd/StaffInfo';
+import StaffInfo from "../../components/molecules/Crm/Staff/StaffAdd/StaffInfo";
 
-import StaffAddHeader
-    from '../../components/organisms/Crm/Staff.tsx/StaffCreate/StaffAddHeader';
+import StaffAddHeader from "../../components/organisms/Crm/Staff.tsx/StaffCreate/StaffAddHeader";
 
-import Typography
-    from '../../components/atoms/Typography';
+import Typography from "../../components/atoms/Typography";
 
-import Button
-    from '../../components/atoms/Button';
+import Button from "../../components/atoms/Button";
 
-import Icon
-    from '../../components/atoms/Icon';
+import Icon from "../../components/atoms/Icon";
 
-import {
-    staffAdd
-} from '../../api/staff';
+import { staffAdd } from "../../api/staff";
 
-import {
-    useBusiness
-} from '../../context/BusinessContext';
+import { useBusiness } from "../../context/BusinessContext";
 
-import {
-    getApiErrorMessage
-} from '../../utils/getApiErrorMessage';
+import { getApiErrorMessage } from "../../utils/getApiErrorMessage";
 
 export default function AddStaf() {
-    const [
-        isStaffActive,
-        setIsStaffActive
-    ] = useState(true);
+  const crmPath = useCrmPath();
 
-    const [
-        staffFirstName,
-        setStaffFirstName
-    ] = useState('');
+  const [isStaffActive, setIsStaffActive] = useState(true);
 
-    const [
-        staffLastName,
-        setStaffLastName
-    ] = useState('');
+  const [staffFirstName, setStaffFirstName] = useState("");
 
-    const [
-        staffPosition,
-        setStaffPosition
-    ] = useState('');
+  const [staffLastName, setStaffLastName] = useState("");
 
-    const [
-        staffDescription,
-        setStaffDescription
-    ] = useState('');
+  const [staffPosition, setStaffPosition] = useState("");
 
-    const [
-        staffPhoto,
-        setStaffPhoto
-    ] = useState<File | null>(
-        null
-    );
+  const [staffDescription, setStaffDescription] = useState("");
 
-    const [
-        errorMessage,
-        setErrorMessage
-    ] = useState('');
+  const [staffPhoto, setStaffPhoto] = useState<File | null>(null);
 
-    const {
-        selectedBusiness
-    } = useBusiness();
+  const [errorMessage, setErrorMessage] = useState("");
 
-    const navigate =
-        useNavigate();
+  const { selectedBusiness } = useBusiness();
 
-    const queryClient =
-        useQueryClient();
+  const navigate = useNavigate();
 
-    const createStaff =
-        useMutation({
-            mutationFn: () => {
-                if (
-                    !selectedBusiness
-                ) {
-                    throw new Error(
-                        'Бизнес не выбран.'
-                    );
-                }
+  const queryClient = useQueryClient();
 
-                return staffAdd({
-                    id:
-                        Number(
-                            selectedBusiness.id
-                        ),
-                    first_name:
-                        staffFirstName.trim(),
-                    last_name:
-                        staffLastName.trim(),
-                    position:
-                        staffPosition.trim(),
-                    is_active:
-                        isStaffActive,
-                    description:
-                        staffDescription.trim(),
-                    photo:
-                        staffPhoto
-                });
-            },
-            onMutate: () => {
-                setErrorMessage('');
-            },
-            onSuccess:
-                async (
-                    data
-                ) => {
-                    await queryClient.invalidateQueries({
-                        queryKey: [
-                            'masters'
-                        ]
-                    });
+  const createStaff = useMutation({
+    mutationFn: () => {
+      if (!selectedBusiness) {
+        throw new Error("Бизнес не выбран.");
+      }
 
-                    await queryClient.invalidateQueries({
-                        queryKey: [
-                            'staff'
-                        ]
-                    });
+      return staffAdd({
+        id: Number(selectedBusiness.id),
+        first_name: staffFirstName.trim(),
+        last_name: staffLastName.trim(),
+        position: staffPosition.trim(),
+        is_active: isStaffActive,
+        description: staffDescription.trim(),
+        photo: staffPhoto,
+      });
+    },
+    onMutate: () => {
+      setErrorMessage("");
+    },
+    onSuccess: async (data) => {
+      await queryClient.invalidateQueries({
+        queryKey: ["masters"],
+      });
 
-                    window.dispatchEvent(
-                        new CustomEvent(
-                            'kezek:staff-created',
-                            {
-                                detail:
-                                    data
-                            }
-                        )
-                    );
+      await queryClient.invalidateQueries({
+        queryKey: ["staff"],
+      });
 
-                    navigate(
-                        '/crm/staff'
-                    );
-                },
-            onError:
-                (
-                    error
-                ) => {
-                    setErrorMessage(
-                        getApiErrorMessage(
-                            error,
-                            'Не удалось создать мастера.'
-                        )
-                    );
-                }
-        });
+      window.dispatchEvent(
+        new CustomEvent("kezek:staff-created", {
+          detail: data,
+        }),
+      );
 
-    const handleSave =
-        () => {
-            if (
-                createStaff.isPending
-            ) {
-                return;
-            }
+      navigate(crmPath("staff"));
+    },
+    onError: (error) => {
+      setErrorMessage(getApiErrorMessage(error, "Не удалось создать мастера."));
+    },
+  });
 
-            setErrorMessage('');
+  const handleSave = () => {
+    if (createStaff.isPending) {
+      return;
+    }
 
-            if (
-                !selectedBusiness
-            ) {
-                setErrorMessage(
-                    'Сначала выберите бизнес.'
-                );
+    setErrorMessage("");
 
-                return;
-            }
+    if (!selectedBusiness) {
+      setErrorMessage("Сначала выберите бизнес.");
 
-            if (
-                !staffFirstName.trim()
-            ) {
-                setErrorMessage(
-                    'Введите имя мастера.'
-                );
+      return;
+    }
 
-                return;
-            }
+    if (!staffFirstName.trim()) {
+      setErrorMessage("Введите имя мастера.");
 
-            if (
-                !staffPosition.trim()
-            ) {
-                setErrorMessage(
-                    'Введите должность мастера.'
-                );
+      return;
+    }
 
-                return;
-            }
+    if (!staffPosition.trim()) {
+      setErrorMessage("Введите должность мастера.");
 
-            createStaff.mutate();
-        };
+      return;
+    }
 
-    const handleCancel =
-        () => {
-            window.dispatchEvent(
-                new Event(
-                    'kezek:staff-add-cancelled'
-                )
-            );
+    createStaff.mutate();
+  };
 
-            navigate(
-                '/crm/staff'
-            );
-        };
+  const handleCancel = () => {
+    window.dispatchEvent(new Event("kezek:staff-add-cancelled"));
 
-    return (
-        <div
-            className="
-                w-full
-                mx-auto
-            "
-        >
-            <StaffAddHeader />
+    navigate(crmPath("staff"));
+  };
 
-            <div
-                className="
-                    flex
-                    flex-col
-                    md:flex-row
-                    gap-10
-                    py-5
-                    items-start
-                    w-full
-                "
+  return (
+    <div className="w-full mx-auto">
+      <StaffAddHeader />
+
+      <div className="flex flex-col md:flex-row gap-10 py-5 items-start w-full">
+        <div className="flex flex-col gap-10 w-full md:w-[300px] shrink-0">
+          <div data-tour="staff-photo">
+            <StaffImage photo={staffPhoto} onChange={setStaffPhoto} />
+          </div>
+
+          <div data-tour="staff-active">
+            <StaffActive isActive={isStaffActive} onChange={setIsStaffActive} />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-6 w-full flex-1">
+          <StaffInfo
+            first_name={staffFirstName}
+            onNameChange={setStaffFirstName}
+            last_name={staffLastName}
+            onLastNameChange={setStaffLastName}
+            position={staffPosition}
+            onPositionChange={setStaffPosition}
+            description={staffDescription}
+            onDescriptionChange={setStaffDescription}
+          />
+
+          {errorMessage && (
+            <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <Icon
+                icon={CircleAlert}
+                size={19}
+                className="mt-0.5 shrink-0 text-red-500"
+              />
+
+              <div className="whitespace-pre-line leading-5">
+                {errorMessage}
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-4 w-full">
+            <Button
+              type="button"
+              onClick={handleCancel}
+              className="px-7 py-3 rounded-xl bg-[#E2E8FF] hover:bg-[#D1DBFF] transition-colors cursor-pointer"
             >
-                <div
-                    className="
-                        flex
-                        flex-col
-                        gap-10
-                        w-full
-                        md:w-[300px]
-                        shrink-0
-                    "
-                >
-                    <div
-                        data-tour="staff-photo"
-                    >
-                        <StaffImage
-                            photo={
-                                staffPhoto
-                            }
-                            onChange={
-                                setStaffPhoto
-                            }
-                        />
-                    </div>
+              <Typography
+                text="Отмена"
+                className="text-[#3B28CC] font-medium text-[15px]"
+              />
+            </Button>
 
-                    <div
-                        data-tour="staff-active"
-                    >
-                        <StaffActive
-                            isActive={
-                                isStaffActive
-                            }
-                            onChange={
-                                setIsStaffActive
-                            }
-                        />
-                    </div>
-                </div>
-
-                <div
-                    className="
-                        flex
-                        flex-col
-                        gap-6
-                        w-full
-                        flex-1
-                    "
-                >
-                    <StaffInfo
-                        first_name={
-                            staffFirstName
-                        }
-                        onNameChange={
-                            setStaffFirstName
-                        }
-                        last_name={
-                            staffLastName
-                        }
-                        onLastNameChange={
-                            setStaffLastName
-                        }
-                        position={
-                            staffPosition
-                        }
-                        onPositionChange={
-                            setStaffPosition
-                        }
-                        description={
-                            staffDescription
-                        }
-                        onDescriptionChange={
-                            setStaffDescription
-                        }
-                    />
-
-                    {errorMessage && (
-                        <div
-                            className="
-                                flex
-                                items-start
-                                gap-3
-                                rounded-xl
-                                border
-                                border-red-200
-                                bg-red-50
-                                px-4
-                                py-3
-                                text-sm
-                                text-red-700
-                            "
-                        >
-                            <Icon
-                                icon={
-                                    CircleAlert
-                                }
-                                size={
-                                    19
-                                }
-                                className="
-                                    mt-0.5
-                                    shrink-0
-                                    text-red-500
-                                "
-                            />
-
-                            <div
-                                className="
-                                    whitespace-pre-line
-                                    leading-5
-                                "
-                            >
-                                {errorMessage}
-                            </div>
-                        </div>
-                    )}
-
-                    <div
-                        className="
-                            flex
-                            justify-end
-                            gap-4
-                            w-full
-                        "
-                    >
-                        <Button
-                            type="button"
-                            onClick={
-                                handleCancel
-                            }
-                            className="
-                                px-7
-                                py-3
-                                rounded-xl
-                                bg-[#E2E8FF]
-                                hover:bg-[#D1DBFF]
-                                transition-colors
-                                cursor-pointer
-                            "
-                        >
-                            <Typography
-                                text="Отмена"
-                                className="
-                                    text-[#3B28CC]
-                                    font-medium
-                                    text-[15px]
-                                "
-                            />
-                        </Button>
-
-                        <div
-                            data-tour="staff-submit"
-                        >
-                            <Button
-                                type="button"
-                                onClick={
-                                    handleSave
-                                }
-                                disabled={
-                                    createStaff.isPending
-                                }
-                                className={`
+            <div data-tour="staff-submit">
+              <Button
+                type="button"
+                onClick={handleSave}
+                disabled={createStaff.isPending}
+                className={`
                                     px-8
                                     py-3
                                     rounded-xl
@@ -416,35 +193,27 @@ export default function AddStaf() {
                                     shadow-sm
 
                                     ${
-                                        createStaff.isPending
-                                            ? `
+                                      createStaff.isPending
+                                        ? `
                                                 opacity-60
                                                 cursor-not-allowed
                                             `
-                                            : `
+                                        : `
                                                 cursor-pointer
                                                 hover:bg-[#2b1d96]
                                             `
                                     }
                                 `}
-                            >
-                                <Typography
-                                    text={
-                                        createStaff.isPending
-                                            ? 'Сохранение...'
-                                            : 'Сохранить'
-                                    }
-                                    className="
-                                        text-white
-                                        font-medium
-                                        text-[15px]
-                                    "
-                                />
-                            </Button>
-                        </div>
-                    </div>
-                </div>
+              >
+                <Typography
+                  text={createStaff.isPending ? "Сохранение..." : "Сохранить"}
+                  className="text-white font-medium text-[15px]"
+                />
+              </Button>
             </div>
+          </div>
         </div>
-    );
+      </div>
+    </div>
+  );
 }

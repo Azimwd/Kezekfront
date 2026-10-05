@@ -183,15 +183,6 @@ function ServiceLibrary({
       data-tour-scroll-allowed="true"
       className="space-y-5 text-slate-800"
     >
-      <div className="flex justify-end">
-        <button
-          type="button"
-          className={button}
-          onClick={() => window.dispatchEvent(new Event("kezek:tour:services"))}
-        >
-          Обучение по услугам
-        </button>
-      </div>
       <div
         data-tour="service-directions"
         className="rounded-xl border border-slate-200 bg-white p-4"

@@ -1,3 +1,5 @@
+import { useBusiness } from "../../../../context/BusinessContext";
+import { businessPath } from "../../../../utils/crmPaths";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -183,13 +185,25 @@ const allSteps: TourStep[] = [
     target: '[data-tour="business-submit"]',
     title: "Создайте бизнес",
     description:
-      "Проверьте данные и нажмите «Создать бизнес». После успешного сохранения он станет выбранным бизнесом. При ошибке исправьте данные в форме и повторите отправку.",
+      "Проверьте данные и нажмите «Создать бизнес». После успешного сохранения откроется его кабинет. При ошибке исправьте данные в форме и повторите отправку.",
     action: "event",
     eventName: "kezek:business-created",
     waitingText: "Ожидаем успешное создание бизнеса",
     formStep: true,
     errorEventName: "kezek:business-create-error",
     allowOutsideInteraction: true,
+  },
+  {
+    id: "workspace-menu",
+    stage: 1,
+    stageTitle: "Кабинет бизнеса",
+    route: "/crm/dashboard",
+    target: '[data-tour="workspace-context"]',
+    title: "Кабинет вашего бизнеса",
+    description:
+      "Название сверху показывает, каким бизнесом вы управляете. Все разделы меню относятся к нему. Чтобы открыть другой бизнес, нажмите «Все бизнесы» или «Мои бизнесы» вверху страницы.",
+    action: "manual",
+    noBack: true,
   },
   {
     id: "staff-open",
@@ -294,7 +308,7 @@ const allSteps: TourStep[] = [
     noBack: true,
     validation: "dataset-valid",
     validationMessage:
-      "Выберите бизнес в шапке и дождитесь загрузки библиотеки. При ошибке нажмите «Повторить».",
+      "Дождитесь загрузки библиотеки этого бизнеса. При ошибке нажмите «Повторить».",
     allowOutsideInteraction: true,
   },
   {
@@ -754,7 +768,10 @@ const tourWasCompleted = () => {
 export default function CrmTour() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isRunning, setIsRunning] = useState(() => !tourWasCompleted());
+  const { selectedBusiness, businesses, isBusinessesPending, businessesError } =
+    useBusiness();
+  const autoStarted = useRef(false);
+  const [isRunning, setIsRunning] = useState(false);
   const [scope, setScope] = useState<TourScope>("all");
   const [stepIndex, setStepIndex] = useState(0);
   const [target, setTarget] = useState<HTMLElement | null>(null);
@@ -769,6 +786,12 @@ export default function CrmTour() {
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [tooltipHeight, setTooltipHeight] = useState(290);
   const [collapsed, setCollapsed] = useState(false);
+  useEffect(() => {
+    if (autoStarted.current || isBusinessesPending || businessesError) return;
+    autoStarted.current = true;
+    // Existing businesses and direct links must never force creation of another business.
+    if (!businesses.length && !tourWasCompleted()) setIsRunning(true);
+  }, [businesses.length, isBusinessesPending, businessesError]);
   const steps = useMemo(() => scopeSteps(scope), [scope]);
   const step = steps[stepIndex];
   const handledEventRef = useRef(false);
@@ -790,6 +813,19 @@ export default function CrmTour() {
     setIsRunning(false);
     clearTarget();
   }, [scope, clearTarget]);
+  const tourBusiness = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isRunning) {
+      tourBusiness.current = null;
+      return;
+    }
+    const id = selectedBusiness ? String(selectedBusiness.id) : null;
+    if (tourBusiness.current && (!id || id !== tourBusiness.current)) {
+      stopTour();
+    } else if (id) {
+      tourBusiness.current = id;
+    }
+  }, [selectedBusiness?.id, isRunning, stopTour]);
   const goNext = useCallback(() => {
     if (stepIndex >= steps.length - 1) {
       stopTour();
@@ -822,11 +858,15 @@ export default function CrmTour() {
       clearTarget();
       setScope(nextScope);
       setStepIndex(
-        openForm ? nextSteps.findIndex((item) => item.id === openForm) : 0,
+        openForm
+          ? nextSteps.findIndex((item) => item.id === openForm)
+          : nextScope === "all" && selectedBusiness
+            ? nextSteps.findIndex((item) => item.id === "workspace-menu")
+            : 0,
       );
       setIsRunning(true);
     },
-    [clearTarget],
+    [clearTarget, selectedBusiness],
   );
   useEffect(() => {
     const all = () => startTour("all"),
@@ -920,8 +960,16 @@ export default function CrmTour() {
   useEffect(() => {
     if (!isRunning || !step) return;
     clearTarget();
-    if (step.route && location.pathname !== step.route) {
-      navigate(step.route);
+    const route = !step.route
+      ? null
+      : step.route === "/crm/my-businesses"
+        ? step.route
+        : selectedBusiness
+          ? businessPath(selectedBusiness.id, step.route.replace("/crm/", ""))
+          : null;
+    if (step.route && !route) return;
+    if (route && location.pathname !== route) {
+      navigate(route);
       return;
     }
     const startedAt = Date.now();
@@ -982,6 +1030,7 @@ export default function CrmTour() {
     retry,
     clearTarget,
     goNext,
+    selectedBusiness,
   ]);
   useEffect(() => {
     if (!isRunning || !step || !target || step.action !== "click") return;
