@@ -1,396 +1,320 @@
-import { useUser } from "../../context/UserContext";
 import { useMemo, useState } from "react";
-
-import { useQuery } from "@tanstack/react-query";
-
+import { Link } from "react-router-dom";
+import {
+  ArrowLeft,
+  BookOpen,
+  Building2,
+  CheckCircle2,
+  FilePenLine,
+  ShieldAlert,
+  RotateCcw,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { useBusiness } from "../../context/BusinessContext";
 import BusinessCard from "../../components/organisms/Crm/Businesses/BusinessCard";
+import BusinessHeader from "../../components/organisms/Crm/Businesses/BusinessHeader";
+import NewBusiness from "../../components/molecules/Crm/Businesses/NewBusiness";
 
-import Cards from "../../components/organisms/Crm/Businesses/Cards";
-
-import { listBusinesses } from "../../api/businesses";
+const PAGE_SIZE = 9;
 
 export default function Mybusinesses() {
-  const { user } = useUser();
-
+  const {
+    businesses,
+    isBusinessesPending,
+    isBusinessesFetching,
+    businessesError,
+    refetchBusinesses,
+  } = useBusiness();
+  const [search, setSearch] = useState("");
+  const [city, setCity] = useState("");
+  const [status, setStatus] = useState("");
   const [page, setPage] = useState(1);
-
-  /*
-   * ============================================================
-   * BUSINESSES
-   * ============================================================
-   */
-
-  const { isPending, isFetching, error, data } = useQuery({
-    queryKey: ["businesses", user?.id, page],
-
-    queryFn: () => listBusinesses(page),
-
-    retry: false,
-
-    placeholderData: (previousData) => previousData,
-  });
-
-  const businesses = data?.data ?? [];
-
-  const pagination = data?.pagination;
-
-  const currentPage = pagination?.current_page ?? page;
-
-  const totalPages = pagination?.total_pages ?? 1;
-
-  const totalCount = pagination?.count ?? 0;
-
-  const pageSize = pagination?.page_size ?? 9;
-
-  /*
-   * ============================================================
-   * STATISTICS
-   * ============================================================
-   */
-
-  const cardsData = useMemo(() => {
-    const active = businesses.filter(
-      (business) => business.status === "active",
-    ).length;
-
-    const drafts = businesses.filter(
-      (business) => business.status === "draft",
-    ).length;
-
-    const blocked = businesses.filter(
-      (business) => business.status === "blocked",
-    ).length;
-
-    return [
-      {
-        id: 1,
-        title: "Всего бизнесов",
-        num: totalCount,
-        leftBorderClass: "",
-      },
-
-      {
-        id: 2,
-        title: "Активные",
-        num: active,
-        leftBorderClass: "border-l-[4px] border-l-green-500",
-      },
-
-      {
-        id: 3,
-        title: "Черновики",
-        num: drafts,
-        leftBorderClass: "border-l-[4px] border-l-slate-400",
-      },
-
-      {
-        id: 4,
-        title: "Заблокированные",
-        num: blocked,
-        leftBorderClass: "border-l-[4px] border-l-red-500",
-      },
-    ];
-  }, [businesses, totalCount]);
-
-  /*
-   * ============================================================
-   * EMPTY
-   * ============================================================
-   */
-
-  const hasNoBusinesses = totalCount === 0;
-
-  /*
-   * ============================================================
-   * PAGINATION INFO
-   * ============================================================
-   */
-
-  const firstItem = totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1;
-
-  const lastItem =
-    totalCount === 0 ? 0 : Math.min(currentPage * pageSize, totalCount);
-
-  /*
-   * ============================================================
-   * PAGE NUMBERS
-   * ============================================================
-   */
-
-  const pageNumbers = useMemo(() => {
-    /*
-     * До 5 страниц показываем все.
-     */
-
-    if (totalPages <= 5) {
-      return Array.from(
-        {
-          length: totalPages,
-        },
-        (_, index) => index + 1,
-      );
-    }
-
-    /*
-     * Если страниц много —
-     * показываем максимум 5 рядом
-     * с текущей страницей.
-     */
-
-    let start = Math.max(1, currentPage - 2);
-
-    let end = Math.min(totalPages, start + 4);
-
-    if (end - start < 4) {
-      start = Math.max(1, end - 4);
-    }
-
-    const pages: number[] = [];
-
-    for (let number = start; number <= end; number += 1) {
-      pages.push(number);
-    }
-
-    return pages;
-  }, [currentPage, totalPages]);
-
-  /*
-   * ============================================================
-   * LOADING
-   * ============================================================
-   */
-
-  if (isPending && !data) {
-    return (
-      <div className="flex w-full items-center justify-center px-4 py-10 text-center">
-        <p className="text-sm text-gray-500 sm:text-base">
-          Загрузка бизнесов...
-        </p>
-      </div>
+  const cities = useMemo(
+    () =>
+      Array.from(
+        new Map(
+          businesses
+            .filter((b) => b.city_name)
+            .map((b) => [
+              String(b.city),
+              { id: String(b.city), name: b.city_name },
+            ]),
+        ).values(),
+      ).sort((a, b) => a.name.localeCompare(b.name, "ru")),
+    [businesses],
+  );
+  const filtered = useMemo(() => {
+    const term = search.trim().toLocaleLowerCase("ru");
+    return businesses.filter(
+      (b) =>
+        (!city || String(b.city) === city) &&
+        (!status || b.status === status) &&
+        (!term ||
+          [b.name, b.address, b.city_name, b.phone].some((value) =>
+            (value ?? "").toLocaleLowerCase("ru").includes(term),
+          )),
     );
-  }
-
-  /*
-   * ============================================================
-   * ERROR
-   * ============================================================
-   */
-
-  if (error) {
-    return (
-      <div className="flex w-full items-center justify-center px-4 py-10 text-center">
-        <p className="max-w-[420px] text-sm leading-5 text-red-500 sm:text-base">
-          Произошла ошибка при загрузке бизнесов. Возможно, сессия истекла.
-        </p>
-      </div>
-    );
-  }
-
-  /*
-   * ============================================================
-   * RENDER
-   * ============================================================
-   */
+  }, [businesses, search, city, status]);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const offset = (currentPage - 1) * PAGE_SIZE;
+  const visible = filtered.slice(offset, offset + PAGE_SIZE);
+  const active = businesses.filter((b) => b.status === "active").length;
+  const stats = [
+    {
+      title: "Всего бизнесов",
+      count: businesses.length,
+      icon: Building2,
+      value: "",
+      note: businesses.length
+        ? `${Math.round((active / businesses.length) * 100)}% активных`
+        : "Начните с первого бизнеса",
+      tone: "text-[#6554ed] bg-[#eeebff]",
+    },
+    {
+      title: "Активные",
+      count: active,
+      icon: CheckCircle2,
+      value: "active",
+      note: "Опубликованы",
+      tone: "text-emerald-600 bg-emerald-50",
+    },
+    {
+      title: "Черновики",
+      count: businesses.filter((b) => b.status === "draft").length,
+      icon: FilePenLine,
+      value: "draft",
+      note: "Ещё не опубликованы",
+      tone: "text-amber-600 bg-amber-50",
+    },
+    {
+      title: "Заблокированные",
+      count: businesses.filter((b) => b.status === "blocked").length,
+      icon: ShieldAlert,
+      value: "blocked",
+      note: "Доступ ограничен",
+      tone: "text-rose-500 bg-rose-50",
+    },
+  ];
+  const resetFilters = () => {
+    setSearch("");
+    setCity("");
+    setStatus("");
+    setPage(1);
+  };
+  const setFilter = (setter: (value: string) => void) => (value: string) => {
+    setter(value);
+    setPage(1);
+  };
+  const pageNumbers = Array.from(
+    { length: Math.min(5, totalPages) },
+    (_, index) =>
+      Math.max(1, Math.min(currentPage - 2, totalPages - 4)) + index,
+  );
 
   return (
-    <div className="flex w-full min-w-0 flex-col gap-6 sm:gap-8 lg:gap-10">
-      {/* =====================================================
-                STATISTICS
-            ===================================================== */}
-
-      <div className="grid w-full min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 lg:gap-6 xl:gap-9">
-        {cardsData.map((card) => (
-          <div key={card.id} className="min-w-0">
-            <Cards
-              title={card.title}
-              num={card.num}
-              leftBorderClass={card.leftBorderClass}
-            />
-          </div>
-        ))}
-      </div>
-
-      {/* =====================================================
-                BUSINESSES
-            ===================================================== */}
-
-      {hasNoBusinesses ? (
-        <div className="rounded-2xl border border-dashed border-[#c7c4d8] bg-white px-4 py-10 text-center sm:py-14">
-          <p className="text-sm text-gray-500 sm:text-base">
-            У вас пока нет ни одного бизнеса
+    <div className="mx-auto flex w-full max-w-[1280px] min-w-0 flex-col gap-7 sm:gap-8">
+      <nav
+        aria-label="Навигация страницы бизнесов"
+        className="flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm"
+      >
+        <Link
+          to="/catalog"
+          className="inline-flex items-center gap-2 rounded-lg py-1 text-[#6554ed] hover:text-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-indigo-500"
+        >
+          <ArrowLeft size={16} aria-hidden="true" />В каталог
+        </Link>
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new Event("kezek:tour:restart"))}
+          className="inline-flex cursor-pointer items-center gap-2 rounded-lg py-1 text-[#7a8197] hover:text-[#6554ed]"
+        >
+          <BookOpen size={16} aria-hidden="true" />
+          Руководство по запуску бизнеса
+        </button>
+      </nav>
+      <div className="flex min-w-0 flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+        <div className="min-w-0 xl:max-w-[330px] xl:shrink-0">
+          <h1 className="text-2xl font-bold tracking-tight text-[#202840] sm:text-3xl">
+            Мои бизнесы
+          </h1>
+          <p className="mt-2 max-w-[400px] text-sm leading-6 text-[#7a8197]">
+            Откройте бизнес, чтобы управлять его записями, услугами и командой
           </p>
         </div>
-      ) : (
-        <>
-          {/* =============================================
-                        BUSINESS CARDS
-                    ============================================= */}
-
-          <div
-            className={`
-                            grid
-                            w-full
-                            min-w-0
-                            grid-cols-1
-                            gap-4
-
-                            md:grid-cols-2
-                            md:gap-5
-
-                            xl:grid-cols-3
-                            xl:gap-6
-
-                            transition-opacity
-
-                            ${isFetching ? "opacity-60" : "opacity-100"}
-                        `}
-          >
-            {businesses.map((business) => (
-              <div key={business.id} className="min-w-0">
-                <BusinessCard business={business} />
+        <BusinessHeader
+          search={search}
+          onSearchChange={setFilter(setSearch)}
+          city={city}
+          onCityChange={setFilter(setCity)}
+          cities={cities}
+          status={status}
+          onStatusChange={setFilter(setStatus)}
+        />
+      </div>
+      <div>
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 sm:gap-4">
+          {stats.map((item) => (
+            <button
+              key={item.title}
+              type="button"
+              onClick={() => {
+                setStatus(item.value);
+                setPage(1);
+              }}
+              aria-pressed={status === item.value}
+              aria-label={`Показать: ${item.title.toLocaleLowerCase("ru")}`}
+              className={`flex min-w-0 cursor-pointer flex-col rounded-2xl border bg-white/60 p-4 text-left transition hover:border-[#d2cbff] hover:bg-white sm:p-5 ${status === item.value ? "border-[#dcd6ff]" : "border-[#ecedf5]"}`}
+            >
+              <div className="flex w-full items-start justify-between gap-2">
+                <span className="text-xs leading-5 text-[#7a8197] sm:text-sm">
+                  {item.title}
+                </span>
+                <span
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${item.tone}`}
+                >
+                  <item.icon size={17} aria-hidden="true" />
+                </span>
               </div>
+              <div className="mt-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <span className="text-2xl font-bold tabular-nums text-[#202840]">
+                  {isBusinessesPending || businessesError ? "—" : item.count}
+                </span>
+                <span className="text-xs leading-5 text-[#7a8197]">
+                  {isBusinessesPending
+                    ? "Загрузка…"
+                    : businessesError
+                      ? "Данные недоступны"
+                      : item.note}
+                </span>
+              </div>
+            </button>
+          ))}
+        </div>
+        <p className="mt-3 text-xs text-[#9a9fb1]">По всем вашим бизнесам</p>
+      </div>
+      <section
+        aria-label="Ваши бизнесы"
+        aria-busy={isBusinessesFetching}
+        className="min-w-0"
+      >
+        {isBusinessesPending ? (
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            <p role="status" className="sr-only">
+              Загрузка бизнесов...
+            </p>
+            {[1, 2, 3].map((id) => (
+              <div
+                key={id}
+                aria-hidden="true"
+                className="h-[420px] animate-pulse rounded-2xl border border-[#ecedf5] bg-[#eeeff8]"
+              />
             ))}
           </div>
-
-          {/* =============================================
-                        PAGINATION
-                    ============================================= */}
-
-          <div className="flex w-full min-w-0 flex-col gap-4 border-t border-[#e2e4f0] pt-5 sm:flex-row sm:items-center sm:justify-between">
-            {/* =========================================
-                            INFO
-                        ========================================= */}
-
-            <div className="text-center text-xs leading-5 text-slate-500 sm:text-left sm:text-sm">
-              {totalCount === 0
-                ? "Бизнесов нет"
-                : `Показано ${firstItem}-${lastItem} из ${totalCount} бизнесов`}
-            </div>
-
-            {/* =========================================
-                            MOBILE PAGINATION
-                        ========================================= */}
-
-            {totalPages > 1 && (
-              <div className="flex w-full items-center justify-between gap-2 sm:hidden">
-                {/* PREVIOUS */}
-
-                <button
-                  type="button"
-                  disabled={currentPage <= 1 || isFetching}
-                  onClick={() =>
-                    setPage((previousPage) => Math.max(1, previousPage - 1))
-                  }
-                  className="flex h-10 min-w-[82px] cursor-pointer items-center justify-center rounded-lg border border-[#c7c4d8] bg-white px-3 text-xs font-medium text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  Пред.
-                </button>
-
-                {/* CURRENT */}
-
-                <div className="flex min-w-0 flex-1 items-center justify-center text-xs font-semibold text-slate-600">
-                  {currentPage} / {totalPages}
-                </div>
-
-                {/* NEXT */}
-
-                <button
-                  type="button"
-                  disabled={currentPage >= totalPages || isFetching}
-                  onClick={() =>
-                    setPage((previousPage) =>
-                      Math.min(totalPages, previousPage + 1),
-                    )
-                  }
-                  className="flex h-10 min-w-[82px] cursor-pointer items-center justify-center rounded-lg border border-[#c7c4d8] bg-white px-3 text-xs font-medium text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  След.
-                </button>
-              </div>
-            )}
-
-            {/* =========================================
-                            TABLET / DESKTOP PAGINATION
-                        ========================================= */}
-
-            {totalPages > 1 && (
-              <div className="hidden min-w-0 items-center gap-1 sm:flex">
-                {/* PREVIOUS */}
-
-                <button
-                  type="button"
-                  disabled={currentPage <= 1 || isFetching}
-                  onClick={() =>
-                    setPage((previousPage) => Math.max(1, previousPage - 1))
-                  }
-                  className="h-9 cursor-pointer rounded-lg border border-[#c7c4d8] bg-white px-3 text-sm font-medium text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 lg:px-4"
-                >
-                  Пред.
-                </button>
-
-                {/* PAGE NUMBERS */}
-
-                {pageNumbers.map((pageNumber) => (
-                  <button
-                    key={pageNumber}
-                    type="button"
-                    disabled={isFetching}
-                    onClick={() => setPage(pageNumber)}
-                    className={`
-                                                h-9
-                                                min-w-9
-                                                cursor-pointer
-                                                rounded-lg
-                                                border
-                                                px-2
-                                                text-sm
-                                                font-medium
-                                                transition
-
-                                                ${
-                                                  currentPage === pageNumber
-                                                    ? `
-                                                            border-[#4031d0]
-                                                            bg-[#4031d0]
-                                                            text-white
-                                                        `
-                                                    : `
-                                                            border-[#c7c4d8]
-                                                            bg-white
-                                                            text-slate-600
-                                                            hover:bg-slate-50
-                                                        `
-                                                }
-
-                                                disabled:cursor-not-allowed
-                                                disabled:opacity-60
-
-                                                lg:px-3
-                                            `}
-                  >
-                    {pageNumber}
-                  </button>
-                ))}
-
-                {/* NEXT */}
-
-                <button
-                  type="button"
-                  disabled={currentPage >= totalPages || isFetching}
-                  onClick={() =>
-                    setPage((previousPage) =>
-                      Math.min(totalPages, previousPage + 1),
-                    )
-                  }
-                  className="h-9 cursor-pointer rounded-lg border border-[#c7c4d8] bg-white px-3 text-sm font-medium text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 lg:px-4"
-                >
-                  След.
-                </button>
-              </div>
-            )}
+        ) : businessesError ? (
+          <div
+            role="alert"
+            className="rounded-2xl border border-rose-100 bg-white p-8 text-center"
+          >
+            <p className="font-medium text-[#202840]">
+              Не удалось загрузить бизнесы
+            </p>
+            <p className="mt-2 text-sm text-[#7a8197]">Попробуйте ещё раз.</p>
+            <button
+              type="button"
+              onClick={refetchBusinesses}
+              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#4F46E5] px-5 py-3 text-sm font-medium text-white"
+            >
+              <RotateCcw size={16} />
+              Повторить
+            </button>
           </div>
-        </>
-      )}
+        ) : (
+          <>
+            {filtered.length === 0 && (
+              <div
+                role="status"
+                className="mb-5 rounded-2xl border border-dashed border-[#dedbef] bg-white/40 p-6 text-center"
+              >
+                <h2 className="font-semibold text-[#202840]">
+                  {businesses.length
+                    ? "Бизнесы не найдены"
+                    : "Ваш первый бизнес начинается здесь"}
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-[#7a8197]">
+                  {businesses.length
+                    ? "Попробуйте другое название или измените фильтры."
+                    : "Добавьте бизнес, укажите направления услуг и настройте свой кабинет."}
+                </p>
+                {businesses.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={resetFilters}
+                    className="mt-3 text-sm font-medium text-[#6554ed] hover:text-indigo-700"
+                  >
+                    Сбросить фильтры
+                  </button>
+                )}
+              </div>
+            )}
+            <div className="grid min-w-0 grid-cols-1 items-stretch gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              {visible.map((business) => (
+                <BusinessCard key={business.id} business={business} />
+              ))}
+              <NewBusiness appearance="card" showHelpLink={false} />
+            </div>
+            {filtered.length > 0 && (
+              <div className="mt-6 flex flex-col items-center justify-between gap-4 border-t border-[#ecedf5] pt-5 sm:flex-row">
+                <p className="text-xs text-[#8a90a5] sm:text-sm">
+                  Показано {offset + 1}–
+                  {Math.min(offset + PAGE_SIZE, filtered.length)} из{" "}
+                  {filtered.length} бизнесов
+                  {isBusinessesFetching ? " · Обновление…" : ""}
+                </p>
+                {totalPages > 1 && (
+                  <nav
+                    aria-label="Страницы бизнесов"
+                    className="flex items-center gap-1.5"
+                  >
+                    <button
+                      type="button"
+                      aria-label="Предыдущая страница"
+                      disabled={currentPage <= 1}
+                      onClick={() => setPage(currentPage - 1)}
+                      className="rounded-lg border border-[#e5e4f0] bg-white p-2 text-[#7a8197] disabled:opacity-30"
+                    >
+                      <ChevronLeft size={18} />
+                    </button>
+                    {pageNumbers.map((number) => (
+                      <button
+                        key={number}
+                        type="button"
+                        aria-current={
+                          number === currentPage ? "page" : undefined
+                        }
+                        onClick={() => setPage(number)}
+                        className={`h-9 min-w-9 rounded-lg text-sm font-medium ${number === currentPage ? "bg-[#4F46E5] text-white" : "bg-white text-[#7a8197] hover:bg-indigo-50"}`}
+                      >
+                        {number}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      aria-label="Следующая страница"
+                      disabled={currentPage >= totalPages}
+                      onClick={() => setPage(currentPage + 1)}
+                      className="rounded-lg border border-[#e5e4f0] bg-white p-2 text-[#7a8197] disabled:opacity-30"
+                    >
+                      <ChevronRight size={18} />
+                    </button>
+                  </nav>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </section>
     </div>
   );
 }
