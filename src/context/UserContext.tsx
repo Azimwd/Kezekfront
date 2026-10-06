@@ -1,78 +1,77 @@
 import {
-    createContext,
-    useContext,
-    useEffect,
-    useState,
-    type ReactNode
-} from 'react';
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 
-import { getCurrentUser } from '../api/auth';
+import { getCurrentUser } from "../api/auth";
 
 type UserData = {
-    email: string;
-    id: number;
-    phone: string | null;
-    role: string;
+  email: string;
+  id: number;
+  phone: string | null;
+  role: string;
+  is_email_verified?: boolean;
+  email_verification_required?: boolean;
 };
 
 interface UserContextType {
-    user: UserData | null;
-    setUser: (user: UserData | null) => void;
-    isLoadingUser: boolean;
+  user: UserData | null;
+  setUser: (user: UserData | null) => void;
+  isLoadingUser: boolean;
 }
 
-const UserContext = createContext<UserContextType | undefined>(
-    undefined
-);
+const UserContext = createContext<UserContextType | undefined>(undefined);
 
-export const UserProvider = ({
-    children
-}: {
-    children: ReactNode;
-}) => {
-    const [user, setUser] = useState<UserData | null>(null);
-    const [isLoadingUser, setIsLoadingUser] = useState(true);
+export const UserProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<UserData | null>(null);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
 
-    useEffect(() => {
-        const loadCurrentUser = async () => {
-            try {
-                const response = await getCurrentUser();
+  useEffect(() => {
+    const loadCurrentUser = async () => {
+      try {
+        const response = await getCurrentUser();
 
-                const currentUser =
-                    response?.data ?? response;
+        const currentUser = response?.data ?? response;
 
-                setUser(currentUser);
-            } catch (error) {
-                setUser(null);
-            } finally {
-                setIsLoadingUser(false);
-            }
-        };
+        setUser(currentUser);
+      } catch (error) {
+        setUser(null);
+      } finally {
+        setIsLoadingUser(false);
+      }
+    };
 
-        loadCurrentUser();
-    }, []);
+    loadCurrentUser();
+  }, []);
 
-    return (
-        <UserContext.Provider
-            value={{
-                user,
-                setUser,
-                isLoadingUser
-            }}
-        >
-            {children}
-        </UserContext.Provider>
-    );
+  useEffect(() => {
+    const expired = () => setUser(null);
+    window.addEventListener("auth:expired", expired);
+    return () => window.removeEventListener("auth:expired", expired);
+  }, []);
+
+  return (
+    <UserContext.Provider
+      value={{
+        user,
+        setUser,
+        isLoadingUser,
+      }}
+    >
+      {children}
+    </UserContext.Provider>
+  );
 };
 
 export const useUser = () => {
-    const context = useContext(UserContext);
+  const context = useContext(UserContext);
 
-    if (context === undefined) {
-        throw new Error(
-            'useUser должен использоваться внутри UserProvider'
-        );
-    }
+  if (context === undefined) {
+    throw new Error("useUser должен использоваться внутри UserProvider");
+  }
 
-    return context;
+  return context;
 };

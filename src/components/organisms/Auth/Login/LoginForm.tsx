@@ -3,6 +3,11 @@ import { useMutation } from "@tanstack/react-query";
 import { Eye, EyeOff, LockKeyhole, UserRound } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import {
+  getAuthReturnPath,
+  clearAuthReturnPath,
+  verificationRequired,
+} from "../../../../api/accountSecurity";
 
 import { loginUser } from "../../../../api/auth";
 import { useUser } from "../../../../context/UserContext";
@@ -22,22 +27,24 @@ export default function LoginForm() {
     onSuccess: (data) => {
       setUser(data.data);
 
-      if (data.data.role === "business_owner") {
-        const from = (location.state as { from?: unknown } | null)?.from;
-        navigate(
-          typeof from === "string" && /^\/crm(?:\/|$)/.test(from)
-            ? from
-            : "/crm",
-          { replace: true },
-        );
-        return;
-      }
-
-      navigate("/");
+      const from = getAuthReturnPath(
+        (location.state as { from?: unknown } | null)?.from,
+      );
+      clearAuthReturnPath();
+      navigate(from ?? (data.data.role === "business_owner" ? "/crm" : "/"), {
+        replace: true,
+      });
     },
-
     onError: (error) => {
-      console.error("Ошибка авторизации:", error);
+      if (verificationRequired(error)) {
+        setUser(null);
+        navigate("/auth/verify-email", {
+          state: {
+            email: email.trim(),
+            from: (location.state as { from?: string } | null)?.from,
+          },
+        });
+      }
     },
   });
 
@@ -95,10 +102,12 @@ export default function LoginForm() {
 
             <input
               id="email"
-              type="text"
+              type="email"
+              required
+              maxLength={254}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Введите email или телефон"
+              placeholder="Введите email"
               autoComplete="username"
               className="h-[49px] w-full rounded-[8px] border border-[#BEC0D4] bg-[#FCFCFE] pl-10 pr-4 text-[15px] text-[#22232D] outline-none transition placeholder:text-[#818293] focus:border-[#4F46E5] focus:ring-2 focus:ring-[#4F46E5]/10"
             />
@@ -115,12 +124,16 @@ export default function LoginForm() {
               Пароль
             </label>
 
-            <button
-              type="button"
+            <NavLink
+              to="/auth/forgot-password"
+              state={{
+                email,
+                from: (location.state as { from?: string } | null)?.from,
+              }}
               className="text-[13px] font-medium text-[#3429EE] hover:underline"
             >
               Забыли пароль?
-            </button>
+            </NavLink>
           </div>
 
           <div className="relative">
@@ -207,6 +220,7 @@ export default function LoginForm() {
           Нет аккаунта?{" "}
           <NavLink
             to="/auth/register"
+            state={location.state}
             className="font-medium text-[#2518EE] hover:underline"
           >
             Зарегистрироваться

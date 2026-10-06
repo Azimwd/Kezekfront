@@ -5,6 +5,11 @@ import BusinessWorkspace, {
 import LegacyCrmRedirect from "../pages/CRM/LegacyCrmRedirect";
 import { Navigate, Route, Routes } from "react-router-dom";
 
+import {
+  ForgotPasswordPage,
+  ResetPasswordPage,
+  VerifyEmailPage,
+} from "../pages/Auth/AccountSecurityPages";
 import LoginPage from "../pages/Auth/LoginPage";
 import RegistrationPage from "../pages/Auth/RegistrationPage";
 import Authorization from "../pages/Auth/Authorization";
@@ -66,6 +71,9 @@ function App() {
               <Route path="login" element={<LoginPage />} />
 
               <Route path="register" element={<RegistrationPage />} />
+              <Route path="forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="reset-password" element={<ResetPasswordPage />} />
+              <Route path="verify-email" element={<VerifyEmailPage />} />
             </Route>
           </Route>
 

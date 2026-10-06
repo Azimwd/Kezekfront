@@ -1,92 +1,37 @@
-import {api} from "./api"
-
-
-interface LoginResponse {
-    message: string;
-    data: {
-        id: number;
-        email: string; 
-        phone: string;
-        role: string;
-    }
+import { api } from "./api";
+export interface AuthUser {
+  id: number;
+  email: string;
+  phone: string | null;
+  role: string;
+  first_name?: string;
+  last_name?: string;
+  is_email_verified?: boolean;
+  email_verification_required?: boolean;
 }
-
-interface RegisterResponse {
-    message: string;
-    data: {
-        id: number;
-        email: string;
-        phone: string;
-        first_name: string;
-        last_name: string;
-        role: string;
-    }
+interface AuthResponse {
+  message: string;
+  data: AuthUser;
+  verification_email_queued?: boolean;
 }
-
 export interface RegisterPayload {
-    email: string;
-    first_name: string;
-    last_name: string;
-    role: string;
-    password: string;
-    confirm_password: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  password: string;
+  confirm_password: string;
 }
-
-export const registerUser = async (userData: RegisterPayload) => {
-    try {
-        const response = await api.post<RegisterResponse>('/api/users/register/', 
-            userData,
-            
-    );
-        return response.data;
-    } catch(error) {
-        console.error("Ошибка регистрации: ", error);
-        throw error; 
-    }
-}
-
-export const loginUser = async (email: string, password: string) => {
-    try{
-        const response = await api.post<LoginResponse>('/api/users/login/',
-            {
-                email,
-                password
-            },
-            {
-                withCredentials: true
-            }
-        )
-
-        return response.data
-    }
-    catch(error){
-        console.error("Ошибка авторизации: ", error);
-        throw error;
-    }
-}
-
-export const getCurrentUser = async () => {
-    try {
-        const response = await api.get('/api/users/me/', {
-            withCredentials: true
-        });
-
-        return response.data;
-    } catch (error) {
-        throw error;
-    }
-};
-
-export const logout = async () => {
-    try {
-        const response = await api.post('/api/users/logout/', null, {
-            withCredentials: true
-        });
-
-        return response.data;
-    } catch(error) {
-        console.error("Ошибка выхода: ", error);
-        throw error;
-    }
-}
-
+export const registerUser = async (data: RegisterPayload) =>
+  (await api.post<AuthResponse>("/api/users/register/", data)).data;
+export const loginUser = async (email: string, password: string) =>
+  (
+    await api.post<AuthResponse>("/api/users/login/", {
+      email: email.trim(),
+      password,
+    })
+  ).data;
+export const getCurrentUser = async () =>
+  (await api.get("/api/users/me/")).data;
+export const logout = async () =>
+  (await api.post("/api/users/logout/", null)).data;

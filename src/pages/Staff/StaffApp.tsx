@@ -1,6 +1,18 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Link, Route, Routes, useParams } from "react-router-dom";
+import {
+  Link,
+  Route,
+  Routes,
+  useParams,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  verificationRequired,
+  rememberAuthReturnPath,
+  clearAuthReturnPath,
+} from "../../api/accountSecurity";
 import { api } from "../../api/api";
 import ConfirmationDialog from "../../components/molecules/Feedback/ConfirmationDialog";
 import FeedbackNotice from "../../components/molecules/Feedback/FeedbackNotice";
@@ -132,6 +144,9 @@ export default function StaffApp() {
   );
 }
 function LoginForm() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const from = location.pathname + location.search + location.hash;
   const [register, setRegister] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -155,8 +170,12 @@ function LoginForm() {
           },
           { withCredentials: true },
         );
-        // If automatic login fails, retry login rather than registering the same email again.
         setRegister(false);
+        rememberAuthReturnPath(from);
+        navigate("/auth/verify-email", {
+          state: { email: email.trim(), queued: true, from },
+        });
+        return;
       }
       await api.post(
         "/api/users/login/",
@@ -164,7 +183,14 @@ function LoginForm() {
         { withCredentials: true },
       );
       // Reload also refreshes the project's UserProvider with the new cookie session.
+      clearAuthReturnPath();
       window.location.reload();
+    },
+    onError: (error) => {
+      if (verificationRequired(error))
+        navigate("/auth/verify-email", {
+          state: { email: email.trim(), from },
+        });
     },
   });
   function submit(event: FormEvent) {
@@ -180,6 +206,13 @@ function LoginForm() {
         Используйте свой аккаунт Kezek. Доступ к бизнесу появится после
         подтверждения владельцем.
       </p>
+      <Link
+        to="/auth/forgot-password"
+        state={{ email, from }}
+        className="mb-4 inline-block text-sm text-[#7655bb]"
+      >
+        Забыли пароль?
+      </Link>
       <form className="space-y-3" onSubmit={submit}>
         {register && (
           <>
@@ -255,7 +288,7 @@ function LoginForm() {
           {login.isPending
             ? "Подождите…"
             : register
-              ? "Зарегистрироваться и войти"
+              ? "Создать аккаунт"
               : "Войти"}
         </button>
       </form>

@@ -73,6 +73,18 @@ export default function Navbar() {
   };
   return (
     <header className="w-full border-b border-[#EEF0F5] bg-white">
+      {user?.is_email_verified === false && (
+        <div className="bg-[#F1EEFF] px-4 py-2 text-center text-sm text-[#514481]">
+          Подтвердите почту для защиты аккаунта.{" "}
+          <NavLink
+            to="/auth/verify-email"
+            state={{ email: user.email }}
+            className="font-semibold underline"
+          >
+            Отправить письмо
+          </NavLink>
+        </div>
+      )}
       <div className="mx-auto flex w-full max-w-[1600px] flex-col px-4 py-3 sm:px-6 lg:px-10 lg:py-4 xl:px-16">
         {/* =====================================================
                     MAIN ROW
@@ -136,7 +148,7 @@ export default function Navbar() {
               {/* BUSINESS OWNER */}
               {user?.role === "business_owner" && (
                 <NavLink
-                  to="/crm/my-businesses"
+                  to="/crm"
                   className={({ isActive }) => `
                                         border-b-2
                                         pb-1
@@ -257,7 +269,7 @@ export default function Navbar() {
               {/* BUSINESS OWNER */}
               {user?.role === "business_owner" && (
                 <NavLink
-                  to="/crm/my-businesses"
+                  to="/crm"
                   onClick={closeMenu}
                   className={({ isActive }) => `
                                         flex
