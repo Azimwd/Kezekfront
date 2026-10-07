@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Sidebar from "../../organisms/Crm/Sidebar";
 import Header from "../../organisms/Crm/Header";
+import FreePeriodBanner from "../../organisms/Crm/FreePeriod/FreePeriodBanner";
 import ServicesHeader from "../../organisms/Crm/Services/ServicesHeader";
 import StaffHeader from "../../organisms/Crm/Staff.tsx/StaffHeader";
 import { useBusiness } from "../../../context/BusinessContext";
@@ -90,6 +91,7 @@ export default function CrmTemplate() {
           className={`min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto ${section === "settings" && selectedBusiness ? "p-0" : "px-4 py-5 sm:px-5 sm:py-6 md:px-7 md:py-7 lg:px-10 lg:py-9"}`}
         >
           <div className="w-full min-w-0 max-w-full">
+            <FreePeriodBanner />
             <Outlet key={selectedBusiness?.id ?? "business-list"} />
           </div>
         </section>
