@@ -152,6 +152,7 @@ api.interceptors.response.use(
      */
 
     const isAuthRequest =
+      url.includes("/api/users/google/") ||
       url.includes("/api/users/password-reset/") ||
       url.includes("/api/users/email-verification/") ||
       url.includes("/api/users/login/") ||

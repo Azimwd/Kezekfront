@@ -1,3 +1,4 @@
+import GoogleButton from "../Google/GoogleButton";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { UserRound, Mail, LockKeyhole, Eye, EyeOff } from "lucide-react";
@@ -408,6 +409,15 @@ export default function RegisterTemplate() {
           {serverError}
         </div>
       )}
+
+      <div className="mt-5">
+        <GoogleButton
+          mode="register"
+          role={role}
+          acceptedTerms={agreement}
+          disabled={registerMutation.isPending}
+        />
+      </div>
 
       {/* SUBMIT */}
       <button

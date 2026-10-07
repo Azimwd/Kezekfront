@@ -1,3 +1,4 @@
+import GoogleButton from "../../components/organisms/Auth/Google/GoogleButton";
 import { useEffect, useState, type FormEvent } from "react";
 import {
   Link,
@@ -292,6 +293,9 @@ function LoginForm() {
               : "Войти"}
         </button>
       </form>
+      <div className="my-4">
+        <GoogleButton returnTo={from} disabled={login.isPending} />
+      </div>
       <button
         className="mt-4 text-sm text-[#7655bb] underline"
         disabled={login.isPending}
