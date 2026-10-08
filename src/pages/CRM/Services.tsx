@@ -1,3 +1,4 @@
+import ServicePrice from "../../components/molecules/ServicePrice";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useBusiness } from "../../context/BusinessContext";
@@ -347,7 +348,7 @@ function ServiceLibrary({
                         </h3>
                         <p className="mt-1 text-xs text-slate-500">
                           {row.service
-                            ? `${Number(row.service.price).toLocaleString("ru-KZ")} ₸ · ${row.service.duration_minutes} мин · ${row.is_active ? "Включена" : "Выключена"}`
+                            ? <><ServicePrice service={row.service} /> · {row.service.duration_minutes} мин · {row.is_active ? "Включена" : "Выключена"}</>
                             : "Шаблон · настройте цену, время и мастеров"}
                         </p>
                         <span className="mt-1 block text-xs text-slate-400">
