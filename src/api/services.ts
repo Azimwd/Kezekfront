@@ -62,6 +62,8 @@ export interface ServiceItem {
   description: string | null;
 
   price: string | number;
+  discount_percent?: number;
+  final_price?: string | number;
 
   duration_minutes: number;
 
@@ -233,6 +235,7 @@ export const editService = async (
   buffer_after_minutes: number,
   is_active: boolean,
   assign_staff_ids?: number[],
+  discount_percent?: number,
 ): Promise<ServiceItem> => {
   const response = await api.patch<ServiceResponse>(
     `/api/businesses/services/${serviceId}/`,
@@ -245,6 +248,7 @@ export const editService = async (
       buffer_before_minutes,
       buffer_after_minutes,
       is_active,
+      ...(discount_percent === undefined ? {} : { discount_percent }),
       ...(assign_staff_ids === undefined ? {} : { assign_staff_ids }),
     },
   );

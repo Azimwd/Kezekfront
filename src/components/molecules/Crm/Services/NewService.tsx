@@ -1,3 +1,4 @@
+import ServiceDiscountField from "./ServiceDiscountField";
 import {
   useState,
   useEffect,
@@ -162,6 +163,7 @@ export default function NewService({
    */
   const [serviceName, setServiceName] = useState("");
   const [serviceDesc, setServiceDesc] = useState("");
+  const [discountPercent, setDiscountPercent] = useState(0);
   const [price, setPrice] = useState("");
   const [duration, setDuration] = useState(0);
   const [bufferBefore, setBufferBefore] = useState(0);
@@ -375,6 +377,7 @@ export default function NewService({
     setServiceName("");
     setServiceDesc("");
     setPrice("");
+    setDiscountPercent(0);
     setDuration(0);
     setBufferBefore(0);
     setBufferAfter(0);
@@ -389,6 +392,7 @@ export default function NewService({
     setServiceName(service?.name ?? row?.template?.name ?? "");
     setServiceDesc(service?.description ?? row?.template?.description ?? "");
     setPrice(service ? String(service.price) : "");
+    setDiscountPercent(service?.discount_percent ?? 0);
     setDuration(
       service?.duration_minutes ??
         row?.template?.suggested_duration_minutes ??
@@ -456,6 +460,7 @@ export default function NewService({
         name: serviceName.trim(),
         description: serviceDesc.trim(),
         price,
+        discount_percent: discountPercent,
         duration_minutes: duration,
         buffer_before_minutes: bufferBefore,
         buffer_after_minutes: bufferAfter,
@@ -488,6 +493,7 @@ export default function NewService({
             bufferAfter,
             row ? true : isActive,
             selectedStaffIds,
+            discountPercent,
           );
         } else {
           const response = await createConfiguredService(Number(businessKey), {
@@ -1103,6 +1109,7 @@ export default function NewService({
                                 sm:grid-cols-2
                             "
               >
+<ServiceDiscountField value={discountPercent} onChange={setDiscountPercent} price={price} />
                 {/* PRICE */}
                 <div
                   className="

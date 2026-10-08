@@ -52,6 +52,8 @@ export interface CatalogService {
   description: string | null;
 
   price: string | number;
+  discount_percent?: number;
+  final_price?: string | number;
 
   duration_minutes: number;
 

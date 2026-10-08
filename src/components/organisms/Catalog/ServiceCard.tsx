@@ -1,3 +1,4 @@
+import { serviceFinalPrice } from "../../../utils/servicePrice";
 import {
     Heart,
     MapPin,
@@ -246,9 +247,7 @@ const getMinPrice = (
                     service:
                         BusinessService
                 ): number =>
-                    Number(
-                        service.price
-                    )
+                    serviceFinalPrice(service)
             )
             .filter(
                 (

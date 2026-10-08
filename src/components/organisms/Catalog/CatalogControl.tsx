@@ -1,3 +1,4 @@
+import { serviceFinalPrice } from "../../../utils/servicePrice";
 import {
     useEffect,
     useMemo,
@@ -170,9 +171,7 @@ const getBusinessMinPrice = (
                     service:
                         CatalogService
                 ): number =>
-                    Number(
-                        service.price
-                    )
+                    serviceFinalPrice(service)
             )
             .filter(
                 (
@@ -1242,9 +1241,7 @@ export default function CatalogControl() {
 
 
                                             const price =
-                                                Number(
-                                                    service.price
-                                                );
+                                                serviceFinalPrice(service);
 
 
                                             if (

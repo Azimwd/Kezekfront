@@ -1,4 +1,12 @@
+import { rememberAuthReturnPath } from "../../../api/accountSecurity";
+import { getRepeatBookingDraft } from "../../../api/repeatBooking";
+import { useUser } from "../../../context/UserContext";
+import { serviceFinalPrice } from "../../../utils/servicePrice";
+import ServicePrice from "../../molecules/ServicePrice";
+import BusinessPortfolio from "../Portfolio/BusinessPortfolio";
 import {
+    useEffect,
+    useRef,
     useMemo,
     useState
 } from 'react';
@@ -9,6 +17,8 @@ import {
 } from '@tanstack/react-query';
 
 import {
+    useSearchParams,
+    useLocation,
     useNavigate,
     useParams
 } from 'react-router-dom';
@@ -727,6 +737,42 @@ export default function BookingControl() {
      * ========================================================
      */
 
+    const [searchParams] = useSearchParams();
+    const location = useLocation();
+    const { user, isLoadingUser } = useUser();
+    const repeatId = Number(searchParams.get("repeat"));
+    const hasRepeat = searchParams.has("repeat");
+    const repeatValid = Number.isSafeInteger(repeatId) && repeatId > 0;
+    const appliedRepeat = useRef("");
+    const repeatDraft = useQuery({
+      queryKey: ["repeat-booking", user?.id, repeatId],
+      queryFn: () => getRepeatBookingDraft(repeatId),
+      enabled: hasRepeat && repeatValid && !!user,
+      retry: false,
+      staleTime: 0,
+    });
+    useEffect(() => {
+      if (hasRepeat && !isLoadingUser && !user) {
+        navigate("/auth/login", { replace: true, state: { from: rememberAuthReturnPath(location.pathname + location.search) } });
+      }
+    }, [hasRepeat, isLoadingUser, user, navigate, location.pathname, location.search]);
+    useEffect(() => {
+      const draft = repeatDraft.data;
+      const key = `${user?.id}:${repeatId}:${businessId}`;
+      if (!draft || draft.business !== businessId || appliedRepeat.current === key) return;
+      appliedRepeat.current = key;
+      setFirstName(draft.client_first_name);
+      setLastName(draft.client_last_name);
+      setPhone(draft.client_phone);
+      setComment(draft.comment);
+      setSelectedServiceId(draft.service);
+      setSelectedMasterId(draft.staff);
+      setSelectedAddonIds(draft.addon_ids);
+      setSelectedDate("");
+      setSelectedStartAt("");
+      setIsServicePickerOpen(!draft.service);
+    }, [repeatDraft.data, businessId, repeatId, user?.id]);
+
     const today =
         useMemo(
             () =>
@@ -1301,9 +1347,7 @@ export default function BookingControl() {
     const totalPrice =
         (
             selectedService
-                ? Number(
-                    selectedService.price
-                )
+                ? serviceFinalPrice(selectedService)
                 : 0
         ) +
         addonsTotalPrice;
@@ -2057,6 +2101,10 @@ export default function BookingControl() {
      * ========================================================
      */
 
+    if (hasRepeat && repeatValid && user && repeatDraft.isPending) {
+      return <div role="status" className="mx-auto max-w-3xl px-4 py-12 text-center text-slate-500">Загружаем данные прошлой записи…</div>;
+    }
+
     return (
         <div
             className="
@@ -2070,6 +2118,9 @@ export default function BookingControl() {
             "
         >
 
+            {hasRepeat && <div role="status" className="mb-6 rounded-2xl border border-indigo-100 bg-indigo-50 p-4 text-sm text-indigo-900">
+              {!repeatValid ? "Некорректная ссылка для повторной записи." : repeatDraft.isLoading || isLoadingUser ? "Загружаем данные прошлой записи…" : repeatDraft.isError || (repeatDraft.data && repeatDraft.data.business !== businessId) ? "Не удалось подготовить повторную запись. Вернитесь в «Мои записи» или заполните форму самостоятельно." : repeatDraft.data ? <><p className="font-semibold">Данные заполнены. Выберите новую дату и время.</p><p className="mt-1">Стоимость рассчитана по текущим ценам и скидкам.</p>{repeatDraft.data.warnings.map(message => <p key={message} className="mt-1">{message}</p>)}</> : "Войдите, чтобы повторить запись."}
+            </div>}
             {/* HEADER */}
 
             <div
@@ -2149,6 +2200,8 @@ export default function BookingControl() {
                 </div>
             </div>
 
+
+            <BusinessPortfolio businessId={businessId} />
 
             <div
                 className="
@@ -2308,9 +2361,7 @@ export default function BookingControl() {
                                                 text-[#4F46E5]
                                             "
                                         >
-                                            {formatMoney(
-                                                selectedService.price
-                                            )}
+                                            <ServicePrice service={selectedService} />
                                         </span>
 
                                     </div>
@@ -2740,9 +2791,7 @@ export default function BookingControl() {
                                                                             text-[#4F46E5]
                                                                         "
                                                                     >
-                                                                        {formatMoney(
-                                                                            service.price
-                                                                        )}
+                                                                        <ServicePrice service={service} />
                                                                     </div>
 
                                                                 </div>

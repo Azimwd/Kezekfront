@@ -9,6 +9,7 @@ import {
   MessageSquareText,
   CalendarClock,
   BarChart3,
+  Images,
 } from "lucide-react";
 import Sidebar from "../../organisms/Crm/Sidebar";
 import Header from "../../organisms/Crm/Header";
@@ -28,6 +29,7 @@ const sections = [
   { id: 2, navigator: "appointments", label: "Записи", icon: CalendarDays },
   { id: 4, navigator: "staff", label: "Персонал", icon: Users },
   { id: 5, navigator: "services", label: "Услуги", icon: Layers },
+  { id: 10, navigator: "gallery", label: "Галерея работ", icon: Images },
   { id: 6, navigator: "schedule", label: "График работы", icon: CalendarClock },
   { id: 7, navigator: "settings", label: "Настройки бизнеса", icon: Settings },
   { id: 8, navigator: "reviews", label: "Отзывы", icon: MessageSquareText },

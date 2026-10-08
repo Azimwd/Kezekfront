@@ -1,3 +1,4 @@
+import Gallery from "../pages/CRM/Gallery";
 import BusinessWorkspace, {
   CrmEntry,
   MissingBusinessPage,
@@ -100,6 +101,7 @@ function App() {
                   <Route path="edit/:id" element={<EditStaff />} />
                 </Route>
                 <Route path="services" element={<Services />} />
+                <Route path="gallery" element={<Gallery />} />
                 <Route path="schedule" element={<Schedule />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="reviews" element={<Reviews />} />

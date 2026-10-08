@@ -1,3 +1,4 @@
+import ServiceDiscountField from "./ServiceDiscountField";
 import React, { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
@@ -134,6 +135,7 @@ export default function EditService({ service }: EditServiceProps) {
    */
   const [name, setName] = useState(service.name || "");
   const [description, setDescription] = useState(service.description || "");
+  const [discountPercent, setDiscountPercent] = useState(service.discount_percent ?? 0);
   const [price, setPrice] = useState<string>(String(service.price ?? ""));
   const [duration, setDuration] = useState(service.duration_minutes ?? 0);
   const [bufferBefore, setBufferBefore] = useState(
@@ -376,6 +378,7 @@ export default function EditService({ service }: EditServiceProps) {
     setName(service.name || "");
     setDescription(service.description || "");
     setPrice(String(service.price ?? ""));
+    setDiscountPercent(service.discount_percent ?? 0);
     setDuration(service.duration_minutes ?? 0);
     setBufferBefore(service.buffer_before_minutes ?? 0);
     setBufferAfter(service.buffer_after_minutes ?? 0);
@@ -432,6 +435,7 @@ export default function EditService({ service }: EditServiceProps) {
         Number(bufferAfter),
         isActive,
         selectedStaffIds,
+        discountPercent,
       );
       /*
        * ================================================
@@ -830,7 +834,8 @@ export default function EditService({ service }: EditServiceProps) {
                                 sm:grid-cols-2
                             "
             >
-              {/* PRICE */}
+              <ServiceDiscountField value={discountPercent} onChange={setDiscountPercent} price={price} />
+{/* PRICE */}
               <div
                 className="
                                     flex

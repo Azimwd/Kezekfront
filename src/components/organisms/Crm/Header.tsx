@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { useBusiness } from "../../../context/BusinessContext";
 import { BUSINESS_LIST_PATH, businessPath } from "../../../utils/crmPaths";
 const descriptions: Record<string, string> = {
+  "Галерея работ": "Результаты работ бизнеса и портфолио мастеров",
   "Панель управления": "Ключевые показатели и ближайшие записи вашего бизнеса",
   "Мои бизнесы":
     "Откройте бизнес, чтобы управлять его записями, услугами и командой",

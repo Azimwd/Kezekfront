@@ -43,6 +43,7 @@ export interface LibraryFilters {
   active: "all" | "true" | "false";
 }
 export interface ServiceConfiguration {
+  discount_percent?: number;
   name: string;
   description: string;
   price: string;
