@@ -29,7 +29,6 @@ export default function Navbar() {
   const { user, setUser } = useUser();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-
   // A confirmed business membership opens the staff portal, regardless of global role.
   const { data: staffProfiles = [], isError: isStaffAccessError } = useQuery({
     queryKey: ["staff-navbar-memberships", user?.id ?? null],
@@ -148,7 +147,7 @@ export default function Navbar() {
               {/* BUSINESS OWNER */}
               {user?.role === "business_owner" && (
                 <NavLink
-                  to="/crm"
+                  to="/crm/my-businesses"
                   className={({ isActive }) => `
                                         border-b-2
                                         pb-1
@@ -269,7 +268,7 @@ export default function Navbar() {
               {/* BUSINESS OWNER */}
               {user?.role === "business_owner" && (
                 <NavLink
-                  to="/crm"
+                  to="/crm/my-businesses"
                   onClick={closeMenu}
                   className={({ isActive }) => `
                                         flex
