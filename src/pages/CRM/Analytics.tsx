@@ -409,9 +409,9 @@ export default function Analytics() {
   }
 
   const inputClass =
-    "w-full rounded-xl border border-[#ded9ef] " +
+    "w-full cursor-pointer disabled:cursor-not-allowed rounded-xl border border-[#ded9ef] " +
     "bg-white px-3 py-2.5 text-sm outline-none " +
-    "focus:border-violet-500";
+    "focus:border-violet-500 [&::-webkit-calendar-picker-indicator]:cursor-pointer";
 
   const visitors = report
     ? [
@@ -444,7 +444,7 @@ export default function Analytics() {
           type="button"
           onClick={exportExcel}
           disabled={!report || exporting}
-          className="inline-flex items-center gap-2 rounded-xl bg-[#5746d9] px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+          className="cursor-pointer inline-flex items-center gap-2 rounded-xl bg-[#5746d9] px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Download size={18} />
 
@@ -465,7 +465,7 @@ export default function Analytics() {
               key={days}
               type="button"
               onClick={() => choosePeriod(Number(days))}
-              className="rounded-lg border border-[#ded9ef] px-3 py-2 text-sm hover:bg-violet-50"
+              className="cursor-pointer rounded-lg border border-[#ded9ef] px-3 py-2 text-sm hover:bg-violet-50"
             >
               {label}
             </button>
@@ -590,7 +590,7 @@ export default function Analytics() {
             <button
               type="submit"
               disabled={form.date_from > form.date_to}
-              className="w-full rounded-xl bg-[#5746d9] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+              className="cursor-pointer disabled:cursor-not-allowed w-full rounded-xl bg-[#5746d9] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
             >
               Применить / обновить
             </button>
@@ -688,8 +688,8 @@ export default function Analytics() {
                   onClick={() => setMetric(value)}
                   className={
                     metric === value
-                      ? "rounded-lg bg-violet-100 px-3 py-2 text-sm text-violet-700"
-                      : "rounded-lg px-3 py-2 text-sm text-gray-500"
+                      ? "cursor-pointer rounded-lg bg-violet-100 px-3 py-2 text-sm text-violet-700"
+                      : "cursor-pointer rounded-lg px-3 py-2 text-sm text-gray-500"
                   }
                 >
                   {METRIC_LABELS[value]}

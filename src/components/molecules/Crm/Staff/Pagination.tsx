@@ -79,7 +79,7 @@ export default function Pagination({
                     disabled ||
                     currentPage <= 1
                 }
-                className="
+                className="cursor-pointer 
                     h-9
                     px-4
                     rounded-lg
@@ -118,7 +118,7 @@ export default function Pagination({
                         disabled={
                             disabled
                         }
-                        className={`
+                        className={`cursor-pointer disabled:cursor-not-allowed 
                             h-9
                             min-w-9
                             px-3
@@ -137,7 +137,7 @@ export default function Pagination({
 
                             ${
                                 disabled
-                                    ? 'opacity-60 cursor-not-allowed'
+                                    ? 'opacity-60 disabled:cursor-not-allowed'
                                     : ''
                             }
                         `}
@@ -162,7 +162,7 @@ export default function Pagination({
                     currentPage >=
                         totalPages
                 }
-                className="
+                className="cursor-pointer 
                     h-9
                     px-4
                     rounded-lg

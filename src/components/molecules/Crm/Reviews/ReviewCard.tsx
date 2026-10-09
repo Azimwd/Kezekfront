@@ -434,7 +434,7 @@ export default function ReviewCard({
                                     false
                                 )
                             }
-                            className="
+                            className="cursor-pointer disabled:cursor-not-allowed 
                                 px-4
                                 py-2
                                 text-sm
@@ -455,7 +455,7 @@ export default function ReviewCard({
                             onClick={
                                 handleSubmit
                             }
-                            className="
+                            className="cursor-pointer 
                                 min-w-[110px]
                                 rounded-xl
                                 bg-[#4F46E5]
@@ -506,7 +506,7 @@ export default function ReviewCard({
                                 true
                             )
                         }
-                        className="
+                        className="cursor-pointer 
                             flex
                             items-center
                             gap-2

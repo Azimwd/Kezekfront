@@ -138,7 +138,7 @@ export default function ReviewFilters({
                                 )
                         );
                     }}
-                    className="
+                    className="cursor-pointer 
                         h-10
                         min-w-[150px]
                         rounded-xl
@@ -206,7 +206,7 @@ export default function ReviewFilters({
                                 )
                         );
                     }}
-                    className="
+                    className="cursor-pointer 
                         h-10
                         min-w-[180px]
                         rounded-xl
@@ -269,7 +269,7 @@ export default function ReviewFilters({
                                 'all'
                             )
                         }
-                        className={`
+                        className={`cursor-pointer 
                             px-4
                             py-2
                             text-sm
@@ -295,7 +295,7 @@ export default function ReviewFilters({
                                 'replied'
                             )
                         }
-                        className={`
+                        className={`cursor-pointer 
                             border-l
                             border-[#c7c4d8]
                             px-4
@@ -323,7 +323,7 @@ export default function ReviewFilters({
                                 'unreplied'
                             )
                         }
-                        className={`
+                        className={`cursor-pointer 
                             border-l
                             border-[#c7c4d8]
                             px-4
