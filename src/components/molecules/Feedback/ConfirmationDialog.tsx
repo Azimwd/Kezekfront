@@ -97,7 +97,7 @@ export default function ConfirmationDialog({
             aria-label="Закрыть подтверждение"
             disabled={busy}
             onClick={close}
-            className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-xl text-[#8b8499] transition hover:bg-[#f5f2fb] hover:text-[#282237] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7655bb] disabled:opacity-40"
+            className="absolute cursor-pointer disabled:cursor-not-allowed right-4 top-4 flex h-9 w-9 items-center justify-center rounded-xl text-[#8b8499] transition hover:bg-[#f5f2fb] hover:text-[#282237] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7655bb] disabled:opacity-40"
           >
             <X size={19} />
           </button>
@@ -148,14 +148,14 @@ export default function ConfirmationDialog({
             type="button"
             disabled={busy}
             onClick={close}
-            className="flex min-h-11 flex-1 items-center justify-center rounded-xl border border-[#e1dbe9] bg-white px-4 py-2.5 text-sm font-medium text-[#6c607a] transition hover:bg-[#f5f1fb] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7655bb] disabled:opacity-50"
+            className="flex cursor-pointer disabled:cursor-not-allowed min-h-11 flex-1 items-center justify-center rounded-xl border border-[#e1dbe9] bg-white px-4 py-2.5 text-sm font-medium text-[#6c607a] transition hover:bg-[#f5f1fb] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7655bb] disabled:opacity-50"
           >
             Отмена
           </button>
           <button
             type="submit"
             disabled={busy}
-            className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-wait disabled:opacity-70 ${dangerous ? "bg-red-600 hover:bg-red-700 focus-visible:outline-red-500" : "bg-[#7655bb] hover:bg-[#6544a6] focus-visible:outline-[#7655bb]"}`}
+            className={`flex cursor-pointer min-h-11 flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-wait disabled:opacity-70 ${dangerous ? "bg-red-600 hover:bg-red-700 focus-visible:outline-red-500" : "bg-[#7655bb] hover:bg-[#6544a6] focus-visible:outline-[#7655bb]"}`}
           >
             {busy && (
               <LoaderCircle size={17} className="shrink-0 animate-spin" />
