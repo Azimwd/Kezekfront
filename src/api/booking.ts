@@ -336,7 +336,7 @@ export const getBookingServices =
 export const getBookingStaff =
     async (
         businessId: number,
-        serviceId: number
+        serviceId?: number
     ): Promise<
         BookingStaff[]
     > => {

@@ -28,6 +28,8 @@ import {
 } from '../../../api/reviews';
 
 
+import { getBookingStaff } from '../../../api/booking';
+
 interface BusinessReviewsProps {
     businessId: number;
 
@@ -662,10 +664,33 @@ function ReviewCard({
 }
 
 
-export default function BusinessReviews({
+export default function BusinessReviews(props: BusinessReviewsProps) {
+    return <BusinessReviewsContent key={`${props.businessId}:${!!props.allowReply}`} {...props} />;
+}
+
+function BusinessReviewsContent({
     businessId,
     allowReply = false
 }: BusinessReviewsProps) {
+    const [staffId, setStaffId] = useState<number | undefined>();
+    const {
+        data: staff = [],
+        isPending: isStaffPending,
+        isError: isStaffError,
+        isFetching: isStaffFetching,
+        refetch: refetchStaff
+    } = useQuery({
+        queryKey: ['review-staff', businessId],
+        queryFn: () => getBookingStaff(businessId),
+        enabled: !allowReply && Number.isInteger(businessId) && businessId > 0,
+        retry: false
+    });
+
+    const handleStaffChange = (value: string) => {
+        setStaffId(value ? Number(value) : undefined);
+        setPage(1);
+    };
+
 
     const queryClient =
         useQueryClient();
@@ -749,6 +774,10 @@ export default function BusinessReviews({
                         rating;
                 }
 
+                if (staffId !== undefined) {
+                    next.staff_id = staffId;
+                }
+
 
                 if (
                     allowReply
@@ -763,6 +792,7 @@ export default function BusinessReviews({
             [
                 page,
                 rating,
+                staffId,
                 replyStatus,
                 allowReply
             ]
@@ -1162,6 +1192,12 @@ export default function BusinessReviews({
             </div>
 
 
+            {!allowReply && staffId !== undefined && (
+                <p className="mb-3 text-xs text-slate-500">
+                    Оценка выше — общая для бизнеса. Ниже показаны отзывы о выбранном мастере.
+                </p>
+            )}
+
             <div
                 className="
                     mb-5
@@ -1174,6 +1210,7 @@ export default function BusinessReviews({
                     bg-[#FAFBFF]
                     p-4
                     md:flex-row
+                    md:flex-wrap
                     md:items-center
                     md:justify-between
                 "
@@ -1299,6 +1336,38 @@ export default function BusinessReviews({
 
                 </div>
 
+
+                {!allowReply && (
+                    <div className="flex min-w-0 flex-col gap-2 md:w-64">
+                        <label htmlFor={`review-staff-${businessId}`} className="text-xs font-medium text-slate-600">
+                            Отзывы о мастере
+                        </label>
+                        <select
+                            id={`review-staff-${businessId}`}
+                            aria-label="Отзывы мастера"
+                            value={staffId ?? ''}
+                            onChange={event => handleStaffChange(event.target.value)}
+                            disabled={isStaffPending || isStaffError}
+                            className="w-full cursor-pointer rounded-xl border border-[#D9DDEC] bg-white px-3.5 py-2.5 text-sm text-slate-700 outline-none focus:border-[#4F46E5] disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            <option value="">{isStaffPending ? 'Загрузка мастеров…' : 'Все мастера'}</option>
+                            {staff.map(master => (
+                                <option key={master.id} value={master.id}>
+                                    {[master.first_name, master.last_name].filter(Boolean).join(' ').trim() || `Мастер #${master.id}`}
+                                </option>
+                            ))}
+                        </select>
+                        {isStaffError && (
+                            <div className="text-xs text-red-600" role="alert">
+                                Не удалось загрузить мастеров.{' '}
+                                <button type="button" onClick={() => refetchStaff()} disabled={isStaffFetching}
+                                    className="cursor-pointer font-semibold underline disabled:cursor-not-allowed disabled:opacity-60">
+                                    Повторить
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {
                     allowReply &&
@@ -1462,7 +1531,9 @@ export default function BusinessReviews({
                                             text-slate-700
                                         "
                                     >
-                                        Отзывов пока нет
+                                        {staffId !== undefined || rating !== undefined || (allowReply && replyStatus !== 'all')
+                                            ? 'По выбранным фильтрам отзывов нет'
+                                            : 'Отзывов пока нет'}
                                     </div>
 
                                     <div
@@ -1472,7 +1543,9 @@ export default function BusinessReviews({
                                             text-slate-500
                                         "
                                     >
-                                        Здесь появятся отзывы клиентов после завершённых записей.
+                                        {staffId !== undefined || rating !== undefined || (allowReply && replyStatus !== 'all')
+                                            ? 'Попробуйте выбрать другого мастера или изменить фильтры.'
+                                            : 'Здесь появятся отзывы клиентов после завершённых записей.'}
                                     </div>
                                 </div>
                             )
@@ -1596,6 +1669,7 @@ export default function BusinessReviews({
 
                             <button
                                 type="button"
+                                aria-label="Предыдущая страница отзывов"
                                 disabled={
                                     currentPage <=
                                     1 ||
@@ -1639,6 +1713,7 @@ export default function BusinessReviews({
 
                             <button
                                 type="button"
+                                aria-label="Следующая страница отзывов"
                                 disabled={
                                     currentPage >=
                                     totalPages ||
