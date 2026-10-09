@@ -2181,6 +2181,7 @@ export default function Mybookings() {
                                                     )}
 
 
+                                                    <button type="button" onClick={() => navigate(`/booking/${booking.business}?repeat=${booking.id}`)} className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-100">Записаться повторно</button>
                                                     {canReschedule(
                                                         booking
                                                     ) && (
